@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  user_service:
+    volumes:
+      - ../services/user_service:/app/services/user_service
+      - ../shared:/app/shared
+      - ../Cargo.toml:/app/Cargo.toml
+      - ../Cargo.lock:/app/Cargo.lock
+    command: sh -c "cd /app/services/user_service && cargo watch -x run"
+    # Alternative for hot-reloading with 'air' (if installed in builder and configured for Rust):
+    # command: sh -c "cd /app/services/user_service && air"
+
+  driver_service:
+    volumes:
+      - ../services/driver_service:/app/services/driver_service
+      - ../shared:/app/shared
+      - ../Cargo.toml:/app/Cargo.toml
+      - ../Cargo.lock:/app/Cargo.lock
+    command: sh -c "cd /app/services/driver_service && cargo watch -x run"
+
+  ride_service:
+    volumes:
+      - ../services/ride_service:/app/services/ride_service
+      - ../shared:/app/shared
+      - ../Cargo.toml:/app/Cargo.toml
+      - ../Cargo.lock:/app/Cargo.lock
+    command: sh -c "cd /app/services/ride_service && cargo watch -x run"
+
+  location_service:
+    volumes:
+      - ../services/location_service:/app/services/location_service
+      - ../shared:/app/shared
+      - ../Cargo.toml:/app/Cargo.toml
+      - ../Cargo.lock:/app/Cargo.lock
+    command: sh -c "cd /app/services/location_service && cargo watch -x run"
+
+  payment_service:
+    volumes:
+      - ../services/payment_service:/app/services/payment_service
+      - ../shared:/app/shared
+      - ../Cargo.toml:/app/Cargo.toml
+      - ../Cargo.lock:/app/Cargo.lock
+    command: sh -c "cd /app/services/payment_service && cargo watch -x run"
+
+  notification_service:
+    volumes:
+      - ../services/notification_service:/app/services/notification_service
+      - ../shared:/app/shared
+      - ../Cargo.toml:/app/Cargo.toml
+      - ../Cargo.lock:/app/Cargo.lock
+    command: sh -c "cd /app/services/notification_service && cargo watch -x run"

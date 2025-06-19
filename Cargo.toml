@@ -1,0 +1,42 @@
+[package]
+name = "movve_monorepo"
+version = "0.1.0"
+edition = "2024"
+
+
+[workspace]
+members = [
+"services/user_service",
+    "services/driver_service",
+    "services/ride_service",
+    "services/location_service",
+    "services/payment_service",
+    "services/notification_service",
+    "shared/auth",
+    "shared/database"
+]
+
+[workspace.dependencies]
+tokio = { version = "1.45.1", features = ["full"] }
+axum =  "0.8.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+bcrypt = "0.15"
+jsonwebtoken = "9.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+anyhow = "1.0"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+async-graphql = "7.0.17"
+async-graphql-axum = "7.0.17"
+air = "0.1.0"
+
+[dependencies]
+resolver = "0.1.3"
+
+
+

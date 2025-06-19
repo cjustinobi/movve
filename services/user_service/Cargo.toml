@@ -1,0 +1,16 @@
+[package]
+name = "user_service"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "user_service"
+path = "src/main.rs"
+
+[dependencies]
+axum.workspace = true
+serde.workspace = true  # Inherits from workspace.dependencies
+tokio.workspace = true
+async-graphql.workspace = true
+async-graphql-axum.workspace = true
+air.workspace = true
