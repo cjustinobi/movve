@@ -1,0 +1,14 @@
+[package]
+name = "auth"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Use workspace dependencies
+tokio = { workspace = true }
+axum = { workspace = true }
+
+# Reference local workspace crates
+common = { path = "../../libs/common" }
+database = { path = "../../libs/database" }
+utils = { path = "../../libs/utils" }
