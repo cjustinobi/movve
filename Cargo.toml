@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "apps/auth",
     "apps/driver",
+    "apps/gateway",
     "libs/common",
     "libs/database",
     "libs/utils",
