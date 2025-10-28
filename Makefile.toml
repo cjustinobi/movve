@@ -208,19 +208,19 @@ dependencies = ["docker-build-auth", "docker-build-gateway", "docker-build-drive
 [tasks.docker-build-auth]
 description = "Build auth service Docker image"
 script = '''
-docker build -f apps/auth/Dockerfile -t rideshare-auth:latest .
+docker build -f apps/auth/Dockerfile -t movve-auth:latest .
 '''
 
 [tasks.docker-build-gateway]
 description = "Build gateway service Docker image"
 script = '''
-docker build -f apps/gateway/Dockerfile -t rideshare-gateway:latest .
+docker build -f apps/gateway/Dockerfile -t movve-gateway:latest .
 '''
 
 [tasks.docker-build-driver]
 description = "Build driver service Docker image"
 script = '''
-docker build -f apps/driver/Dockerfile -t rideshare-driver:latest .
+docker build -f apps/driver/Dockerfile -t movve-driver:latest .
 '''
 
 [tasks.docker-up]
@@ -321,27 +321,27 @@ script = '''
 echo "Starting all services in tmux..."
 
 # Create a new tmux session
-tmux new-session -d -s rideshare
+tmux new-session -d -s movve
 
 # Split the window into panes
-tmux split-window -h -t rideshare
-tmux split-window -v -t rideshare:0.0
-tmux split-window -v -t rideshare:0.2
+tmux split-window -h -t movve
+tmux split-window -v -t movve:0.0
+tmux split-window -v -t movve:0.2
 
 # Run services in each pane
-tmux send-keys -t rideshare:0.0 'cd apps/auth && cargo run' C-m
-tmux send-keys -t rideshare:0.1 'cd apps/gateway && cargo run' C-m
-tmux send-keys -t rideshare:0.2 'cd apps/driver && cargo run' C-m
-tmux send-keys -t rideshare:0.3 'echo "All services started. Press Ctrl+B then D to detach."' C-m
+tmux send-keys -t movve:0.0 'cd apps/auth && cargo run' C-m
+tmux send-keys -t movve:0.1 'cd apps/gateway && cargo run' C-m
+tmux send-keys -t movve:0.2 'cd apps/driver && cargo run' C-m
+tmux send-keys -t movve:0.3 'echo "All services started. Press Ctrl+B then D to detach."' C-m
 
 # Attach to the session
-tmux attach -t rideshare
+tmux attach -t movve
 '''
 
 [tasks.stop-all]
 description = "Stop all running services (tmux)"
 script = '''
-tmux kill-session -t rideshare 2>/dev/null || echo "No running session found"
+tmux kill-session -t movve 2>/dev/null || echo "No running session found"
 '''
 
 # ==============================================================================

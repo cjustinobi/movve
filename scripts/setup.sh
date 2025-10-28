@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Setting up rideshare monorepo..."
+echo "Setting up movve monorepo..."
 
 # Copy environment file
 if [ ! -f .env ]; then
