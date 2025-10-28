@@ -1,67 +1,66 @@
-use axum::{body::Body, http::{Request, StatusCode}, response::IntoResponse, routing::post, Router, Extension};
-use tracing_subscriber;
-use tokio::net::TcpListener;
-use reqwest::Client;
-use axum::response::Response;
+mod proxy;
 
+use axum::{
+    middleware,
+    routing::{get, post},
+    Router,
+};
+use common::{middleware::jwt_auth, AppConfig};
+use std::sync::Arc;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+#[derive(Clone)]
+pub struct AppState {
+    pub config: Arc<AppConfig>,
+    pub http_client: reqwest::Client,
+}
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-tracing_subscriber::fmt::init();
-let client = Client::new();
+async fn main() -> Result<(), anyhow::Error> {
+    dotenvy::dotenv().ok();
+    
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
+    let config = Arc::new(AppConfig::load()?);
+    let http_client = reqwest::Client::new();
 
-let app = Router::new()
-.route("/health", axum::routing::get(|| async { "ok" }))
-// simple pass-through endpoints
-.route("/api/auth/login", post(proxy_login))
-.route("/api/driver/drivers", axum::routing::get(proxy_drivers))
-.layer(axum::Extension(client));
+    let app_state = AppState {
+        config: config.clone(),
+        http_client,
+    };
 
+    // Public routes (no auth required)
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .route("/api/auth/register", post(proxy::proxy_to_auth))
+        .route("/api/auth/login", post(proxy::proxy_to_auth));
 
-let listener = TcpListener::bind("0.0.0.0:4000").await?;
-tracing::info!("gateway listening on {}", listener.local_addr().unwrap());
-axum::serve(listener, app)
-	.await?;
-	Ok(())
+    // Protected routes (auth required)
+    let protected_routes = Router::new()
+        .route("/api/auth/verify", get(proxy::proxy_to_auth))
+        .route("/api/driver/*path", get(proxy::proxy_to_driver).post(proxy::proxy_to_driver))
+        .layer(middleware::from_fn_with_state(
+            config.jwt.clone(),
+            jwt_auth,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
+        .with_state(app_state);
+
+    let addr = format!("{}:{}", config.server.host, config.server.port);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    
+    tracing::info!("Gateway listening on {}", addr);
+    
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }
 
-
-async fn proxy_login(Extension(client): Extension<Client>, body: String) -> impl IntoResponse {
-// Forward the JSON body to the auth service
-let auth_url = std::env::var("AUTH_URL").unwrap_or_else(|_| "http://localhost:4001/login".into());
-match client.post(&auth_url).body(body).header("content-type", "application/json").send().await {
-Ok(resp) => {
-let status = resp.status();
-let bytes = resp.bytes().await.unwrap_or_default();
-(status, bytes).into_response()
-}
-Err(e) => {
-tracing::error!("error proxying login: {}", e);
-(StatusCode::BAD_GATEWAY, "auth service error").into_response()
-}
-}
-}
-
-
-async fn proxy_drivers(Extension(client): Extension<Client>) -> impl IntoResponse {
-let driver_url = std::env::var("DRIVER_URL").unwrap_or_else(|_| "http://localhost:4002/drivers".into());
-match client.get(&driver_url).send().await {
-Ok(resp) => {
-let status = resp.status();
-let headers = resp.headers().clone();
-let bytes = resp.bytes().await.unwrap_or_default();
-
-let mut response = Response::builder().status(status);
-for (k, v) in headers.iter() {
-    response = response.header(k, v);
-}
-response.body(Body::from(bytes)).unwrap()
-
-}
-Err(e) => {
-tracing::error!("error proxying drivers: {}", e);
-(StatusCode::BAD_GATEWAY, "driver service error").into_response()
-}
-}
+async fn health_check() -> &'static str {
+    "Gateway is healthy"
 }

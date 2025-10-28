@@ -1,21 +1,8 @@
-use serde::{Deserialize, Serialize};
+pub mod config;
+pub mod error;
+pub mod models;
+pub mod middleware;
 
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct LoginRequest {
-pub username: String,
-pub password: String,
-}
-
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct LoginResponse {
-pub token: String,
-}
-
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Driver {
-pub id: u64,
-pub name: String,
-}
+pub use config::*;
+pub use error::*;
+pub use models::*;

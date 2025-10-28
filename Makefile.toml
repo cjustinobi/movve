@@ -1,0 +1,397 @@
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[env]
+RUST_LOG = "info"
+DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/rideshare_db"
+
+# ==============================================================================
+# Development Tasks
+# ==============================================================================
+
+[tasks.dev]
+description = "Run all services in development mode"
+dependencies = ["dev-auth", "dev-gateway", "dev-driver"]
+
+[tasks.dev-auth]
+description = "Run auth service in development"
+cwd = "apps/auth"
+command = "cargo"
+args = ["run"]
+watch = { watch = ["apps/auth/src", "libs/common/src", "libs/utils/src"] }
+
+[tasks.dev-gateway]
+description = "Run gateway service in development"
+cwd = "apps/gateway"
+command = "cargo"
+args = ["run"]
+watch = { watch = ["apps/gateway/src", "libs/common/src", "libs/utils/src"] }
+
+[tasks.dev-driver]
+description = "Run driver service in development"
+cwd = "apps/driver"
+command = "cargo"
+args = ["run"]
+watch = { watch = ["apps/driver/src", "libs/common/src", "libs/utils/src"] }
+
+# ==============================================================================
+# Build Tasks
+# ==============================================================================
+
+[tasks.build]
+description = "Build all services"
+command = "cargo"
+args = ["build", "--workspace"]
+
+[tasks.build-release]
+description = "Build all services in release mode"
+command = "cargo"
+args = ["build", "--workspace", "--release"]
+
+[tasks.build-auth]
+description = "Build auth service"
+cwd = "apps/auth"
+command = "cargo"
+args = ["build"]
+
+[tasks.build-gateway]
+description = "Build gateway service"
+cwd = "apps/gateway"
+command = "cargo"
+args = ["build"]
+
+[tasks.build-driver]
+description = "Build driver service"
+cwd = "apps/driver"
+command = "cargo"
+args = ["build"]
+
+# ==============================================================================
+# Database Tasks
+# ==============================================================================
+
+[tasks.db-create]
+description = "Create database"
+script = '''
+psql -U postgres -c "CREATE DATABASE rideshare_db;"
+'''
+
+[tasks.db-drop]
+description = "Drop database"
+script = '''
+psql -U postgres -c "DROP DATABASE IF EXISTS rideshare_db;"
+'''
+
+[tasks.db-reset]
+description = "Reset database"
+dependencies = ["db-drop", "db-create"]
+
+[tasks.db-migrate-auth]
+description = "Run auth service migrations"
+cwd = "apps/auth"
+command = "sqlx"
+args = ["migrate", "run"]
+
+[tasks.db-migrate-driver]
+description = "Run driver service migrations"
+cwd = "apps/driver"
+command = "sqlx"
+args = ["migrate", "run"]
+
+[tasks.db-migrate]
+description = "Run all migrations"
+dependencies = ["db-migrate-auth", "db-migrate-driver"]
+
+[tasks.db-setup]
+description = "Setup database from scratch"
+dependencies = ["db-create", "db-migrate"]
+
+# ==============================================================================
+# Test Tasks
+# ==============================================================================
+
+[tasks.test]
+description = "Run all tests"
+command = "cargo"
+args = ["test", "--workspace"]
+
+[tasks.test-auth]
+description = "Run auth service tests"
+command = "cargo"
+args = ["test", "-p", "auth"]
+
+[tasks.test-gateway]
+description = "Run gateway service tests"
+command = "cargo"
+args = ["test", "-p", "gateway"]
+
+[tasks.test-driver]
+description = "Run driver service tests"
+command = "cargo"
+args = ["test", "-p", "driver"]
+
+[tasks.test-common]
+description = "Run common lib tests"
+command = "cargo"
+args = ["test", "-p", "common"]
+
+# ==============================================================================
+# Lint and Format Tasks
+# ==============================================================================
+
+[tasks.fmt]
+description = "Format all code"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fmt-check]
+description = "Check code formatting"
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.clippy]
+description = "Run clippy on all code"
+command = "cargo"
+args = ["clippy", "--workspace", "--", "-D", "warnings"]
+
+[tasks.check]
+description = "Check all code compiles"
+command = "cargo"
+args = ["check", "--workspace"]
+
+[tasks.lint]
+description = "Run all linting tasks"
+dependencies = ["fmt-check", "clippy"]
+
+# ==============================================================================
+# Clean Tasks
+# ==============================================================================
+
+[tasks.clean]
+description = "Clean all build artifacts"
+command = "cargo"
+args = ["clean"]
+
+[tasks.clean-auth]
+description = "Clean auth service build artifacts"
+cwd = "apps/auth"
+command = "cargo"
+args = ["clean"]
+
+[tasks.clean-gateway]
+description = "Clean gateway service build artifacts"
+cwd = "apps/gateway"
+command = "cargo"
+args = ["clean"]
+
+[tasks.clean-driver]
+description = "Clean driver service build artifacts"
+cwd = "apps/driver"
+command = "cargo"
+args = ["clean"]
+
+# ==============================================================================
+# Docker Tasks
+# ==============================================================================
+
+[tasks.docker-build]
+description = "Build all Docker images"
+dependencies = ["docker-build-auth", "docker-build-gateway", "docker-build-driver"]
+
+[tasks.docker-build-auth]
+description = "Build auth service Docker image"
+script = '''
+docker build -f apps/auth/Dockerfile -t rideshare-auth:latest .
+'''
+
+[tasks.docker-build-gateway]
+description = "Build gateway service Docker image"
+script = '''
+docker build -f apps/gateway/Dockerfile -t rideshare-gateway:latest .
+'''
+
+[tasks.docker-build-driver]
+description = "Build driver service Docker image"
+script = '''
+docker build -f apps/driver/Dockerfile -t rideshare-driver:latest .
+'''
+
+[tasks.docker-up]
+description = "Start all services with docker-compose"
+script = '''
+docker-compose up -d
+'''
+
+[tasks.docker-down]
+description = "Stop all services with docker-compose"
+script = '''
+docker-compose down
+'''
+
+[tasks.docker-logs]
+description = "View logs from all services"
+script = '''
+docker-compose logs -f
+'''
+
+# ==============================================================================
+# Watch Tasks (for hot-reloading)
+# ==============================================================================
+
+[tasks.watch-auth]
+description = "Watch and run auth service"
+install_crate = { crate_name = "cargo-watch", binary = "cargo-watch", test_arg = "--version" }
+command = "cargo"
+args = ["watch", "-w", "apps/auth/src", "-w", "libs/common/src", "-w", "libs/utils/src", "-x", "run --bin auth"]
+
+[tasks.watch-gateway]
+description = "Watch and run gateway service"
+install_crate = { crate_name = "cargo-watch", binary = "cargo-watch", test_arg = "--version" }
+command = "cargo"
+args = ["watch", "-w", "apps/gateway/src", "-w", "libs/common/src", "-w", "libs/utils/src", "-x", "run --bin gateway"]
+
+[tasks.watch-driver]
+description = "Watch and run driver service"
+install_crate = { crate_name = "cargo-watch", binary = "cargo-watch", test_arg = "--version" }
+command = "cargo"
+args = ["watch", "-w", "apps/driver/src", "-w", "libs/common/src", "-w", "libs/utils/src", "-x", "run --bin driver"]
+
+# ==============================================================================
+# Utility Tasks
+# ==============================================================================
+
+[tasks.deps]
+description = "Check for outdated dependencies"
+install_crate = { crate_name = "cargo-outdated", binary = "cargo-outdated", test_arg = "--version" }
+command = "cargo"
+args = ["outdated", "-w"]
+
+[tasks.audit]
+description = "Audit dependencies for security vulnerabilities"
+install_crate = { crate_name = "cargo-audit", binary = "cargo-audit", test_arg = "--version" }
+command = "cargo"
+args = ["audit"]
+
+[tasks.tree]
+description = "Show dependency tree"
+command = "cargo"
+args = ["tree"]
+
+[tasks.bloat]
+description = "Find what takes up space in the binary"
+install_crate = { crate_name = "cargo-bloat", binary = "cargo-bloat", test_arg = "--version" }
+command = "cargo"
+args = ["bloat", "--release"]
+
+# ==============================================================================
+# Combined Workflow Tasks
+# ==============================================================================
+
+[tasks.setup]
+description = "Initial setup for the project"
+dependencies = ["db-setup"]
+
+[tasks.ci]
+description = "Run CI checks (format, lint, test, build)"
+dependencies = ["fmt-check", "clippy", "test", "build"]
+
+[tasks.pre-commit]
+description = "Run before committing"
+dependencies = ["fmt", "clippy", "test"]
+
+[tasks.all]
+description = "Build and test everything"
+dependencies = ["build", "test", "lint"]
+
+# ==============================================================================
+# Run Multiple Services (using tmux or separate terminals)
+# ==============================================================================
+
+[tasks.run-all]
+description = "Run all services (requires tmux)"
+script = '''
+#!/bin/bash
+echo "Starting all services in tmux..."
+
+# Create a new tmux session
+tmux new-session -d -s rideshare
+
+# Split the window into panes
+tmux split-window -h -t rideshare
+tmux split-window -v -t rideshare:0.0
+tmux split-window -v -t rideshare:0.2
+
+# Run services in each pane
+tmux send-keys -t rideshare:0.0 'cd apps/auth && cargo run' C-m
+tmux send-keys -t rideshare:0.1 'cd apps/gateway && cargo run' C-m
+tmux send-keys -t rideshare:0.2 'cd apps/driver && cargo run' C-m
+tmux send-keys -t rideshare:0.3 'echo "All services started. Press Ctrl+B then D to detach."' C-m
+
+# Attach to the session
+tmux attach -t rideshare
+'''
+
+[tasks.stop-all]
+description = "Stop all running services (tmux)"
+script = '''
+tmux kill-session -t rideshare 2>/dev/null || echo "No running session found"
+'''
+
+# ==============================================================================
+# Help Task
+# ==============================================================================
+
+[tasks.help]
+description = "Show available tasks"
+script = '''
+echo "Available tasks:"
+echo ""
+echo "Development:"
+echo "  dev              - Run all services"
+echo "  watch-auth       - Watch and run auth service"
+echo "  watch-gateway    - Watch and run gateway service"
+echo "  watch-driver     - Watch and run driver service"
+echo "  run-all          - Run all services in tmux"
+echo ""
+echo "Build:"
+echo "  build            - Build all services"
+echo "  build-release    - Build all services (release)"
+echo ""
+echo "Database:"
+echo "  db-create        - Create database"
+echo "  db-drop          - Drop database"
+echo "  db-reset         - Reset database"
+echo "  db-migrate       - Run all migrations"
+echo "  db-setup         - Complete database setup"
+echo ""
+echo "Testing:"
+echo "  test             - Run all tests"
+echo "  test-auth        - Run auth tests"
+echo "  test-gateway     - Run gateway tests"
+echo ""
+echo "Linting:"
+echo "  fmt              - Format code"
+echo "  clippy           - Run clippy"
+echo "  lint             - Run all linting"
+echo ""
+echo "Docker:"
+echo "  docker-build     - Build all Docker images"
+echo "  docker-up        - Start services with docker-compose"
+echo "  docker-down      - Stop services"
+echo ""
+echo "Utilities:"
+echo "  clean            - Clean build artifacts"
+echo "  deps             - Check outdated dependencies"
+echo "  audit            - Audit security vulnerabilities"
+echo ""
+echo "Workflows:"
+echo "  setup            - Initial project setup"
+echo "  ci               - Run CI checks"
+echo "  pre-commit       - Run before committing"
+echo ""
+echo "Run 'cargo make <task>' to execute a task"
+'''
+
+[tasks.default]
+alias = "help"

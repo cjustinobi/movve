@@ -1,52 +1,59 @@
 version: '3.8'
 
 services:
-  user_service:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rideshare_db
+    ports:
+      - "5432:5432"
     volumes:
-      - ../services/user_service:/app/services/user_service
-      - ../shared:/app/shared
-      - ../Cargo.toml:/app/Cargo.toml
-      - ../Cargo.lock:/app/Cargo.lock
-    command: sh -c "cd /app/services/user_service && cargo watch -x run"
-    # Alternative for hot-reloading with 'air' (if installed in builder and configured for Rust):
-    # command: sh -c "cd /app/services/user_service && air"
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  driver_service:
-    volumes:
-      - ../services/driver_service:/app/services/driver_service
-      - ../shared:/app/shared
-      - ../Cargo.toml:/app/Cargo.toml
-      - ../Cargo.lock:/app/Cargo.lock
-    command: sh -c "cd /app/services/driver_service && cargo watch -x run"
+  auth:
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rideshare_db
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
 
-  ride_service:
-    volumes:
-      - ../services/ride_service:/app/services/ride_service
-      - ../shared:/app/shared
-      - ../Cargo.toml:/app/Cargo.toml
-      - ../Cargo.lock:/app/Cargo.lock
-    command: sh -c "cd /app/services/ride_service && cargo watch -x run"
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      RUST_LOG: info
+    depends_on:
+      - auth
+      - driver
 
-  location_service:
-    volumes:
-      - ../services/location_service:/app/services/location_service
-      - ../shared:/app/shared
-      - ../Cargo.toml:/app/Cargo.toml
-      - ../Cargo.lock:/app/Cargo.lock
-    command: sh -c "cd /app/services/location_service && cargo watch -x run"
+  driver:
+    build:
+      context: .
+      dockerfile: apps/driver/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rideshare_db
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
 
-  payment_service:
-    volumes:
-      - ../services/payment_service:/app/services/payment_service
-      - ../shared:/app/shared
-      - ../Cargo.toml:/app/Cargo.toml
-      - ../Cargo.lock:/app/Cargo.lock
-    command: sh -c "cd /app/services/payment_service && cargo watch -x run"
-
-  notification_service:
-    volumes:
-      - ../services/notification_service:/app/services/notification_service
-      - ../shared:/app/shared
-      - ../Cargo.toml:/app/Cargo.toml
-      - ../Cargo.lock:/app/Cargo.lock
-    command: sh -c "cd /app/services/notification_service && cargo watch -x run"
+volumes:
+  postgres_data:
