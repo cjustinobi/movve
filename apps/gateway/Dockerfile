@@ -22,15 +22,15 @@ RUN mkdir -p apps/auth/src apps/driver/src apps/gateway/src libs/common/src libs
     echo "pub fn dummy() {}" > libs/common/src/lib.rs && \
     echo "pub fn dummy() {}" > libs/utils/src/lib.rs
 
-RUN cargo build --release -p driver
+RUN cargo build --release -p gateway
 
-RUN rm -rf apps/driver/src libs/common/src libs/utils/src
+RUN rm -rf apps/gateway/src libs/common/src libs/utils/src
 
-COPY apps/driver ./apps/driver
+COPY apps/gateway ./apps/gateway
 COPY libs/common ./libs/common
 COPY libs/utils ./libs/utils
 
-RUN cargo build --release -p driver
+RUN cargo build --release -p gateway
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -44,16 +44,15 @@ RUN useradd -m -u 1000 appuser
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/driver /app/driver
-COPY apps/driver/config.yaml /app/config.yaml
-COPY apps/driver/migrations /app/migrations
+COPY --from=builder /app/target/release/gateway /app/gateway
+COPY config.yaml /app/config.yaml
 
 RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8002
+EXPOSE 8000
 
 ENV RUST_LOG=info
 
-CMD ["./driver"]
+CMD ["./gateway"]

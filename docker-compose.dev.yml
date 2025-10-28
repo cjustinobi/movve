@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: justin
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: movve_auth
     ports:
@@ -16,6 +16,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - movve-network
 
   auth:
     build:
@@ -24,23 +26,14 @@ services:
     ports:
       - "8001:8001"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/movve_auth
+      DATABASE_URL: postgresql://justin:postgres@postgres:5432/movee_auth
       RUST_LOG: info
     depends_on:
       postgres:
         condition: service_healthy
-
-  gateway:
-    build:
-      context: .
-      dockerfile: apps/gateway/Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      RUST_LOG: info
-    depends_on:
-      - auth
-      - driver
+    networks:
+      - movve-network
+    restart: unless-stopped
 
   driver:
     build:
@@ -54,6 +47,28 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - movve-network
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      RUST_LOG: info
+    depends_on:
+      - auth
+      - driver
+    networks:
+      - movve-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+
+networks:
+  movve-network:
+    driver: bridge

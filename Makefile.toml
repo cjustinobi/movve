@@ -96,8 +96,14 @@ args = ["migrate", "run"]
 [tasks.db-migrate-driver]
 description = "Run driver service migrations"
 cwd = "apps/driver"
-command = "sqlx"
-args = ["migrate", "run"]
+script = '''
+#!/bin/bash
+if [ -d "migrations" ]; then
+    sqlx migrate run
+else
+    echo "No migrations found for driver service, skipping..."
+fi
+'''
 
 [tasks.db-migrate]
 description = "Run all migrations"
