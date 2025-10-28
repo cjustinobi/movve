@@ -4,7 +4,7 @@ skip_core_tasks = true
 
 [env]
 RUST_LOG = "info"
-DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/rideshare_db"
+DATABASE_URL = "postgresql://justin:postgres@localhost:5432/movve_auth"
 
 # ==============================================================================
 # Development Tasks
@@ -74,13 +74,13 @@ args = ["build"]
 [tasks.db-create]
 description = "Create database"
 script = '''
-psql -U postgres -c "CREATE DATABASE rideshare_db;"
+psql -U postgres -c "CREATE DATABASE movve_auth;"
 '''
 
 [tasks.db-drop]
 description = "Drop database"
 script = '''
-psql -U postgres -c "DROP DATABASE IF EXISTS rideshare_db;"
+psql -U postgres -c "DROP DATABASE IF EXISTS movve_auth;"
 '''
 
 [tasks.db-reset]

@@ -1,8 +1,12 @@
-use bcrypt::{hash, verify, DEFAULT_COST};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use chrono::Utc;
-use common::{AppError, AuthResponse, Claims, JwtConfig, LoginRequest, RegisterRequest, User, UserInfo};
+use common::{
+    AppError, AuthResponse, Claims, JwtConfig, LoginRequest, RegisterRequest, User, UserInfo,
+};
 use jsonwebtoken::{encode, EncodingKey, Header};
-use uuid::Uuid;
 
 use crate::repository::UserRepository;
 
@@ -17,17 +21,22 @@ impl AuthService {
     }
 
     pub async fn register(&self, req: RegisterRequest) -> Result<AuthResponse, AppError> {
-        if self.repo.find_by_email(&req.email).await
+        if self
+            .repo
+            .find_by_email(&req.email)
+            .await
             .map_err(|e| AppError::InternalError(e.to_string()))?
             .is_some()
         {
             return Err(AppError::Conflict("Email already exists".to_string()));
         }
 
-        let password_hash = hash(&req.password, DEFAULT_COST)
-            .map_err(|e| AppError::InternalError(e.to_string()))?;
+        let password_hash = self.hash_password(&req.password)?;
 
-        let user = self.repo.create_user(&req.email, &password_hash, req.role).await
+        let user = self
+            .repo
+            .create_user(&req.email, &password_hash, req.role)
+            .await
             .map_err(|e| AppError::InternalError(e.to_string()))?;
 
         let token = self.generate_token(&user)?;
@@ -43,16 +52,14 @@ impl AuthService {
     }
 
     pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, AppError> {
-        let user = self.repo.find_by_email(&req.email).await
+        let user = self
+            .repo
+            .find_by_email(&req.email)
+            .await
             .map_err(|e| AppError::InternalError(e.to_string()))?
             .ok_or_else(|| AppError::Unauthorized("Invalid credentials".to_string()))?;
 
-        let valid = verify(&req.password, &user.password_hash)
-            .map_err(|e| AppError::InternalError(e.to_string()))?;
-
-        if !valid {
-            return Err(AppError::Unauthorized("Invalid credentials".to_string()));
-        }
+        self.verify_password(&req.password, &user.password_hash)?;
 
         let token = self.generate_token(&user)?;
 
@@ -76,6 +83,27 @@ impl AuthService {
         .claims;
 
         Ok(claims)
+    }
+
+    fn hash_password(&self, password: &str) -> Result<String, AppError> {
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|e| AppError::InternalError(format!("Failed to hash password: {}", e)))?
+            .to_string();
+
+        Ok(password_hash)
+    }
+
+    fn verify_password(&self, password: &str, password_hash: &str) -> Result<(), AppError> {
+        let parsed_hash = PasswordHash::new(password_hash)
+            .map_err(|e| AppError::InternalError(format!("Invalid password hash: {}", e)))?;
+
+        Argon2::default()
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .map_err(|_| AppError::Unauthorized("Invalid credentials".to_string()))
     }
 
     fn generate_token(&self, user: &User) -> Result<String, AppError> {

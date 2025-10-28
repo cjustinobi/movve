@@ -1,7 +1,6 @@
 use axum::{routing::get, Json, Router};
 use tracing_subscriber;
 use tokio::net::TcpListener;
-use common::Driver;
 
 
 #[tokio::main]
@@ -10,8 +9,7 @@ async fn main() -> anyhow::Result<()> {
 
 
 	let app = Router::new()
-	.route("/health", get(health))
-	.route("/drivers", get(list_drivers));
+	.route("/health", get(health));
 
 	let listener = TcpListener::bind("0.0.0.0:4002").await?;
 	tracing::info!("driver listening on {}", listener.local_addr().unwrap());
@@ -26,10 +24,3 @@ async fn health() -> &'static str {
 }
 
 
-async fn list_drivers() -> Json<Vec<Driver>> {
-let drivers = vec![
-Driver { id: 1, name: "Alice".into() },
-Driver { id: 2, name: "Bob".into() },
-];
-Json(drivers)
-}

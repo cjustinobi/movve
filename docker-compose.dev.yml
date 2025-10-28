@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: rideshare_db
+      POSTGRES_DB: movve_auth
     ports:
       - "5432:5432"
     volumes:
@@ -24,7 +24,7 @@ services:
     ports:
       - "8001:8001"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rideshare_db
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/movve_auth
       RUST_LOG: info
     depends_on:
       postgres:
@@ -49,7 +49,7 @@ services:
     ports:
       - "8002:8002"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rideshare_db
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/movve_driver
       RUST_LOG: info
     depends_on:
       postgres:

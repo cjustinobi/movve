@@ -40,7 +40,7 @@ async fn main() -> Result<(), anyhow::Error> {
     // Protected routes (auth required)
     let protected_routes = Router::new()
         .route("/api/auth/verify", get(proxy::proxy_to_auth))
-        .route("/api/driver/*path", get(proxy::proxy_to_driver).post(proxy::proxy_to_driver))
+        .route("/api/driver/{*path}", get(proxy::proxy_to_driver).post(proxy::proxy_to_driver))
         .layer(middleware::from_fn_with_state(
             config.jwt.clone(),
             jwt_auth,

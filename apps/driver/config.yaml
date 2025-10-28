@@ -1,0 +1,11 @@
+server:
+  host: "127.0.0.1"
+  port: 8002
+
+jwt:
+  secret: "your-super-secret-jwt-key-change-this-in-production"
+  expiration_hours: 24
+
+services:
+  auth_service_url: "http://localhost:8001"
+  driver_service_url: "http://localhost:8002"
