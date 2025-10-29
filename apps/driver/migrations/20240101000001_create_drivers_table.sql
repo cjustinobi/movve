@@ -3,13 +3,11 @@ CREATE TYPE vehicle_type AS ENUM ('sedan', 'suv', 'van', 'motorcycle');
 
 CREATE TABLE drivers (
     id UUID PRIMARY KEY,
-    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
+    user_id UUID NOT NULL,
     phone VARCHAR(20) NOT NULL,
     license_number VARCHAR(50) NOT NULL UNIQUE,
     vehicle_type vehicle_type NOT NULL,
-    vehicle_plate VARCHAR(20) NOT NULL,
+    vehicle_plate VARCHAR(20) NOT NULL UNIQUE,
     vehicle_model VARCHAR(100) NOT NULL,
     vehicle_year INTEGER NOT NULL,
     status driver_status NOT NULL DEFAULT 'offline',
@@ -17,8 +15,8 @@ CREATE TABLE drivers (
     total_rides INTEGER DEFAULT 0,
     current_latitude DECIMAL(10, 8),
     current_longitude DECIMAL(11, 8),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_drivers_user_id ON drivers(user_id);
