@@ -4,7 +4,7 @@ skip_core_tasks = true
 
 [env]
 RUST_LOG = "info"
-DATABASE_URL = "postgresql://justin:postgres@localhost:5432/movve_auth"
+#DATABASE_URL = "postgresql://postgres:5Bs9a0pAGjOK2pBY@db.mkqxamrggcjetrjnnfnq.supabase.co:5432/postgres"
 
 # ==============================================================================
 # Development Tasks
@@ -68,24 +68,8 @@ command = "cargo"
 args = ["build"]
 
 # ==============================================================================
-# Database Tasks
+# Database Tasks - Supabase (Online)
 # ==============================================================================
-
-[tasks.db-create]
-description = "Create database"
-script = '''
-psql -U postgres -c "CREATE DATABASE movve_auth;"
-'''
-
-[tasks.db-drop]
-description = "Drop database"
-script = '''
-psql -U postgres -c "DROP DATABASE IF EXISTS movve_auth;"
-'''
-
-[tasks.db-reset]
-description = "Reset database"
-dependencies = ["db-drop", "db-create"]
 
 [tasks.db-migrate-auth]
 description = "Run auth service migrations"
@@ -107,11 +91,352 @@ fi
 
 [tasks.db-migrate]
 description = "Run all migrations"
-dependencies = ["db-migrate-auth", "db-migrate-driver"]
+dependencies = ["db-migrate-auth"]
+
+[tasks.db-migrate-info-auth]
+description = "Show auth service migration status"
+cwd = "apps/auth"
+command = "sqlx"
+args = ["migrate", "info"]
+
+[tasks.db-migrate-info-driver]
+description = "Show driver service migration status"
+cwd = "apps/driver"
+script = '''
+#!/bin/bash
+if [ -d "migrations" ]; then
+    sqlx migrate info
+else
+    echo "No migrations found for driver service"
+fi
+'''
+
+[tasks.db-migrate-info]
+description = "Show migration status for all services"
+dependencies = ["db-migrate-info-auth", "db-migrate-info-driver"]
+
+[tasks.db-migrate-revert-auth]
+description = "Revert last auth service migration"
+cwd = "apps/auth"
+command = "sqlx"
+args = ["migrate", "revert"]
+
+[tasks.db-migrate-revert-driver]
+description = "Revert last driver service migration"
+cwd = "apps/driver"
+script = '''
+#!/bin/bash
+if [ -d "migrations" ]; then
+    sqlx migrate revert
+else
+    echo "No migrations found for driver service"
+fi
+'''
+
+
 
 [tasks.db-setup]
-description = "Setup database from scratch"
-dependencies = ["db-create", "db-migrate"]
+description = "Setup database (create if needed and run all migrations)"
+script = '''
+#!/bin/bash
+echo "Setting up database..."
+sqlx database create 2>/dev/null || echo "Database already exists ✅"
+echo "Running migrations..."
+cargo make db-migrate
+echo "✅ Database setup complete"
+'''
+
+[tasks.db-reset]
+description = "⚠️  Reset database (drop and recreate all tables)"
+script = '''
+#!/bin/bash
+echo "⚠️  WARNING: This will delete all data in your Supabase database!"
+echo "Are you sure you want to continue? (type 'yes' to confirm)"
+read -r confirm
+if [ "$confirm" != "yes" ]; then
+  echo "Aborted."
+  exit 1
+fi
+echo "Dropping database..."
+sqlx database drop -y
+echo "Creating database..."
+sqlx database create
+echo "Running migrations..."
+cargo make db-migrate
+echo "✅ Database reset complete"
+'''
+
+# ==============================================================================
+# SQLx Prepare (for compile-time verification)
+# ==============================================================================
+
+[tasks.db-prepare-auth]
+description = "Prepare SQLx offline data for auth service"
+cwd = "apps/auth"
+command = "cargo"
+args = ["sqlx", "prepare"]
+
+[tasks.db-prepare-driver]
+description = "Prepare SQLx offline data for driver service"
+cwd = "apps/driver"
+script = '''
+#!/bin/bash
+if [ -d "migrations" ]; then
+    cargo sqlx prepare
+else
+    echo "No migrations found for driver service, skipping..."
+fi
+'''
+
+[tasks.db-prepare]
+description = "Prepare SQLx offline data for all services"
+dependencies = ["db-prepare-auth", "db-prepare-driver"]
+
+[tasks.db-prepare-check-auth]
+description = "Check if auth service SQLx data is up to date"
+cwd = "apps/auth"
+command = "cargo"
+args = ["sqlx", "prepare", "--check"]
+
+[tasks.db-prepare-check-driver]
+description = "Check if driver service SQLx data is up to date"
+cwd = "apps/driver"
+script = '''
+#!/bin/bash
+if [ -d "migrations" ]; then
+    cargo sqlx prepare --check
+else
+    echo "No migrations found for driver service, skipping..."
+fi
+'''
+
+[tasks.db-prepare-check]
+description = "Check if SQLx data is up to date for all services"
+dependencies = ["db-prepare-check-auth", "db-prepare-check-driver"]
+
+# ==============================================================================
+# Database Shell (with psql installation check)
+# ==============================================================================
+
+[tasks.db-shell]
+description = "Connect to Supabase database shell"
+script = '''
+#!/bin/bash
+if ! command -v psql &> /dev/null; then
+    echo "❌ psql is not installed."
+    echo ""
+    echo "To install psql:"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "  brew install postgresql@15"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo "  sudo apt-get install postgresql-client  # Ubuntu/Debian"
+        echo "  sudo yum install postgresql             # RHEL/CentOS"
+    else
+        echo "  Please install PostgreSQL client for your system"
+    fi
+    echo ""
+    echo "Or use Supabase Studio: https://app.supabase.com/project/[YOUR-PROJECT]/editor"
+    exit 1
+fi
+
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ DATABASE_URL not set in .env"
+    exit 1
+fi
+
+psql "${DATABASE_URL}"
+'''
+
+[tasks.db-query]
+description = "Execute a SQL query"
+script = '''
+#!/bin/bash
+if ! command -v psql &> /dev/null; then
+    echo "❌ psql is not installed. Use 'cargo make db-shell' for installation instructions."
+    exit 1
+fi
+
+if [ -z "$SQL" ]; then
+  echo "Usage: SQL='SELECT * FROM users' cargo make db-query"
+  exit 1
+fi
+
+psql "${DATABASE_URL}" -c "$SQL"
+'''
+
+[tasks.db-query-file]
+description = "Execute SQL from a file"
+script = '''
+#!/bin/bash
+if ! command -v psql &> /dev/null; then
+    echo "❌ psql is not installed. Use 'cargo make db-shell' for installation instructions."
+    exit 1
+fi
+
+if [ -z "$SQL_FILE" ]; then
+  echo "Usage: SQL_FILE=path/to/query.sql cargo make db-query-file"
+  exit 1
+fi
+
+if [ ! -f "$SQL_FILE" ]; then
+    echo "❌ File not found: $SQL_FILE"
+    exit 1
+fi
+
+psql "${DATABASE_URL}" -f "$SQL_FILE"
+'''
+
+# ==============================================================================
+# Database Backup & Restore (with pg_dump check)
+# ==============================================================================
+
+[tasks.db-backup]
+description = "Backup database to SQL file"
+script = '''
+#!/bin/bash
+if ! command -v pg_dump &> /dev/null; then
+    echo "❌ pg_dump is not installed."
+    echo ""
+    echo "To install PostgreSQL tools:"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "  brew install postgresql@18"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo "  sudo apt-get install postgresql-client  # Ubuntu/Debian"
+        echo "  sudo yum install postgresql             # RHEL/CentOS"
+    fi
+    echo ""
+    echo "Or use Supabase Dashboard: https://app.supabase.com/project/[YOUR-PROJECT]/database/backups"
+    exit 1
+fi
+
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="backups/backup_${TIMESTAMP}.sql"
+mkdir -p backups
+echo "Creating backup..."
+pg_dump "${DATABASE_URL}" > $BACKUP_FILE
+echo "✅ Backup saved to $BACKUP_FILE"
+'''
+
+[tasks.db-restore]
+description = "Restore database from SQL file"
+script = '''
+#!/bin/bash
+if ! command -v psql &> /dev/null; then
+    echo "❌ psql is not installed. Use 'cargo make db-shell' for installation instructions."
+    exit 1
+fi
+
+if [ -z "$BACKUP_FILE" ]; then
+  echo "Usage: BACKUP_FILE=backups/backup_20240101_120000.sql cargo make db-restore"
+  exit 1
+fi
+
+if [ ! -f "$BACKUP_FILE" ]; then
+    echo "❌ Backup file not found: $BACKUP_FILE"
+    exit 1
+fi
+
+echo "⚠️  WARNING: This will restore from $BACKUP_FILE"
+echo "Are you sure? (type 'yes' to confirm)"
+read -r confirm
+if [ "$confirm" != "yes" ]; then
+  echo "Aborted."
+  exit 1
+fi
+
+psql "${DATABASE_URL}" < $BACKUP_FILE
+echo "✅ Database restored from $BACKUP_FILE"
+'''
+
+# ==============================================================================
+# Supabase CLI Tasks (Optional)
+# ==============================================================================
+
+[tasks.supabase-link]
+description = "Link to Supabase project (requires Supabase CLI)"
+script = '''
+#!/bin/bash
+if ! command -v supabase &> /dev/null; then
+    echo "❌ Supabase CLI is not installed."
+    echo ""
+    echo "To install:"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "  brew install supabase/tap/supabase"
+    else
+        echo "  npm install -g supabase"
+    fi
+    echo ""
+    echo "Or visit: https://supabase.com/docs/guides/cli"
+    exit 1
+fi
+
+if [ -z "$SUPABASE_PROJECT_REF" ]; then
+  echo "Usage: SUPABASE_PROJECT_REF=your_project_ref cargo make supabase-link"
+  echo ""
+  echo "Get your project ref from: https://app.supabase.com/project/[YOUR-PROJECT]/settings/general"
+  exit 1
+fi
+
+supabase link --project-ref $SUPABASE_PROJECT_REF
+'''
+
+[tasks.supabase-status]
+description = "Show Supabase project status"
+script = '''
+#!/bin/bash
+if ! command -v supabase &> /dev/null; then
+    echo "❌ Supabase CLI is not installed. Use 'cargo make supabase-link' for installation instructions."
+    exit 1
+fi
+
+supabase projects list
+'''
+
+# ==============================================================================
+# Help & Info
+# ==============================================================================
+
+[tasks.db-help]
+description = "Show database commands help"
+script = '''
+#!/bin/bash
+echo "================================================"
+echo "Database Commands"
+echo "================================================"
+echo ""
+echo "Migrations:"
+echo "  cargo make db-migrate                    - Run all migrations"
+echo "  cargo make db-migrate-auth               - Run auth service migrations"
+echo "  cargo make db-migrate-driver             - Run driver service migrations"
+echo "  cargo make db-migrate-info               - Show migration status"
+echo "  cargo make db-create-migration-auth      - Create auth migration"
+echo "  cargo make db-create-migration-driver    - Create driver migration"
+echo ""
+echo "Setup & Reset:"
+echo "  cargo make db-setup                      - Setup database (create + migrate)"
+echo "  cargo make db-reset                      - Reset database (⚠️  destructive)"
+echo ""
+echo "SQLx Prepare:"
+echo "  cargo make db-prepare                    - Prepare offline SQLx data"
+echo "  cargo make db-prepare-check              - Check SQLx data status"
+echo ""
+echo "Database Access (requires psql):"
+echo "  cargo make db-shell                      - Open database shell"
+echo "  SQL='...' cargo make db-query            - Execute SQL query"
+echo "  SQL_FILE=... cargo make db-query-file    - Execute SQL file"
+echo ""
+echo "Backup & Restore (requires pg_dump):"
+echo "  cargo make db-backup                     - Backup database"
+echo "  BACKUP_FILE=... cargo make db-restore    - Restore from backup"
+echo ""
+echo "Supabase CLI (optional):"
+echo "  cargo make supabase-link                 - Link to Supabase project"
+echo "  cargo make supabase-status               - Show project status"
+echo ""
+echo "Help:"
+echo "  cargo make db-help                       - Show this help"
+echo ""
+'''
 
 # ==============================================================================
 # Test Tasks
