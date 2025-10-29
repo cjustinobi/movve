@@ -17,6 +17,7 @@ sqlx = { workspace = true }
 uuid = { workspace = true }
 jsonwebtoken = { workspace = true }
 argon2 = "0.5.3"
+diesel = { version = "2.3.3", features = ["postgres", "r2d2", "chrono"] }
 
 # Reference local workspace crates
 common = { path = "../../libs/common" }
