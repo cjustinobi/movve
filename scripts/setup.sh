@@ -16,8 +16,10 @@ fi
 
 # Install cargo-watch for hot reloading
 if ! command -v cargo-watch &> /dev/null; then
-    echo "Installing cargo-watch..."
-    cargo install cargo-watch
+    echo "Installing cargo-watch with macOS AppKit framework fix..."
+    RUSTFLAGS="-C link-arg=-framework -C link-arg=AppKit" cargo install cargo-watch
+else
+    echo "cargo-watch already installed ✅"
 fi
 
 # Install sqlx-cli

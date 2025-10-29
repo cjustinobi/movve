@@ -1,10 +1,18 @@
+# Prerequisite
+- Ensure you have latest rust version installed - Run `rustup update stable` to update to the latest stable version
+
+
+
 # 1. Clone and setup
-git clone <your-repo>
-cd <your-monorepo>
-./scripts/setup.sh
+git clone [https://github.com/Moove-Buildl/movve_monorepo.git](https://github.com/Moove-Buildl/movve_monorepo.git)
+
+cd to Movve repo
+
+Run `./scripts/setup.sh`
 
 # 2. Start all services
-cargo make run-all
+
+Run `cargo make run-all`
 
 # 3. In another terminal, test the API
 ```
