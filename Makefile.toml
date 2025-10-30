@@ -158,6 +158,12 @@ script = [
     "diesel database reset --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
 ]
 
+[tasks.diesel-driver-schema]
+script = '''
+cd apps/driver
+diesel print-schema --database-url "${DRIVER_DATABASE_URL}" > src/schema.rs
+'''
+
 
 # ==============================================================================
 # Database Shell (with psql installation check)

@@ -1,4 +1,5 @@
-use crate::repository::{DriverRepository, NewDriver, Driver};
+use crate::repository::DriverRepository;
+use crate::model::{NewDriver, Driver};
 use anyhow::Result;
 use uuid::Uuid;
 

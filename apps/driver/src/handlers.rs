@@ -1,6 +1,7 @@
 use axum::{extract::{State, Path}, Json};
 use uuid::Uuid;
-use crate::{AppState, repository::{Driver, NewDriver}};
+use crate::model::{Driver, NewDriver};
+use crate::{AppState};
 use serde_json::json;
 
 pub async fn create_driver(
