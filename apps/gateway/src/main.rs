@@ -2,12 +2,18 @@ mod proxy;
 
 use axum::{
     middleware,
-    routing::{get, post},
+    routing::{any, get, post},
     Router,
 };
 use common::{middleware::jwt_auth, AppConfig};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+impl AsRef<AppConfig> for AppState {
+    fn as_ref(&self) -> &AppConfig {
+        &self.config
+    }
+}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -31,20 +37,23 @@ async fn main() -> Result<(), anyhow::Error> {
         http_client,
     };
 
+    let config_for_middleware = config.clone();
+
     // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/auth/register", post(proxy::proxy_to_auth))
         .route("/api/auth/login", post(proxy::proxy_to_auth));
 
-    // Protected routes (auth required)
+    // In gateway main.rs
     let protected_routes = Router::new()
         .route("/api/auth/verify", get(proxy::proxy_to_auth))
-        .route("/api/driver/{*path}", get(proxy::proxy_to_driver).post(proxy::proxy_to_driver))
-        .layer(middleware::from_fn_with_state(
-            config.jwt.clone(),
-            jwt_auth,
-        ));
+        .route("/api/drivers", any(proxy::proxy_to_driver))
+        .route("/api/drivers/{id}", any(proxy::proxy_to_driver))
+        .layer(middleware::from_fn(move |req, next| {
+            let secret = config_for_middleware.jwt.secret.clone();
+            jwt_auth(secret, req, next)
+        }));
 
     let app = Router::new()
         .merge(public_routes)
@@ -54,7 +63,9 @@ async fn main() -> Result<(), anyhow::Error> {
     let addr = format!("{}:{}", config.server.host, config.server.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     
-    tracing::info!("Gateway listening on {}", addr);
+    tracing::info!("🚪 Gateway listening on {}", addr);
+    tracing::info!("📡 Auth service: {}", config.services.auth_service_url);
+    tracing::info!("🚗 Driver service: {}", config.services.driver_service_url);
     
     axum::serve(listener, app).await?;
 

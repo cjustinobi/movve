@@ -1,21 +1,28 @@
+// In libs/common/src/middleware.rs
 use axum::{
-    extract::{Request, State},
+    extract::Request,
     http::StatusCode,
     middleware::Next,
     response::Response,
 };
 use jsonwebtoken::{decode, DecodingKey, Validation};
+use serde::{Deserialize, Serialize};
 
-use crate::{Claims, JwtConfig};
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,
+}
 
+// Simple version - pass secret directly
 pub async fn jwt_auth(
-    State(jwt_config): State<JwtConfig>,
+    secret: String,
     mut req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
     let auth_header = req
         .headers()
-        .get("Authorization")
+        .get("authorization")
         .and_then(|h| h.to_str().ok())
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -23,14 +30,15 @@ pub async fn jwt_auth(
         .strip_prefix("Bearer ")
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let claims = decode::<Claims>(
+    let token_data = decode::<Claims>(
         token,
-        &DecodingKey::from_secret(jwt_config.secret.as_bytes()),
+        &DecodingKey::from_secret(secret.as_bytes()),
         &Validation::default(),
     )
-    .map_err(|_| StatusCode::UNAUTHORIZED)?
-    .claims;
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    req.extensions_mut().insert(claims);
+    // Add user_id to request extensions
+    req.extensions_mut().insert(token_data.claims.sub);
+
     Ok(next.run(req).await)
 }

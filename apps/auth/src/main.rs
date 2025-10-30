@@ -49,10 +49,9 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/api/auth/verify", get(handlers::verify_token))
         .with_state(app_state);
 
-    let addr = format!("{}:{}", config.server.host, config.server.port);
+    let addr: String = format!("{}:{}", config.server.host, config.server.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    
-    tracing::info!("Auth service listening on {}", addr);
+    tracing::info!("🔐 Auth service listening on {} (localhost only)", addr);
     
     axum::serve(listener, app).await?;
 
