@@ -7,7 +7,7 @@ CREATE TABLE users (
     last_name VARCHAR(100),
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(100) UNIQUE,
-    gender gender NOT NULL,
+    gender gender,
     nok_name VARCHAR(100),
     nok_phone VARCHAR(100),
     dob DATE,

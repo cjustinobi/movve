@@ -1,4 +1,3 @@
-use diesel::prelude::*;
 use diesel::{Queryable, Selectable, Identifiable, Insertable};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

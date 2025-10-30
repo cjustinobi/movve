@@ -9,6 +9,9 @@ skip_core_tasks = true
 
 
 [env]
+APP_PORT = 8000
+AUTH_PORT = 8001
+DRIVER_PORT = 8002
 DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
 DRIVER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_driver"
 #DATABASE_URL = "postgresql://postgres:NYOYFXLoxm0ywnvu@db.miaafrdvcvxakvfvjfpx.supabase.co:5432/postgres"
@@ -127,8 +130,20 @@ script = [
 [tasks.diesel-auth-reset]
 description = "Drop and recreate Auth DB, then run migrations"
 script = [
-    "diesel database reset --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+    '''
+    # Extract database name from URL
+    DB_NAME=$(echo ${DATABASE_URL} | sed 's/.*\///')
+    DB_USER=$(echo ${DATABASE_URL} | sed 's/.*:\/\/\([^:]*\):.*/\1/')
+    
+    # Force disconnect all connections
+    psql -U ${DB_USER} -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();"
+    
+    # Now diesel can safely reset
+    diesel database reset --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations
+    '''
 ]
+
+
 
 # -------------------------------------------------------------------
 # 🚗 DRIVER SERVICE (Diesel)
@@ -544,7 +559,7 @@ dependencies = ["build", "test", "lint"]
 description = "Run all services (requires tmux)"
 script = '''
 #!/bin/bash
-echo "Starting all services in tmux..."
+echo "Starting all services in tmux with live reload..."
 
 # Create a new tmux session
 tmux new-session -d -s movve
@@ -555,20 +570,86 @@ tmux split-window -v -t movve:0.0
 tmux split-window -v -t movve:0.2
 
 # Run services in each pane
-tmux send-keys -t movve:0.0 'cd apps/auth && cargo run' C-m
-tmux send-keys -t movve:0.1 'cd apps/gateway && cargo run' C-m
-tmux send-keys -t movve:0.2 'cd apps/driver && cargo run' C-m
-tmux send-keys -t movve:0.3 'echo "All services started. Press Ctrl+B then D to detach."' C-m
+tmux send-keys -t movve:0.0 'cd apps/auth && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
+tmux send-keys -t movve:0.1 'cd apps/gateway && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
+tmux send-keys -t movve:0.2 'cd apps/driver && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
+tmux send-keys -t movve:0.3 'echo "All services started with live reload. Press Ctrl+B then D to detach."' C-m
+
 
 # Attach to the session
 tmux attach -t movve
 '''
 
 [tasks.stop-all]
-description = "Stop all running services (tmux)"
+description = "Stop all running services and free ports"
 script = '''
-tmux kill-session -t movve 2>/dev/null || echo "No running session found"
+#!/bin/bash
+set +e  # Don't exit on error
+
+echo "Stopping tmux session..."
+tmux kill-session -t movve 2>/dev/null && echo "✓ Tmux session killed" || echo "ℹ No tmux session found"
+
+echo ""
+echo "Freeing ports..."
+
+PORTS="${APP_PORT} ${AUTH_PORT} ${DRIVER_PORT}"
+
+for port in $PORTS; do
+    pid=$(lsof -ti:$port 2>/dev/null)
+    if [ ! -z "$pid" ]; then
+        echo "  Killing process on port $port (PID: $pid)"
+        kill -9 $pid 2>/dev/null
+        sleep 0.5
+    fi
+done
+
+echo ""
+echo "Port status:"
+all_free=true
+for port in $PORTS; do
+    if lsof -ti:$port >/dev/null 2>&1; then
+        echo "  ⚠️  Port $port still in use"
+        all_free=false
+    else
+        echo "  ✓ Port $port is free"
+    fi
+done
+
+if [ "$all_free" = true ]; then
+    echo ""
+    echo "✅ All services stopped successfully"
+else
+    echo ""
+    echo "⚠️  Some ports are still in use. You may need to manually kill processes."
+fi
 '''
+
+[tasks.stop-service]
+description = "Stop a single service running in tmux (usage: cargo make stop-service --service=<name>)"
+script = '''
+#!/bin/bash
+SERVICE="${1:-}"
+SESSION="movve"
+
+if [ -z "$SERVICE" ]; then
+  echo "Usage: cargo make stop-service -- <service_name>"
+  echo "Example: cargo make stop-service -- auth"
+  exit 1
+fi
+
+# Find the pane running the service
+PANE_ID=$(tmux list-panes -t $SESSION -F '#{pane_id} #{pane_current_command} #{pane_current_path}' | grep "apps/$SERVICE" | awk '{print $1}')
+
+if [ -z "$PANE_ID" ]; then
+  echo "No running service found for '$SERVICE' in session '$SESSION'."
+  exit 1
+fi
+
+# Kill that specific pane
+tmux kill-pane -t "$PANE_ID"
+echo "Stopped service '$SERVICE' in tmux session '$SESSION'."
+'''
+
 
 
 [tasks.help]
@@ -580,8 +661,8 @@ echo "🦀 MOVVE PROJECT - Cargo Make Help"
 echo "============================================================"
 echo ""
 echo "🚀 Project Initial Setup:"
-echo " cargo make setup                - Create respective databases and run all migrations"
-echo " cargo make db-reset             - Drop and recreate all DBs (destructive)"
+echo "   cargo make setup                - Create respective databases and run all migrations"
+echo "   cargo make db-reset             - Drop and recreate all DBs (destructive)"
 echo ""
 echo "🚀 Development:"
 echo "  cargo make dev                 - Run all services in development"

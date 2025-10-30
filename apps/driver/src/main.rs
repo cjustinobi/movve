@@ -54,9 +54,9 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Define routes
     let app = Router::new()
-        .route("/health", get(handlers::health_check))
+        .route("/driver/health", get(handlers::health_check))
         .route("/api/drivers", get(handlers::list_drivers).post(handlers::create_driver))
-        .route("/api/drivers/:id", get(handlers::get_driver))
+        .route("/api/drivers/{id}", get(handlers::get_driver))
         .with_state(state);
 
     // Use host and port from config (like auth)
