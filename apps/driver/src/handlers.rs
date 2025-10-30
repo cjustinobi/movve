@@ -1,0 +1,37 @@
+use axum::{extract::{State, Path}, Json};
+use uuid::Uuid;
+use crate::{AppState, repository::{Driver, NewDriver}};
+use serde_json::json;
+
+pub async fn create_driver(
+    State(state): State<AppState>,
+    Json(req): Json<NewDriver>,
+) -> Result<Json<Driver>, axum::http::StatusCode> {
+    match state.driver_service.register_driver(req) {
+        Ok(driver) => Ok(Json(driver)),
+        Err(_) => Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+pub async fn list_drivers(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Driver>>, axum::http::StatusCode> {
+    match state.driver_service.list_drivers() {
+        Ok(drivers) => Ok(Json(drivers)),
+        Err(_) => Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+pub async fn get_driver(
+    State(state): State<AppState>,
+    Path(driver_id): Path<Uuid>,
+) -> Result<Json<Driver>, axum::http::StatusCode> {
+    match state.driver_service.get_driver(driver_id) {
+        Ok(driver) => Ok(Json(driver)),
+        Err(_) => Err(axum::http::StatusCode::NOT_FOUND),
+    }
+}
+
+pub async fn health_check() -> Json<serde_json::Value> {
+    Json(json!({"status": "Driver service is healthy"}))
+}
