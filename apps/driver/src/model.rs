@@ -10,26 +10,26 @@ use crate::schema::drivers;
 
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[DieselTypePath = "crate::schema::sql_types::DriverStatus"]
+#[ExistingTypePath = "crate::schema::sql_types::DriverStatus"]
 pub enum DriverStatus {
-    #[db(rename = "offline")]
+    #[db_rename = "offline"]
     Offline,
-    #[db(rename = "online")]
+    #[db_rename = "online"]
     Online,
-    #[db(rename = "busy")]
+    #[db_rename = "busy"]
     Busy,
 }
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[DieselTypePath = "crate::schema::sql_types::VehicleType"]
+#[ExistingTypePath = "crate::schema::sql_types::VehicleType"]
 pub enum VehicleType {
-    #[db(rename = "sedan")]
+    #[db_rename = "sedan"]
     Sedan,
-    #[db(rename = "suv")]
+    #[db_rename = "suv"]
     Suv,
-    #[db(rename = "van")]
+    #[db_rename = "van"]
     Van,
-    #[db(rename = "motorcycle")]
+    #[db_rename = "motorcycle"]
     Motorcycle,
 }
 

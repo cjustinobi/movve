@@ -16,6 +16,6 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 bigdecimal = { workspace = true }
 diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono", "numeric"] }
-diesel-derive-enum = "2.1"
+diesel-derive-enum = { version = "2.1", features = ["postgres"] }
 
 common = { path = "../../libs/common" }

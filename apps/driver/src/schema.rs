@@ -1,11 +1,11 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "driver_status"))]
     pub struct DriverStatus;
 
-    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "vehicle_type"))]
     pub struct VehicleType;
 }
@@ -18,14 +18,10 @@ diesel::table! {
     drivers (id) {
         id -> Uuid,
         user_id -> Uuid,
-        #[max_length = 20]
         phone -> Varchar,
-        #[max_length = 50]
         license_number -> Varchar,
         vehicle_type -> VehicleType,
-        #[max_length = 20]
         vehicle_plate -> Varchar,
-        #[max_length = 100]
         vehicle_model -> Varchar,
         vehicle_year -> Int4,
         status -> DriverStatus,
