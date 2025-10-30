@@ -1,10 +1,19 @@
+
+# -------------------------------------------------------------------
+# 🚀 GLOBAL CONFIG
+# -------------------------------------------------------------------
+
 [config]
 default_to_workspace = false
 skip_core_tasks = true
 
+
 [env]
+DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
+DRIVER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_driver"
+#DATABASE_URL = "postgresql://postgres:NYOYFXLoxm0ywnvu@db.miaafrdvcvxakvfvjfpx.supabase.co:5432/postgres"
+
 RUST_LOG = "info"
-#DATABASE_URL = "postgresql://postgres:5Bs9a0pAGjOK2pBY@db.mkqxamrggcjetrjnnfnq.supabase.co:5432/postgres"
 
 # ==============================================================================
 # Development Tasks
@@ -67,152 +76,88 @@ cwd = "apps/driver"
 command = "cargo"
 args = ["build"]
 
-# ==============================================================================
-# Database Tasks - Supabase (Online)
-# ==============================================================================
 
-[tasks.db-migrate-auth]
-description = "Run auth service migrations"
-cwd = "apps/auth"
-command = "sqlx"
-args = ["migrate", "run"]
+# -------------------------------------------------------------------
+# 🔍 DATABASE STATUS CHECK
+# -------------------------------------------------------------------
+[tasks.dbs-status]
+description = "Check PostgreSQL connection for both databases"
+script = [
+    "echo 'Checking Auth DB connection...'",
+    "pg_isready -d ${DATABASE_URL}",
+    "echo ''",
+    "echo 'Checking Driver DB connection...'",
+    "pg_isready -d ${DRIVER_DATABASE_URL}"
+]
 
-[tasks.db-migrate-driver]
-description = "Run driver service migrations"
-cwd = "apps/driver"
-script = '''
-#!/bin/bash
-if [ -d "migrations" ]; then
-    sqlx migrate run
-else
-    echo "No migrations found for driver service, skipping..."
-fi
-'''
+# -------------------------------------------------------------------
+# 🧩 APP SETUP (Diesel)
+# -------------------------------------------------------------------
 
-[tasks.db-migrate]
-description = "Run all migrations"
-dependencies = ["db-migrate-auth"]
-
-[tasks.db-migrate-info-auth]
-description = "Show auth service migration status"
-cwd = "apps/auth"
-command = "sqlx"
-args = ["migrate", "info"]
-
-[tasks.db-migrate-info-driver]
-description = "Show driver service migration status"
-cwd = "apps/driver"
-script = '''
-#!/bin/bash
-if [ -d "migrations" ]; then
-    sqlx migrate info
-else
-    echo "No migrations found for driver service"
-fi
-'''
-
-[tasks.db-migrate-info]
-description = "Show migration status for all services"
-dependencies = ["db-migrate-info-auth", "db-migrate-info-driver"]
-
-[tasks.db-migrate-revert-auth]
-description = "Revert last auth service migration"
-cwd = "apps/auth"
-command = "sqlx"
-args = ["migrate", "revert"]
-
-[tasks.db-migrate-revert-driver]
-description = "Revert last driver service migration"
-cwd = "apps/driver"
-script = '''
-#!/bin/bash
-if [ -d "migrations" ]; then
-    sqlx migrate revert
-else
-    echo "No migrations found for driver service"
-fi
-'''
-
-
-
-[tasks.db-setup]
-description = "Setup database (create if needed and run all migrations)"
-script = '''
-#!/bin/bash
-echo "Setting up database..."
-sqlx database create 2>/dev/null || echo "Database already exists ✅"
-echo "Running migrations..."
-cargo make db-migrate
-echo "✅ Database setup complete"
-'''
+[tasks.setup]
+description = "Initial setup for Movve application"
+dependencies = ["diesel-auth-setup", "diesel-driver-setup"]
 
 [tasks.db-reset]
-description = "⚠️  Reset database (drop and recreate all tables)"
-script = '''
-#!/bin/bash
-echo "⚠️  WARNING: This will delete all data in your Supabase database!"
-echo "Are you sure you want to continue? (type 'yes' to confirm)"
-read -r confirm
-if [ "$confirm" != "yes" ]; then
-  echo "Aborted."
-  exit 1
-fi
-echo "Dropping database..."
-sqlx database drop -y
-echo "Creating database..."
-sqlx database create
-echo "Running migrations..."
-cargo make db-migrate
-echo "✅ Database reset complete"
-'''
+description = "Drop and recreate all DBs"
+dependencies = ["diesel-auth-reset", "diesel-driver-reset"]
 
-# ==============================================================================
-# SQLx Prepare (for compile-time verification)
-# ==============================================================================
+# -------------------------------------------------------------------
+# 🧩 AUTH SERVICE (Diesel)
+# -------------------------------------------------------------------
+[tasks.diesel-auth-setup]
+description = "Setup and migrate Auth DB"
+script = [
+    "echo '🚀 Setting up Auth database...'",
+    "diesel setup --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+]
 
-[tasks.db-prepare-auth]
-description = "Prepare SQLx offline data for auth service"
-cwd = "apps/auth"
-command = "cargo"
-args = ["sqlx", "prepare"]
+[tasks.diesel-auth-migrate]
+description = "Run pending Auth migrations"
+script = [
+    "diesel migration run --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+]
 
-[tasks.db-prepare-driver]
-description = "Prepare SQLx offline data for driver service"
-cwd = "apps/driver"
-script = '''
-#!/bin/bash
-if [ -d "migrations" ]; then
-    cargo sqlx prepare
-else
-    echo "No migrations found for driver service, skipping..."
-fi
-'''
+[tasks.diesel-auth-revert]
+description = "Revert last Auth migration"
+script = [
+    "diesel migration revert --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+]
 
-[tasks.db-prepare]
-description = "Prepare SQLx offline data for all services"
-dependencies = ["db-prepare-auth", "db-prepare-driver"]
+[tasks.diesel-auth-reset]
+description = "Drop and recreate Auth DB, then run migrations"
+script = [
+    "diesel database reset --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+]
 
-[tasks.db-prepare-check-auth]
-description = "Check if auth service SQLx data is up to date"
-cwd = "apps/auth"
-command = "cargo"
-args = ["sqlx", "prepare", "--check"]
+# -------------------------------------------------------------------
+# 🚗 DRIVER SERVICE (Diesel)
+# -------------------------------------------------------------------
+[tasks.diesel-driver-setup]
+description = "Setup and migrate Driver DB"
+script = [
+    "echo '🚀 Setting up Driver database...'",
+    "diesel setup --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+]
 
-[tasks.db-prepare-check-driver]
-description = "Check if driver service SQLx data is up to date"
-cwd = "apps/driver"
-script = '''
-#!/bin/bash
-if [ -d "migrations" ]; then
-    cargo sqlx prepare --check
-else
-    echo "No migrations found for driver service, skipping..."
-fi
-'''
+[tasks.diesel-driver-migrate]
+description = "Run pending Driver migrations"
+script = [
+    "diesel migration run --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+]
 
-[tasks.db-prepare-check]
-description = "Check if SQLx data is up to date for all services"
-dependencies = ["db-prepare-check-auth", "db-prepare-check-driver"]
+[tasks.diesel-driver-revert]
+description = "Revert last Driver migration"
+script = [
+    "diesel migration revert --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+]
+
+[tasks.diesel-driver-reset]
+description = "Drop and recreate Driver DB, then run migrations"
+script = [
+    "diesel database reset --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+]
+
 
 # ==============================================================================
 # Database Shell (with psql installation check)
@@ -390,52 +335,6 @@ if ! command -v supabase &> /dev/null; then
 fi
 
 supabase projects list
-'''
-
-# ==============================================================================
-# Help & Info
-# ==============================================================================
-
-[tasks.db-help]
-description = "Show database commands help"
-script = '''
-#!/bin/bash
-echo "================================================"
-echo "Database Commands"
-echo "================================================"
-echo ""
-echo "Migrations:"
-echo "  cargo make db-migrate                    - Run all migrations"
-echo "  cargo make db-migrate-auth               - Run auth service migrations"
-echo "  cargo make db-migrate-driver             - Run driver service migrations"
-echo "  cargo make db-migrate-info               - Show migration status"
-echo "  cargo make db-create-migration-auth      - Create auth migration"
-echo "  cargo make db-create-migration-driver    - Create driver migration"
-echo ""
-echo "Setup & Reset:"
-echo "  cargo make db-setup                      - Setup database (create + migrate)"
-echo "  cargo make db-reset                      - Reset database (⚠️  destructive)"
-echo ""
-echo "SQLx Prepare:"
-echo "  cargo make db-prepare                    - Prepare offline SQLx data"
-echo "  cargo make db-prepare-check              - Check SQLx data status"
-echo ""
-echo "Database Access (requires psql):"
-echo "  cargo make db-shell                      - Open database shell"
-echo "  SQL='...' cargo make db-query            - Execute SQL query"
-echo "  SQL_FILE=... cargo make db-query-file    - Execute SQL file"
-echo ""
-echo "Backup & Restore (requires pg_dump):"
-echo "  cargo make db-backup                     - Backup database"
-echo "  BACKUP_FILE=... cargo make db-restore    - Restore from backup"
-echo ""
-echo "Supabase CLI (optional):"
-echo "  cargo make supabase-link                 - Link to Supabase project"
-echo "  cargo make supabase-status               - Show project status"
-echo ""
-echo "Help:"
-echo "  cargo make db-help                       - Show this help"
-echo ""
 '''
 
 # ==============================================================================
@@ -619,10 +518,6 @@ args = ["bloat", "--release"]
 # Combined Workflow Tasks
 # ==============================================================================
 
-[tasks.setup]
-description = "Initial setup for the project"
-dependencies = ["db-setup"]
-
 [tasks.ci]
 description = "Run CI checks (format, lint, test, build)"
 dependencies = ["fmt-check", "clippy", "test", "build"]
@@ -669,17 +564,18 @@ script = '''
 tmux kill-session -t movve 2>/dev/null || echo "No running session found"
 '''
 
-# ==============================================================================
-# Help Task
-# ==============================================================================
 
 [tasks.help]
-description = "Show all available cargo-make tasks"
+description = "Show all available cargo-make tasks (including Diesel tasks)"
 script = '''
 #!/bin/bash
 echo "============================================================"
 echo "🦀 MOVVE PROJECT - Cargo Make Help"
 echo "============================================================"
+echo ""
+echo "🚀 Project Initial Setup:"
+echo " cargo make setup                - Create respective databases and run all migrations"
+echo " cargo make db-reset             - Drop and recreate all DBs (destructive)"
 echo ""
 echo "🚀 Development:"
 echo "  cargo make dev                 - Run all services in development"
@@ -693,16 +589,6 @@ echo "  cargo make build-release       - Build all services (release)"
 echo "  cargo make build-auth          - Build auth service"
 echo "  cargo make build-gateway       - Build gateway service"
 echo "  cargo make build-driver        - Build driver service"
-echo ""
-echo "🧩 Database (Supabase + SQLx):"
-echo "  cargo make db-setup            - Create DB and run all migrations"
-echo "  cargo make db-migrate          - Run all migrations"
-echo "  cargo make db-migrate-auth     - Run auth service migrations"
-echo "  cargo make db-migrate-driver   - Run driver service migrations"
-echo "  cargo make db-prepare          - Prepare SQLx offline data"
-echo "  cargo make db-reset            - Drop & recreate DB (⚠️ destructive)"
-echo "  cargo make db-shell            - Open DB shell (psql)"
-echo "  SQL='SELECT * FROM users' cargo make db-query"
 echo ""
 echo "🧰 Supabase CLI:"
 echo "  cargo make supabase-link       - Link to Supabase project"
@@ -742,14 +628,27 @@ echo "🖥️  Run Multiple Services (tmux):"
 echo "  cargo make run-all             - Run all services in tmux"
 echo "  cargo make stop-all            - Stop tmux session"
 echo ""
-echo "🔍 Help:"
-echo "  cargo make db-help             - Show database-specific commands"
-echo "  cargo make help                - Show this help menu"
+echo "🐘 Diesel & Database Tasks:"
+echo "  Auth Service:"
+echo "    cargo make diesel-auth-setup        → Create DB + run migrations"
+echo "    cargo make diesel-auth-reset        → Drop DB + recreate + migrate"
+echo "    cargo make diesel-auth-migrate      → Run pending migrations"
+echo "    cargo make diesel-auth-revert       → Revert last migration"
+echo ""
+echo "  Driver Service:"
+echo "    cargo make diesel-driver-setup      → Create DB + run migrations"
+echo "    cargo make diesel-driver-reset      → Drop DB + recreate + migrate"
+echo "    cargo make diesel-driver-migrate    → Run pending migrations"
+echo "    cargo make diesel-driver-revert     → Revert last migration"
+echo ""
+echo "  General:"
+echo "    cargo make dbs-status               → Check both DB connections"
 echo ""
 echo "============================================================"
 echo "💡 Tip: You can run 'cargo make <task>' from anywhere in the workspace"
 echo "============================================================"
 '''
+
 
 
 [tasks.default]
