@@ -25,6 +25,8 @@ anyhow = "1.0"
 dotenvy = "0.15.7"
 chrono = { version = "0.4.42", features = ["serde"] }
 bigdecimal = { version = "0.4", features = ["serde"] }
+utoipa = { version = "5.4.0", features = ["macros", "axum_extras", "chrono", "uuid"] }
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
 
 
 

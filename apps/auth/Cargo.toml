@@ -16,6 +16,8 @@ chrono = { workspace = true }
 sqlx = { workspace = true }
 uuid = { workspace = true }
 jsonwebtoken = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
 argon2 = "0.5.3"
 diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono", "numeric"] }
 diesel-derive-enum = "2.1"

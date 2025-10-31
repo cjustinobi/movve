@@ -1,7 +1,17 @@
 use axum::{extract::State, http::HeaderMap, Json};
-use common::{AppError, AuthResponse, Claims, LoginRequest, RegisterRequest};
-
+use common::{AppError, AuthResponse, Claims, LoginRequest, RegisterRequest, RegisterResponse};
 use crate::AppState;
+
+#[utoipa::path(
+    post,
+    path = "/api/auth/register",
+    request_body = RegisterRequest,
+    responses(
+        (status = 201, description = "User registered successfully", body = RegisterResponse),
+        (status = 400, description = "Invalid input"),
+    ),
+    tag = "Auth"
+)]
 
 pub async fn register(
     State(state): State<AppState>,
@@ -11,6 +21,16 @@ pub async fn register(
     Ok(Json(response))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/auth/login",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "User logged in successfully", body = AuthResponse),
+        (status = 400, description = "Invalid input"),
+    ),
+    tag = "Auth"
+)]
 pub async fn login(
     State(state): State<AppState>,
     Json(req): Json<LoginRequest>,
@@ -19,6 +39,16 @@ pub async fn login(
     Ok(Json(response))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/auth/verify",
+    request_body = RegisterRequest,
+    responses(
+        (status = 201, description = "User registered successfully", body = RegisterResponse),
+        (status = 400, description = "Invalid input"),
+    ),
+    tag = "Auth"
+)]
 pub async fn verify_token(
     State(state): State<AppState>,
     headers: HeaderMap,

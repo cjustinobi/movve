@@ -13,6 +13,27 @@ use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        handlers::register,  // ✅ reference to your route handler
+        handlers::login,
+        handlers::verify_token
+    ),
+    components(schemas(
+        common::RegisterRequest,
+        common::RegisterResponse
+    )),
+    tags(
+        (name = "Auth", description = "User registration and authentication endpoints")
+    )
+)]
+struct ApiDoc;
+
+
 #[derive(Clone)]
 pub struct AppState {
     pub auth_service: Arc<AuthService>,
@@ -47,6 +68,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/verify", get(handlers::verify_token))
+        .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", ApiDoc::openapi()))
         .with_state(app_state);
 
     let addr: String = format!("{}:{}", config.server.host, config.server.port);
