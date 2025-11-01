@@ -1,6 +1,15 @@
 use axum::{extract::State, http::HeaderMap, Json};
-use common::{AppError, AuthResponse, Claims, LoginRequest, RegisterRequest, RegisterResponse};
-use crate::AppState;
+use common::{AppError};
+use crate::{
+    AppState,
+    model::{
+        AuthResponse,
+        LoginRequest, RegisterRequest, RegisterResponse,
+        ForgotPasswordRequest, 
+        ForgotPasswordResponse,
+        Claims,
+    }
+};
 
 #[utoipa::path(
     post,
@@ -64,4 +73,29 @@ pub async fn verify_token(
 
     let claims = state.auth_service.verify_token(token)?;
     Ok(Json(claims))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/auth/forgot-password",
+    request_body = ForgotPasswordRequest,
+    responses(
+        (status = 200, description = "Password reset email sent", body = ForgotPasswordResponse),
+        (status = 404, description = "User not found"),
+    ),
+    tag = "Auth"
+)]
+pub async fn forgot_password(
+    State(state): State<AppState>,
+    Json(req): Json<ForgotPasswordRequest>,
+) -> Result<Json<ForgotPasswordResponse>, AppError> {
+    let token = state.auth_service.forgot_password(&req.email).await?;
+    
+    // TODO: In production, send email here instead of returning token
+    // Example: state.email_service.send_reset_email(&req.email, &token).await?;
+    
+    Ok(Json(ForgotPasswordResponse {
+        message: "Password reset instructions have been sent to your email".to_string(),
+        token: Some(token), // Remove this in production
+    }))
 }

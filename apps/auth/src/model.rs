@@ -75,3 +75,46 @@ pub struct Claims {
     pub exp: i64,
     pub iat: i64,
 }
+
+// ---------- Password Reset Models ----------
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+pub struct PasswordReset {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub token: String,
+    pub expires_at: NaiveDateTime,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+pub struct NewPasswordReset {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub token: String,
+    pub expires_at: NaiveDateTime,
+    pub created_at: NaiveDateTime,
+}
+
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ForgotPasswordRequest {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ForgotPasswordResponse {
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token: Option<String>, // Only for development/testing
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ResetPasswordRequest {
+    pub token: String,
+    pub new_password: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ResetPasswordResponse {
+    pub message: String,
+}

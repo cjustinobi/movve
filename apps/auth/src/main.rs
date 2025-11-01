@@ -64,6 +64,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/verify", get(handlers::verify_token))
+        .route("/api/auth/forgot-password", post(handlers::forgot_password))
         // Expose OpenAPI spec as JSON endpoint for gateway to fetch
         .route("/openapi.json", get(|| async {
             axum::Json(docs::AuthApiDoc::openapi())
