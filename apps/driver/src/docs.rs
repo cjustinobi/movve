@@ -3,30 +3,26 @@ use utoipa::OpenApi;
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::handlers::register,
-        crate::handlers::login,
-        crate::handlers::verify_token
+        crate::handlers::create_driver,
+        crate::handlers::get_driver,
+        crate::handlers::list_drivers,
     ),
     components(schemas(
-        common::RegisterRequest,
-        common::RegisterResponse,
-        common::LoginRequest,
-        common::LoginResponse,
-        common::VerifyResponse
+        crate::model::Driver,
     )),
     tags(
-        (name = "Auth", description = "User registration and authentication endpoints")
+        (name = "Driver", description = "Driver service endpoints")
     ),
     info(
-        title = "Auth Service API",
+        title = "Driver Service API",
         version = "1.0.0",
-        description = "Authentication and user management service"
+        description = "Movve Driver service"
     )
 )]
-pub struct AuthApiDoc;
+pub struct DriverApiDoc;
 
 /// Handler function to return the OpenAPI spec as JSON
 /// This is called by the /openapi.json endpoint
 pub fn get_openapi() -> utoipa::openapi::OpenApi {
-    AuthApiDoc::openapi()
+    DriverApiDoc::openapi()
 }
