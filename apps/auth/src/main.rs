@@ -1,6 +1,7 @@
 mod handlers;
 mod repository;
 mod service;
+mod model;
 mod docs;
 mod schema;
 

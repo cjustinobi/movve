@@ -11,7 +11,7 @@ use crate::AppState;
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title = "Microservices API Gateway",
+        title = "Movve API Gateway",
         version = "1.0.0",
         description = "Loading merged API documentation..."
     )
@@ -51,9 +51,9 @@ fn merge_openapi_specs(auth_spec: Option<Value>, driver_spec: Option<Value>) -> 
     let mut merged = json!({
         "openapi": "3.0.0",
         "info": {
-            "title": "Microservices API Gateway",
+            "title": "Movve API",
             "version": "1.0.0",
-            "description": "Unified API documentation for all microservices"
+            "description": "Unified API documentation for all services"
         },
         "servers": [
             {

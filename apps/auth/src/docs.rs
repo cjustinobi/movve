@@ -8,13 +8,13 @@ use utoipa::OpenApi;
         crate::handlers::verify_token
     ),
     components(schemas(
-        common::RegisterRequest,
-        common::RegisterResponse,
-        common::LoginRequest,
-        common::AuthResponse,
-        common::UserInfo,
-        common::UserRole,
-        common::Claims,
+        crate::model::RegisterRequest,
+        crate::model::RegisterResponse,
+        crate::model::LoginRequest,
+        crate::model::AuthResponse,
+        crate::model::UserInfo,
+        crate::model::UserRole,
+        crate::model::Claims,
     )),
     tags(
         (name = "Auth", description = "User registration and authentication endpoints")
