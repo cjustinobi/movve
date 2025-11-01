@@ -58,15 +58,13 @@ async fn main() -> Result<(), anyhow::Error> {
             jwt_auth(secret, req, next)
         }));
 
-    // Swagger UI with merged OpenAPI specs
-    let swagger_routes = SwaggerUi::new("/docs")
-        .url("/api-doc/openapi.json", docs::GatewayApiDoc::openapi());
-
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
-        .merge(swagger_routes)
-        .route("/api-doc/openapi.json", get(docs::get_merged_openapi))
+        // Serve the dynamically merged OpenAPI spec
+        .route("/api-docs/openapi.json", get(docs::get_merged_openapi))
+        // Swagger UI - uses external_url to point to our dynamic endpoint
+        .merge(SwaggerUi::new("/docs").external_url_unchecked("/api-docs/openapi.json", OpenApi::default()))
         .with_state(app_state);
 
     let addr = format!("{}:{}", config.server.host, config.server.port);

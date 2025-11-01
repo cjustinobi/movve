@@ -1,29 +1,14 @@
 use axum::{
     extract::State,
-    response::{IntoResponse, Response},
-    http::StatusCode,
-    Json,
+    response::Json,
 };
 use serde_json::{json, Value};
-use utoipa::OpenApi;
 use crate::AppState;
-
-/// Placeholder OpenApi struct for SwaggerUI
-/// The actual merged spec is fetched dynamically
-#[derive(OpenApi)]
-#[openapi(
-    info(
-        title = "Microservices API Gateway",
-        version = "1.0.0",
-        description = "Unified API documentation for all microservices. This spec is dynamically merged from all services."
-    )
-)]
-pub struct GatewayApiDoc;
 
 /// Fetch and merge OpenAPI specs from all microservices
 pub async fn get_merged_openapi(
     State(state): State<AppState>,
-) -> Result<Json<Value>, Response> {
+) -> Json<Value> {
     let auth_url = format!("{}/openapi.json", state.config.services.auth_service_url);
     let driver_url = format!("{}/openapi.json", state.config.services.driver_service_url);
 
@@ -34,7 +19,7 @@ pub async fn get_merged_openapi(
     // Merge the specs
     let merged = merge_openapi_specs(auth_spec, driver_spec);
 
-    Ok(Json(merged))
+    Json(merged)
 }
 
 async fn fetch_spec(client: &reqwest::Client, url: &str) -> Option<Value> {
@@ -117,6 +102,5 @@ fn merge_spec_into(merged: &mut Value, spec: Value, service_name: &str) {
         }
     }
 
-    // Add service info to description if available
     tracing::info!("Merged OpenAPI spec from {}", service_name);
 }

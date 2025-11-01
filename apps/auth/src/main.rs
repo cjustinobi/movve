@@ -13,7 +13,6 @@ use service::AuthService;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use utoipa::OpenApi;
 
 #[derive(Clone)]
 pub struct AppState {
