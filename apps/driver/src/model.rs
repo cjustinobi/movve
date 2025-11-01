@@ -8,7 +8,6 @@ use diesel_derive_enum::DbEnum;
 
 use crate::schema::drivers;
 
-
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::DriverStatus"]
 pub enum DriverStatus {
@@ -45,18 +44,18 @@ pub struct Driver {
     pub vehicle_model: String,
     pub vehicle_year: i32,
     pub status: DriverStatus,
-    #[schema(value_type = String, example = "4.5")]
-    // ensure serde serializes as string (requires bigdecimal serde feature)
-    #[serde(with = "bigdecimal::serde::str::option")]
+    #[schema(value_type = Option<String>)]
     pub rating: Option<BigDecimal>,
     pub total_rides: Option<i32>,
+    #[schema(value_type = Option<String>)]
     pub current_latitude: Option<BigDecimal>,
+    #[schema(value_type = Option<String>)]
     pub current_longitude: Option<BigDecimal>,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Insertable)]
+#[derive(Debug, Clone, Serialize, Deserialize, Insertable, ToSchema)]
 #[diesel(table_name = drivers)]
 pub struct NewDriver {
     pub user_id: Uuid,

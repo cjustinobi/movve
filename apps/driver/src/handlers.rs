@@ -4,6 +4,14 @@ use crate::model::{Driver, NewDriver};
 use crate::{AppState};
 use serde_json::json;
 
+#[utoipa::path(
+    post,
+    path = "/drivers",
+    responses(
+        (status = 200, description = "Create a driver", body = [Driver])
+    )
+)]
+
 pub async fn create_driver(
     State(state): State<AppState>,
     Json(req): Json<NewDriver>,
@@ -14,6 +22,14 @@ pub async fn create_driver(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/drivers",
+    responses(
+        (status = 200, description = "List all drivers", body = [Driver])
+    )
+)]
+
 pub async fn list_drivers(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Driver>>, axum::http::StatusCode> {
@@ -23,6 +39,17 @@ pub async fn list_drivers(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/drivers/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Driver unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Driver retrieved successfully", body = Driver),
+        (status = 404, description = "Driver not found")
+    )
+)]
 pub async fn get_driver(
     State(state): State<AppState>,
     Path(driver_id): Path<Uuid>,

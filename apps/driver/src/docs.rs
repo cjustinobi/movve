@@ -20,9 +20,3 @@ use utoipa::OpenApi;
     )
 )]
 pub struct DriverApiDoc;
-
-/// Handler function to return the OpenAPI spec as JSON
-/// This is called by the /openapi.json endpoint
-pub fn get_openapi() -> utoipa::openapi::OpenApi {
-    DriverApiDoc::openapi()
-}
