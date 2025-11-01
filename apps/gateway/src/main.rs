@@ -9,8 +9,8 @@ use axum::{
 use common::{middleware::jwt_auth, AppConfig};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 impl AsRef<AppConfig> for AppState {
     fn as_ref(&self) -> &AppConfig {
@@ -61,10 +61,13 @@ async fn main() -> Result<(), anyhow::Error> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
-        // Serve the dynamically merged OpenAPI spec
-        .route("/api-docs/openapi.json", get(docs::get_merged_openapi))
-        // Swagger UI - uses external_url to point to our dynamic endpoint
-        .merge(SwaggerUi::new("/docs").external_url_unchecked("/api-docs/openapi.json", OpenApi::default()))
+        // Serve the dynamically merged OpenAPI spec at a custom path
+        .route("/merged-openapi.json", get(docs::get_merged_openapi))
+        // Swagger UI points to our custom merged spec
+        .merge(
+            SwaggerUi::new("/docs")
+                .url("/merged-openapi.json", docs::GatewayApiDoc::openapi())
+        )
         .with_state(app_state);
 
     let addr = format!("{}:{}", config.server.host, config.server.port);

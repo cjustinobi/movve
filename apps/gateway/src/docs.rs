@@ -3,7 +3,22 @@ use axum::{
     response::Json,
 };
 use serde_json::{json, Value};
+use utoipa::OpenApi;
 use crate::AppState;
+
+/// Minimal placeholder OpenApi for SwaggerUI initialization
+/// The actual spec is loaded dynamically from /api-docs/openapi.json
+#[derive(OpenApi)]
+#[openapi(
+    info(
+        title = "Microservices API Gateway",
+        version = "1.0.0",
+        description = "Loading merged API documentation..."
+    )
+)]
+pub struct GatewayApiDoc;
+
+/// Fetch and merge OpenAPI specs from all microservices
 
 /// Fetch and merge OpenAPI specs from all microservices
 pub async fn get_merged_openapi(
