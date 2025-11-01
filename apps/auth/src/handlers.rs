@@ -40,7 +40,7 @@ pub async fn login(
 }
 
 #[utoipa::path(
-    post,
+    get,
     path = "/api/auth/verify",
     request_body = RegisterRequest,
     responses(
