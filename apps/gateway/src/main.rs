@@ -58,17 +58,14 @@ async fn main() -> Result<(), anyhow::Error> {
             jwt_auth(secret, req, next)
         }));
 
-    let app = Router::new()
-        .merge(public_routes)
-        .merge(protected_routes)
-        // Serve the dynamically merged OpenAPI spec at a custom path
-        .route("/merged-openapi.json", get(docs::get_merged_openapi))
-        // Swagger UI points to our custom merged spec
-        .merge(
-            SwaggerUi::new("/docs")
-                .url("/merged-openapi.json", docs::GatewayApiDoc::openapi())
-        )
-        .with_state(app_state);
+   let app = Router::new()
+    .merge(public_routes)
+    .merge(protected_routes)
+    // Swagger UI with no explicit URL - it will look for /docs/openapi.json by default
+    .merge(SwaggerUi::new("/docs"))
+    // Serve your merged spec at the path Swagger expects
+    .route("/docs/openapi.json", get(docs::get_merged_openapi))
+    .with_state(app_state);
 
     let addr = format!("{}:{}", config.server.host, config.server.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
