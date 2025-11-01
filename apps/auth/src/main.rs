@@ -1,6 +1,7 @@
 mod handlers;
 mod repository;
 mod service;
+mod docs;
 
 use axum::{
     routing::{get, post},
@@ -12,27 +13,7 @@ use service::AuthService;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
 use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        handlers::register,  // ✅ reference to your route handler
-        handlers::login,
-        handlers::verify_token
-    ),
-    components(schemas(
-        common::RegisterRequest,
-        common::RegisterResponse
-    )),
-    tags(
-        (name = "Auth", description = "User registration and authentication endpoints")
-    )
-)]
-struct ApiDoc;
-
 
 #[derive(Clone)]
 pub struct AppState {
@@ -64,11 +45,14 @@ async fn main() -> Result<(), anyhow::Error> {
     let app_state = AppState { auth_service };
 
     let app = Router::new()
-        .route("/auth/health", get(health_check))
+        .route("/health", get(health_check))
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/verify", get(handlers::verify_token))
-        .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", ApiDoc::openapi()))
+        // Expose OpenAPI spec as JSON endpoint for gateway to fetch
+        .route("/openapi.json", get(|| async {
+            axum::Json(docs::AuthApiDoc::openapi())
+        }))
         .with_state(app_state);
 
     let addr: String = format!("{}:{}", config.server.host, config.server.port);

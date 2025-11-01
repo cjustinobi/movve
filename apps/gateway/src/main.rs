@@ -1,4 +1,5 @@
 mod proxy;
+mod docs;
 
 use axum::{
     middleware,
@@ -8,6 +9,8 @@ use axum::{
 use common::{middleware::jwt_auth, AppConfig};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use utoipa_swagger_ui::SwaggerUi;
+use utoipa::OpenApi;
 
 impl AsRef<AppConfig> for AppState {
     fn as_ref(&self) -> &AppConfig {
@@ -45,7 +48,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/api/auth/register", post(proxy::proxy_to_auth))
         .route("/api/auth/login", post(proxy::proxy_to_auth));
 
-    // In gateway main.rs
+    // Protected routes (require JWT authentication)
     let protected_routes = Router::new()
         .route("/api/auth/verify", get(proxy::proxy_to_auth))
         .route("/api/drivers", any(proxy::proxy_to_driver))
@@ -55,15 +58,22 @@ async fn main() -> Result<(), anyhow::Error> {
             jwt_auth(secret, req, next)
         }));
 
+    // Swagger UI with merged OpenAPI specs
+    let swagger_routes = SwaggerUi::new("/docs")
+        .url("/api-doc/openapi.json", docs::GatewayApiDoc::openapi());
+
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(swagger_routes)
+        .route("/api-doc/openapi.json", get(docs::get_merged_openapi))
         .with_state(app_state);
 
     let addr = format!("{}:{}", config.server.host, config.server.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     
     tracing::info!("🚪 Gateway listening on {}", addr);
+    tracing::info!("📚 Swagger UI available at: http://{}/docs", addr);
     tracing::info!("📡 Auth service: {}", config.services.auth_service_url);
     tracing::info!("🚗 Driver service: {}", config.services.driver_service_url);
     
