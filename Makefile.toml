@@ -556,29 +556,56 @@ dependencies = ["build", "test", "lint"]
 # ==============================================================================
 
 [tasks.run-all]
-description = "Run all services (requires tmux)"
+description = "Run all services (requires tmux, auto-installs if missing)"
 script = '''
 #!/bin/bash
+set -e
+
 echo "Starting all services in tmux with live reload..."
 
-# Create a new tmux session
-tmux new-session -d -s movve
+# --- Check for tmux ---
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "⚠️  tmux not found. Installing..."
 
-# Split the window into panes
-tmux split-window -h -t movve
-tmux split-window -v -t movve:0.0
-tmux split-window -v -t movve:0.2
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    if command -v brew >/dev/null 2>&1; then
+      brew install tmux
+    else
+      echo "❌ Homebrew not found. Please install tmux manually: https://brew.sh"
+      exit 1
+    fi
+  elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update && sudo apt-get install -y tmux
+  elif command -v yum >/dev/null 2>&1; then
+    sudo yum install -y tmux
+  else
+    echo "❌ Unable to install tmux automatically. Please install it manually."
+    exit 1
+  fi
+else
+  echo "✅ tmux found."
+fi
 
-# Run services in each pane
-tmux send-keys -t movve:0.0 'cd apps/auth && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
-tmux send-keys -t movve:0.1 'cd apps/gateway && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
-tmux send-keys -t movve:0.2 'cd apps/driver && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
-tmux send-keys -t movve:0.3 'echo "All services started with live reload. Press Ctrl+B then D to detach."' C-m
+# --- Start tmux session ---
+SESSION="movve"
 
+# Kill existing session if it exists (avoid "duplicate session" errors)
+tmux has-session -t $SESSION 2>/dev/null && tmux kill-session -t $SESSION
 
-# Attach to the session
-tmux attach -t movve
+tmux new-session -d -s $SESSION
+
+tmux split-window -h -t $SESSION
+tmux split-window -v -t $SESSION:0.0
+tmux split-window -v -t $SESSION:0.2
+
+tmux send-keys -t $SESSION:0.0 'cd apps/auth && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
+tmux send-keys -t $SESSION:0.1 'cd apps/gateway && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
+tmux send-keys -t $SESSION:0.2 'cd apps/driver && cargo watch -w src -w ../../libs/common/src -w ../../libs/utils/src -x "run"' C-m
+tmux send-keys -t $SESSION:0.3 'echo "🚀 All services started. Press Ctrl+B then D to detach."' C-m
+
+tmux attach -t $SESSION
 '''
+
 
 [tasks.stop-all]
 description = "Stop all running services and free ports"
