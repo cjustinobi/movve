@@ -19,8 +19,6 @@ use crate::AppState;
 pub struct GatewayApiDoc;
 
 /// Fetch and merge OpenAPI specs from all microservices
-
-/// Fetch and merge OpenAPI specs from all microservices
 pub async fn get_merged_openapi(
     State(state): State<AppState>,
 ) -> Json<Value> {
