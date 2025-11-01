@@ -8,8 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY Cargo.toml Cargo.lock ./
-COPY apps/auth/Cargo.toml ./apps/auth/
+COPY ../../Cargo.toml ../../Cargo.lock ./COPY apps/auth/Cargo.toml ./apps/auth/
 COPY apps/driver/Cargo.toml ./apps/driver/
 COPY apps/gateway/Cargo.toml ./apps/gateway/
 COPY libs/common/Cargo.toml ./libs/common/
