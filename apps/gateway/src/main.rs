@@ -9,8 +9,8 @@ use axum::{
 use common::{middleware::jwt_auth, AppConfig};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
+
+use utoipa_swagger_ui::{SwaggerUi, Config};
 
 impl AsRef<AppConfig> for AppState {
     fn as_ref(&self) -> &AppConfig {
@@ -58,13 +58,18 @@ async fn main() -> Result<(), anyhow::Error> {
             jwt_auth(secret, req, next)
         }));
 
-   let app = Router::new()
+    let app = Router::new()
     .merge(public_routes)
     .merge(protected_routes)
-    // Swagger UI with no explicit URL - it will look for /docs/openapi.json by default
-    .merge(SwaggerUi::new("/docs"))
-    // Serve your merged spec at the path Swagger expects
-    .route("/docs/openapi.json", get(docs::get_merged_openapi))
+    // Serve your merged spec at a custom path
+    .route("/api-docs/openapi.json", get(docs::get_merged_openapi))
+    // Configure SwaggerUI to use your custom path
+    .merge(
+        SwaggerUi::new("/docs")
+            .config(
+                Config::new(["/api-docs/openapi.json"])
+            )
+    )
     .with_state(app_state);
 
     let addr = format!("{}:{}", config.server.host, config.server.port);

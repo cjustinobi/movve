@@ -45,7 +45,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let app_state = AppState { auth_service };
 
     let app = Router::new()
-        .route("/health", get(health_check))
+        .route("/api/auth/health", get(health_check))
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/verify", get(handlers::verify_token))
