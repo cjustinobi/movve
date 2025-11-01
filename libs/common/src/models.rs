@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use utoipa::ToSchema;
@@ -9,12 +9,11 @@ pub struct User {
     pub email: String,
     pub password_hash: String,
     pub role: UserRole,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, sqlx::Type, ToSchema)]
-#[sqlx(type_name = "user_role", rename_all = "lowercase")]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
     Admin,
@@ -24,7 +23,20 @@ pub enum UserRole {
     User,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+impl ToString for UserRole {
+    fn to_string(&self) -> String {
+        match self {
+            UserRole::Admin => "admin".to_string(),
+            UserRole::Driver => "driver".to_string(),
+            UserRole::Vendor => "vendor".to_string(),
+            UserRole::Dispatcher => "dispatcher".to_string(),
+            UserRole::User => "user".to_string(),
+        }
+    }
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RegisterRequest {
     pub email: String,
     pub password: String,
@@ -42,13 +54,13 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AuthResponse {
     pub token: String,
     pub user: UserInfo,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserInfo {
     pub id: Uuid,
     pub email: String,

@@ -2,15 +2,17 @@ mod handlers;
 mod repository;
 mod service;
 mod docs;
+mod schema;
 
 use axum::{
     routing::{get, post},
     Router,
 };
 use common::AppConfig;
+use diesel::r2d2::{self, ConnectionManager};
+use diesel::PgConnection;
 use repository::UserRepository;
 use service::AuthService;
-use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
@@ -32,12 +34,24 @@ async fn main() -> Result<(), anyhow::Error> {
     let database_url = std::env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
 
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await?;
+    // Create Diesel connection pool
+    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    let pool = r2d2::Pool::builder()
+        .max_size(5)
+        .build(manager)
+        .expect("Failed to create pool");
 
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    // Run migrations (if you have diesel_migrations)
+    // You'll need to add: diesel_migrations = "2.2.0" to Cargo.toml
+    // Uncomment the following if using diesel_migrations:
+    /*
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+    
+    let mut conn = pool.get().expect("Failed to get connection");
+    conn.run_pending_migrations(MIGRATIONS)
+        .expect("Failed to run migrations");
+    */
 
     let user_repo = UserRepository::new(pool);
     let auth_service = Arc::new(AuthService::new(user_repo, config.jwt.clone()));
@@ -45,7 +59,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let app_state = AppState { auth_service };
 
     let app = Router::new()
-        .route("/api/auth/health", get(health_check))
+        .route("/health", get(health_check))
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/verify", get(handlers::verify_token))

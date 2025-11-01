@@ -97,7 +97,6 @@ dependencies = [
  "chrono",
  "common",
  "diesel",
- "diesel-derive-enum",
  "dotenvy",
  "jsonwebtoken",
  "serde",

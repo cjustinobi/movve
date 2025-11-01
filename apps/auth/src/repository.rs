@@ -1,14 +1,65 @@
 use common::{User, UserRole};
-use sqlx::PgPool;
+use diesel::prelude::*;
+use diesel::r2d2::{self, ConnectionManager};
 use uuid::Uuid;
+use chrono::NaiveDateTime;
+
+pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+pub type DbError = Box<dyn std::error::Error + Send + Sync>;
+
+use crate::schema::users;
+
+// Diesel model for inserting new users
+#[derive(Insertable)]
+#[diesel(table_name = users)]
+pub struct NewUser {
+    pub id: Uuid,
+    pub email: String,
+    pub password_hash: String,
+    pub role: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+// Diesel model for querying users
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = users)]
+pub struct UserDb {
+    pub id: Uuid,
+    pub email: String,
+    pub password_hash: String,
+    pub role: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+impl From<UserDb> for User {
+    fn from(user_db: UserDb) -> Self {
+        User {
+            id: user_db.id,
+            email: user_db.email,
+            password_hash: user_db.password_hash,
+            role: match user_db.role.as_str() {
+                "admin" => UserRole::Admin,
+                "driver" => UserRole::Driver,
+                "vendor" => UserRole::Vendor,
+                "dispatcher" => UserRole::Dispatcher,
+                "user" => UserRole::User,
+                _ => UserRole::User, // default fallback
+            },
+            created_at: user_db.created_at,
+            updated_at: user_db.updated_at,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct UserRepository {
-    pool: PgPool,
+    pool: DbPool,
 }
 
 impl UserRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub fn new(pool: DbPool) -> Self {
         Self { pool }
     }
 
@@ -17,53 +68,71 @@ impl UserRepository {
         email: &str,
         password_hash: &str,
         role: UserRole,
-    ) -> Result<User, sqlx::Error> {
-        let user = sqlx::query_as!(
-            User,
-            r#"
-            INSERT INTO users (id, email, password_hash, role, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, NOW(), NOW())
-            RETURNING id, email, password_hash, role as "role: UserRole", created_at, updated_at
-            "#,
-            Uuid::new_v4(),
-            email,
-            password_hash,
-            role as UserRole,
-        )
-        .fetch_one(&self.pool)
-        .await?;
+    ) -> Result<User, DbError> {
+        let pool = self.pool.clone();
+        let email = email.to_string();
+        let password_hash = password_hash.to_string();
+        
+        let user = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            let now = chrono::Utc::now().naive_utc();
+            
+            let new_user = NewUser {
+                id: Uuid::new_v4(),
+                email,
+                password_hash,
+                role: role.to_string(),
+                created_at: now,
+                updated_at: now,
+            };
+
+            let user_db: UserDb = diesel::insert_into(users::table)
+                .values(&new_user)
+                .returning(UserDb::as_returning())
+                .get_result(&mut conn)?;
+
+            Ok::<User, DbError>(user_db.into())
+        })
+        .await??;
 
         Ok(user)
     }
 
-    pub async fn find_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
-        let user = sqlx::query_as!(
-            User,
-            r#"
-            SELECT id, email, password_hash, role as "role: UserRole", created_at, updated_at
-            FROM users
-            WHERE email = $1
-            "#,
-            email
-        )
-        .fetch_optional(&self.pool)
-        .await?;
+    pub async fn find_by_email(&self, email: &str) -> Result<Option<User>, DbError> {
+        let pool = self.pool.clone();
+        let email = email.to_string();
+        
+        let user = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            
+            let user_db = users::table
+                .filter(users::email.eq(email))
+                .select(UserDb::as_select())
+                .first::<UserDb>(&mut conn)
+                .optional()?;
+
+            Ok::<Option<User>, DbError>(user_db.map(Into::into))
+        })
+        .await??;
 
         Ok(user)
     }
 
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, sqlx::Error> {
-        let user = sqlx::query_as!(
-            User,
-            r#"
-            SELECT id, email, password_hash, role as "role: UserRole", created_at, updated_at
-            FROM users
-            WHERE id = $1
-            "#,
-            id
-        )
-        .fetch_optional(&self.pool)
-        .await?;
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, DbError> {
+        let pool = self.pool.clone();
+        
+        let user = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            
+            let user_db = users::table
+                .filter(users::id.eq(id))
+                .select(UserDb::as_select())
+                .first::<UserDb>(&mut conn)
+                .optional()?;
+
+            Ok::<Option<User>, DbError>(user_db.map(Into::into))
+        })
+        .await??;
 
         Ok(user)
     }
