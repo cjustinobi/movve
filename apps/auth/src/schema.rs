@@ -14,7 +14,7 @@ diesel::table! {
         id -> Uuid,
         email -> Varchar,
         password_hash -> Varchar,
-        role -> UserRole,
+        role -> Text,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

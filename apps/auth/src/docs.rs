@@ -11,6 +11,10 @@ use utoipa::OpenApi;
         common::RegisterRequest,
         common::RegisterResponse,
         common::LoginRequest,
+        common::AuthResponse,
+        common::UserInfo,
+        common::UserRole,
+        common::Claims,
     )),
     tags(
         (name = "Auth", description = "User registration and authentication endpoints")

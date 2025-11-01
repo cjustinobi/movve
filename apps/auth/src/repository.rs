@@ -1,3 +1,4 @@
+// apps/auth/src/repository.rs
 use common::{User, UserRole};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
@@ -9,19 +10,15 @@ pub type DbError = Box<dyn std::error::Error + Send + Sync>;
 
 use crate::schema::users;
 
-// Diesel model for inserting new users
 #[derive(Insertable)]
 #[diesel(table_name = users)]
-pub struct NewUser {
+pub struct NewUser<'a> {
     pub id: Uuid,
-    pub email: String,
-    pub password_hash: String,
-    pub role: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub email: &'a str,
+    pub password_hash: &'a str,
+    pub role: &'a str,
 }
 
-// Diesel model for querying users
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = users)]
 pub struct UserDb {
@@ -42,8 +39,8 @@ impl From<UserDb> for User {
             role: match user_db.role.as_str() {
                 "admin" => UserRole::Admin,
                 "driver" => UserRole::Driver,
-                "vendor" => UserRole::Vendor,
                 "dispatcher" => UserRole::Dispatcher,
+                "vendor" => UserRole::Vendor,
                 "user" => UserRole::User,
                 _ => UserRole::User, // default fallback
             },
@@ -72,18 +69,16 @@ impl UserRepository {
         let pool = self.pool.clone();
         let email = email.to_string();
         let password_hash = password_hash.to_string();
+        let role_str = role.to_string();
         
         let user = tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()?;
-            let now = chrono::Utc::now().naive_utc();
             
             let new_user = NewUser {
                 id: Uuid::new_v4(),
-                email,
-                password_hash,
-                role: role.to_string(),
-                created_at: now,
-                updated_at: now,
+                email: &email,
+                password_hash: &password_hash,
+                role: &role_str,
             };
 
             let user_db: UserDb = diesel::insert_into(users::table)
