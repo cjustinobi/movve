@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.83-slim-bookworm AS builder
+FROM rustlang/rust:nightly-bookworm AS builder
 
 RUN apt-get update && apt-get install -y \
     pkg-config \
@@ -53,8 +53,7 @@ RUN useradd -m -u 1000 appuser
 WORKDIR /app
 
 COPY --from=builder /app/target/release/gateway /app/gateway
-COPY apps/gateway/config.yaml /app/config.yaml
-
+COPY apps/gateway/config.yaml /app/apps/gateway/config.yaml
 RUN chown -R appuser:appuser /app
 
 USER appuser
