@@ -17,16 +17,17 @@ pub struct NewUser<'a> {
     pub id: Uuid,
     pub email: &'a str,
     pub password_hash: &'a str,
-    pub role: &'a str,
+    pub role: UserRole,  // UserRole enum (it implements Copy/Clone)
 }
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UserDb {
     pub id: Uuid,
     pub email: String,
     pub password_hash: String,
-    pub role: String,
+    pub role: UserRole,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -37,14 +38,7 @@ impl From<UserDb> for User {
             id: user_db.id,
             email: user_db.email,
             password_hash: user_db.password_hash,
-            role: match user_db.role.as_str() {
-                "admin" => UserRole::Admin,
-                "driver" => UserRole::Driver,
-                "dispatcher" => UserRole::Dispatcher,
-                "vendor" => UserRole::Vendor,
-                "user" => UserRole::User,
-                _ => UserRole::User, // default fallback
-            },
+            role: user_db.role,
             created_at: user_db.created_at,
             updated_at: user_db.updated_at,
         }
@@ -91,7 +85,7 @@ impl UserRepository {
         let pool = self.pool.clone();
         let email = email.to_string();
         let password_hash = password_hash.to_string();
-        let role_str = role.to_string();
+        // let role_str = role.to_string();
         
         let user = tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()?;
@@ -100,7 +94,7 @@ impl UserRepository {
                 id: Uuid::new_v4(),
                 email: &email,
                 password_hash: &password_hash,
-                role: &role_str,
+                role,
             };
 
             let user_db: UserDb = diesel::insert_into(users::table)

@@ -55,7 +55,7 @@ diesel::table! {
         dob -> Nullable<Date>,
         #[max_length = 255]
         password_hash -> Varchar,
-        role -> Text,
+        role -> UserRole,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

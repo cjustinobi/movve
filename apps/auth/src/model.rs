@@ -2,6 +2,12 @@ use chrono::{NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use utoipa::ToSchema;
+use diesel::deserialize::{self, FromSql, FromSqlRow};
+use diesel::expression::AsExpression;
+use diesel::pg::{Pg, PgValue};
+use diesel::serialize::{self, IsNull, Output, ToSql};
+use diesel::sql_types::Text;
+use std::io::Write;
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct User {
@@ -13,7 +19,8 @@ pub struct User {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow)]
+#[diesel(sql_type = crate::schema::sql_types::UserRole)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
     Admin,
@@ -23,14 +30,28 @@ pub enum UserRole {
     User,
 }
 
-impl ToString for UserRole {
-    fn to_string(&self) -> String {
-        match self {
-            UserRole::Admin => "admin".to_string(),
-            UserRole::Driver => "driver".to_string(),
-            UserRole::Vendor => "vendor".to_string(),
-            UserRole::Dispatcher => "dispatcher".to_string(),
-            UserRole::User => "user".to_string(),
+impl ToSql<crate::schema::sql_types::UserRole, Pg> for UserRole {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
+        match *self {
+            UserRole::Admin => out.write_all(b"admin")?,
+            UserRole::Driver => out.write_all(b"driver")?,
+            UserRole::Vendor => out.write_all(b"vendor")?,
+            UserRole::Dispatcher => out.write_all(b"dispatcher")?,
+            UserRole::User => out.write_all(b"user")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+
+impl FromSql<crate::schema::sql_types::UserRole, Pg> for UserRole {
+    fn from_sql(bytes: PgValue) -> deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"admin" => Ok(UserRole::Admin),
+            b"driver" => Ok(UserRole::Driver),
+            b"vendor" => Ok(UserRole::Vendor),
+            b"dispatcher" => Ok(UserRole::Dispatcher),
+            b"user" => Ok(UserRole::User),
+            _ => Err("Unrecognized enum variant".into()),
         }
     }
 }
