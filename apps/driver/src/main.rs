@@ -7,7 +7,7 @@ mod schema;
 mod database;
 
 use axum::{
-    routing::{get, post},
+    routing::get,
     Router,
 };
 use common::AppConfig;
