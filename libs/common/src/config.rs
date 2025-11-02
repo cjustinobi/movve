@@ -27,10 +27,9 @@ pub struct ServicesConfig {
 
 impl AppConfig {
     pub fn load() -> Result<Self, anyhow::Error> {
-        let config_str = std::fs::read_to_string("config.yaml")
-            .map_err(|e| anyhow::anyhow!("Failed to read config file: {}", e))?;
-        
-        serde_yaml::from_str(&config_str)
-            .map_err(|e| anyhow::anyhow!("Failed to parse config: {}", e))
+        let path = std::env::var("CONFIG_PATH").unwrap_or_else(|_| "config.yaml".into());
+        let config_str = std::fs::read_to_string(&path)?;
+        let config: Self = serde_yaml::from_str(&config_str)?;
+        Ok(config)
     }
 }

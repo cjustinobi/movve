@@ -53,7 +53,7 @@ RUN useradd -m -u 1000 appuser
 WORKDIR /app
 
 COPY --from=builder /app/target/release/gateway /app/gateway
-COPY apps/gateway/config.yaml /app/apps/gateway/config.yaml
+COPY apps/gateway/config.yaml  /app/config.yaml
 RUN chown -R appuser:appuser /app
 
 USER appuser
@@ -61,5 +61,6 @@ USER appuser
 EXPOSE 8080
 
 ENV RUST_LOG=info
+ENV CONFIG_PATH=/app/apps/gateway/config.yaml
 
 CMD ["./gateway"]
