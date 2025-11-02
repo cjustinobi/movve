@@ -71,7 +71,12 @@ async fn main() -> Result<(), anyhow::Error> {
         }))
         .with_state(app_state);
 
-    let addr: String = format!("{}:{}", config.server.host, config.server.port);
+     let port = std::env::var("PORT")
+        .unwrap_or_else(|_| config.server.port.to_string())
+        .parse::<u16>()
+        .expect("PORT must be a valid number");
+        
+    let addr: String = format!("0.0.0.0:{}", port);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 , config.server.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!("🔐 Auth service listening on {} (localhost only)", addr);
     
