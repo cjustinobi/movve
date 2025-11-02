@@ -60,8 +60,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/api/drivers/{id}", get(handlers::get_driver))
         .with_state(state);
 
-    // Use host and port from config (like auth)
-    let addr = format!("{}:{}", config.server.host, config.server.port);
+    let addr = format!("{}:{}", config.services.driver_service_host, config.services.driver_service_port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
     tracing::info!("🚗 Driver service listening on {}", addr);

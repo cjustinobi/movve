@@ -9,7 +9,7 @@ skip_core_tasks = true
 
 
 [env]
-APP_PORT = 8000
+SERVER_PORT = 8000
 AUTH_PORT = 8001
 DRIVER_PORT = 8002
 DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
@@ -619,7 +619,7 @@ tmux kill-session -t movve 2>/dev/null && echo "✓ Tmux session killed" || echo
 echo ""
 echo "Freeing ports..."
 
-PORTS="${APP_PORT} ${AUTH_PORT} ${DRIVER_PORT}"
+PORTS="${SERVER_PORT} ${AUTH_PORT} ${DRIVER_PORT}"
 
 for port in $PORTS; do
     pid=$(lsof -ti:$port 2>/dev/null)

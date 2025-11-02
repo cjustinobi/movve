@@ -77,7 +77,8 @@ async fn main() -> Result<(), anyhow::Error> {
         .parse::<u16>()
         .expect("PORT must be a valid number");
         
-    let addr: String = format!("0.0.0.0:{}", port);    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    let addr: String = format!("0.0.0.0:{}", port);    
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
     
     tracing::info!("🚪 Gateway listening on {}", addr);
     tracing::info!("📚 Swagger UI available at: http://{}/docs", addr);
