@@ -9,14 +9,12 @@ use utoipa::OpenApi;
     ),
     components(schemas(
         crate::model::Driver,
+        crate::model::NewDriver,
+        crate::model::DriverStatus,
+        crate::model::VehicleType,
     )),
     tags(
-        (name = "Driver", description = "Driver service endpoints")
-    ),
-    info(
-        title = "Driver Service API",
-        version = "1.0.0",
-        description = "Movve Driver service"
+        (name = "Driver Service", description = "Endpoints for managing drivers")
     )
 )]
 pub struct DriverApiDoc;
