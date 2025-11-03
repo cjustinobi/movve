@@ -51,10 +51,8 @@ pub async fn login(
 #[utoipa::path(
     get,
     path = "/api/auth/verify",
-    request_body = RegisterRequest,
     responses(
-        (status = 201, description = "User registered successfully", body = RegisterResponse),
-        (status = 400, description = "Invalid input"),
+        (status = 201, description = "User verified successfully", body = Claims),
     ),
     tag = "Auth"
 )]
