@@ -5,18 +5,14 @@ mod model;
 mod docs;
 mod schema;
 mod database;
+mod routes;
 
-use axum::{
-    routing::get,
-    Router,
-};
 use common::AppConfig;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use std::sync::Arc;
 use dotenvy::dotenv;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use utoipa::OpenApi;
 
 use repository::DriverRepository;
 use service::DriverService;
@@ -54,15 +50,8 @@ async fn main() -> Result<(), anyhow::Error> {
         driver_service: service,
     };
 
-    // Define routes
-    let app = Router::new()
-        .route("/api/driver/health", get(handlers::health_check))
-        .route("/api/driver/drivers", get(handlers::list_drivers).post(handlers::create_driver))
-        .route("/api/driver/drivers/{id}", get(handlers::get_driver))
-        .route("/openapi.json", get(|| async {
-            axum::Json(docs::DriverApiDoc::openapi())
-        }))
-        .with_state(state);
+    // Use the routes module
+    let app = routes::create_routes().with_state(state);
 
     let addr = format!("{}:{}", config.services.driver_service_host, config.services.driver_service_port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;

@@ -9,7 +9,6 @@ use axum::{
 use common::{middleware::jwt_auth, AppConfig};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
 use utoipa_swagger_ui::{SwaggerUi, Config};
 
 impl AsRef<AppConfig> for AppState {
@@ -45,32 +44,33 @@ async fn main() -> Result<(), anyhow::Error> {
     // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/health", get(health_check))
-        .route("/api/auth/register", post(proxy::proxy_to_auth))
-        .route("/api/auth/login", post(proxy::proxy_to_auth));
+        // Public auth routes
+        .route("/api/auth/register", post(proxy::proxy_by_prefix))
+        .route("/api/auth/login", post(proxy::proxy_by_prefix));
 
     // Protected routes (require JWT authentication)
+    // Use wildcard matching to catch all paths with the prefix
     let protected_routes = Router::new()
-        .route("/api/auth/verify", get(proxy::proxy_to_auth))
-        .route("/api/driver/drivers", any(proxy::proxy_to_driver))
-        .route("/api/driver/drivers/{id}", any(proxy::proxy_to_driver))
+        .route("/api/auth/{*path}", any(proxy::proxy_by_prefix))
+        .route("/api/driver/{*path}", any(proxy::proxy_by_prefix))
         .layer(middleware::from_fn(move |req, next| {
             let secret = config_for_middleware.jwt.secret.clone();
             jwt_auth(secret, req, next)
         }));
 
     let app = Router::new()
-    .merge(public_routes)
-    .merge(protected_routes)
-    // Serve your merged spec at a custom path
-    .route("/api-docs/openapi.json", get(docs::get_merged_openapi))
-    // Configure SwaggerUI to use your custom path
-    .merge(
-        SwaggerUi::new("/docs")
-            .config(
-                Config::new(["/api-docs/openapi.json"])
-            )
-    )
-    .with_state(app_state);
+        .merge(public_routes)
+        .merge(protected_routes)
+        // Serve your merged spec at a custom path
+        .route("/api-docs/openapi.json", get(docs::get_merged_openapi))
+        // Configure SwaggerUI to use your custom path
+        .merge(
+            SwaggerUi::new("/docs")
+                .config(
+                    Config::new(["/api-docs/openapi.json"])
+                )
+        )
+        .with_state(app_state);
 
     let port = std::env::var("PORT")
         .unwrap_or_else(|_| config.server.port.to_string())
