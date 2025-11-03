@@ -7,7 +7,7 @@ use serde_json::json;
 
 #[utoipa::path(
     post,
-    path = "/drivers",
+    path = "/api/driver/drivers",
     responses(
         (status = 200, description = "Create a driver", body = [Driver])
     ),
@@ -26,7 +26,7 @@ pub async fn create_driver(
 
 #[utoipa::path(
     get,
-    path = "/drivers",
+    path = "/api/driver/drivers",
     responses(
         (status = 200, description = "List all drivers", body = [Driver])
     ),
@@ -44,7 +44,7 @@ pub async fn list_drivers(
 
 #[utoipa::path(
     get,
-    path = "/drivers/{id}",
+    path = "/api/driver/drivers/{id}",
     params(
         ("id" = Uuid, Path, description = "Driver unique identifier")
     ),

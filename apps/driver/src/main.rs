@@ -56,9 +56,9 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Define routes
     let app = Router::new()
-        .route("/driver/health", get(handlers::health_check))
-        .route("/api/drivers", get(handlers::list_drivers).post(handlers::create_driver))
-        .route("/api/drivers/{id}", get(handlers::get_driver))
+        .route("/api/driver/health", get(handlers::health_check))
+        .route("/api/driver/drivers", get(handlers::list_drivers).post(handlers::create_driver))
+        .route("/api/driver/drivers/{id}", get(handlers::get_driver))
         .route("/openapi.json", get(|| async {
             axum::Json(docs::DriverApiDoc::openapi())
         }))
