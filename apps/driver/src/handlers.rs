@@ -1,7 +1,8 @@
 use axum::{extract::{State, Path}, Json};
 use uuid::Uuid;
-use crate::model::{Driver, NewDriver};
-use crate::{AppState};
+use crate::{
+    AppState,
+    model::{Driver, NewDriver}};
 use serde_json::json;
 
 #[utoipa::path(
@@ -9,7 +10,8 @@ use serde_json::json;
     path = "/drivers",
     responses(
         (status = 200, description = "Create a driver", body = [Driver])
-    )
+    ),
+    tag = "Driver"
 )]
 
 pub async fn create_driver(
@@ -27,7 +29,8 @@ pub async fn create_driver(
     path = "/drivers",
     responses(
         (status = 200, description = "List all drivers", body = [Driver])
-    )
+    ),
+    tag = "Driver"
 )]
 
 pub async fn list_drivers(
@@ -48,7 +51,8 @@ pub async fn list_drivers(
     responses(
         (status = 200, description = "Driver retrieved successfully", body = Driver),
         (status = 404, description = "Driver not found")
-    )
+    ),
+    tag = "Driver"
 )]
 pub async fn get_driver(
     State(state): State<AppState>,
