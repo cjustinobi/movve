@@ -96,25 +96,6 @@ pub struct Claims {
     pub iat: i64,
 }
 
-// ---------- Password Reset Models ----------
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
-pub struct PasswordReset {
-    pub id: Uuid,
-    pub user_id: Uuid,
-    pub token: String,
-    pub expires_at: NaiveDateTime,
-    pub created_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
-pub struct NewPasswordReset {
-    pub id: Uuid,
-    pub user_id: Uuid,
-    pub token: String,
-    pub expires_at: NaiveDateTime,
-    pub created_at: NaiveDateTime,
-}
-
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ForgotPasswordRequest {

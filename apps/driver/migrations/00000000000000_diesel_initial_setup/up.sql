@@ -1,16 +1,21 @@
 CREATE TYPE driver_status AS ENUM ('offline', 'online', 'busy');
 CREATE TYPE vehicle_type AS ENUM ('sedan', 'suv', 'van', 'motorcycle');
+CREATE TYPE vehicle_colour AS ENUM ('red', 'blue', 'green', 'gray', 'black', 'white', 'silver', 'yellow', 'other');
 
 CREATE TABLE drivers (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     phone VARCHAR(20) NOT NULL,
     license_number VARCHAR(50) NOT NULL UNIQUE,
+    insurance_number VARCHAR(50) UNIQUE,
     vehicle_type vehicle_type NOT NULL,
+    vehicle_colour vehicle_colour NOT NULL,
     vehicle_plate VARCHAR(20) NOT NULL UNIQUE,
     vehicle_model VARCHAR(100) NOT NULL,
     vehicle_year INTEGER NOT NULL,
     status driver_status NOT NULL DEFAULT 'offline',
+    verified BOOLEAN NOT NULL DEFAULT FALSE,
+    suspended BOOLEAN NOT NULL DEFAULT FALSE,
     rating DECIMAL(3, 2) DEFAULT 5.0,
     total_rides INTEGER DEFAULT 0,
     current_latitude DECIMAL(10, 8),
