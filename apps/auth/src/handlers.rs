@@ -1,5 +1,6 @@
 use axum::{extract::State, http::HeaderMap, Json};
-use common::{AppError};
+use common::{AppError, ApiResponse};
+use tracing::{info, error, instrument};
 use crate::{
     AppState,
     model::{
@@ -11,12 +12,13 @@ use crate::{
     }
 };
 
+///  Registers a new user
 #[utoipa::path(
     post,
     path = "/api/auth/register",
     request_body = RegisterRequest,
     responses(
-        (status = 201, description = "User registered successfully", body = RegisterResponse),
+        (status = 201, description = "User registered successfully", body = ApiResponse<RegisterResponse>),
         (status = 400, description = "Invalid input"),
     ),
     tag = "Auth"
@@ -25,17 +27,18 @@ use crate::{
 pub async fn register(
     State(state): State<AppState>,
     Json(req): Json<RegisterRequest>,
-) -> Result<Json<AuthResponse>, AppError> {
+) -> Result<ApiResponse<AuthResponse>, AppError> {
     let response = state.auth_service.register(req).await?;
-    Ok(Json(response))
+    Ok(ApiResponse::success_with_message("User registered successfully", response))
 }
 
+/// Logs in an existing user
 #[utoipa::path(
     post,
     path = "/api/auth/login",
     request_body = LoginRequest,
     responses(
-        (status = 200, description = "User logged in successfully", body = AuthResponse),
+        (status = 200, description = "User logged in successfully", body = ApiResponse<AuthResponse>),
         (status = 400, description = "Invalid input"),
     ),
     tag = "Auth"
@@ -43,23 +46,24 @@ pub async fn register(
 pub async fn login(
     State(state): State<AppState>,
     Json(req): Json<LoginRequest>,
-) -> Result<Json<AuthResponse>, AppError> {
+) -> Result<ApiResponse<AuthResponse>, AppError> {
     let response = state.auth_service.login(req).await?;
-    Ok(Json(response))
+    Ok(ApiResponse::success_with_message("User logged in successfully", response))
 }
 
+/// Verifies a JWT token and returns the associated user claims 
 #[utoipa::path(
     get,
     path = "/api/auth/verify",
     responses(
-        (status = 201, description = "User verified successfully", body = Claims),
+        (status = 201, description = "User verified successfully", body = ApiResponse<Claims>),
     ),
     tag = "Auth"
 )]
 pub async fn verify_token(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<Json<Claims>, AppError> {
+) -> Result<ApiResponse<Claims>, AppError> {
     let auth_header = headers
         .get("Authorization")
         .and_then(|h| h.to_str().ok())
@@ -70,15 +74,16 @@ pub async fn verify_token(
         .ok_or_else(|| AppError::Unauthorized("Invalid authorization header".to_string()))?;
 
     let claims = state.auth_service.verify_token(token)?;
-    Ok(Json(claims))
+    Ok(ApiResponse::success_with_message("User verified successfully", claims))
 }
 
+/// Initiates the forgot password process for a user
 #[utoipa::path(
     post,
     path = "/api/auth/forgot-password",
     request_body = ForgotPasswordRequest,
     responses(
-        (status = 200, description = "Password reset email sent", body = ForgotPasswordResponse),
+        (status = 200, description = "Password reset email sent", body = ApiResponse<ForgotPasswordResponse>),
         (status = 404, description = "User not found"),
     ),
     tag = "Auth"
@@ -86,14 +91,12 @@ pub async fn verify_token(
 pub async fn forgot_password(
     State(state): State<AppState>,
     Json(req): Json<ForgotPasswordRequest>,
-) -> Result<Json<ForgotPasswordResponse>, AppError> {
+) -> Result<ApiResponse<ForgotPasswordResponse>, AppError> {
+   
     let token = state.auth_service.forgot_password(&req.email).await?;
     
     // TODO: In production, send email here instead of returning token
     // Example: state.email_service.send_reset_email(&req.email, &token).await?;
     
-    Ok(Json(ForgotPasswordResponse {
-        message: "Password reset instructions have been sent to your email".to_string(),
-        token: Some(token), // Remove this in production
-    }))
+    Ok(ApiResponse::success_with_message("Password reset instructions have been sent to your email", ForgotPasswordResponse { token: Some(token) }))
 }

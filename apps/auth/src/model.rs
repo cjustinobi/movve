@@ -104,7 +104,6 @@ pub struct ForgotPasswordRequest {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ForgotPasswordResponse {
-    pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token: Option<String>, // Only for development/testing
 }
