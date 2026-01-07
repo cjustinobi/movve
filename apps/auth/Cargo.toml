@@ -17,7 +17,7 @@ uuid = { workspace = true }
 jsonwebtoken = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
-argon2 = "0.5.3"
+argon2 = { version = "0.5", features = ["std"] }
 diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono"] }
 # diesel-derive-enum = "2.1"
 

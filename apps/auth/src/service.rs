@@ -1,6 +1,9 @@
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2,
+    Argon2, 
+    PasswordHash, 
+    PasswordHasher, 
+    PasswordVerifier,
+    password_hash::{rand_core::OsRng, SaltString}
 };
 use tracing::{info, error, instrument};
 use uuid::Uuid;
