@@ -32,6 +32,28 @@ pub enum VehicleType {
     Motorcycle,
 }
 
+#[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
+#[ExistingTypePath = "crate::schema::sql_types::VehicleColor"]
+pub enum VehicleColor {
+    #[db_rename = "red"]
+    Red,
+    #[db_rename = "blue"]
+    Blue,
+    #[db_rename = "green"]
+    Green,
+    #[db_rename = "gray"]
+    Gray,
+    #[db_rename = "black"]
+    Black,
+    #[db_rename = "white"]
+    White,
+    #[db_rename = "silver"]
+    Silver,
+    #[db_rename = "yellow"]
+    Yellow,
+
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, Identifiable, ToSchema)]
 #[diesel(table_name = drivers)]
 pub struct Driver {
@@ -40,6 +62,7 @@ pub struct Driver {
     pub phone: String,
     pub license_number: String,
     pub vehicle_type: VehicleType,
+    pub vehicle_color: VehicleColor,
     pub vehicle_plate: String,
     pub vehicle_model: String,
     pub vehicle_year: i32,

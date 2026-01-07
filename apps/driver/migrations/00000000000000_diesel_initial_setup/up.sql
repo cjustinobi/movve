@@ -1,6 +1,6 @@
 CREATE TYPE driver_status AS ENUM ('offline', 'online', 'busy');
 CREATE TYPE vehicle_type AS ENUM ('sedan', 'suv', 'van', 'motorcycle');
-CREATE TYPE vehicle_colour AS ENUM ('red', 'blue', 'green', 'gray', 'black', 'white', 'silver', 'yellow', 'other');
+CREATE TYPE vehicle_colour AS ENUM ('red', 'blue', 'green', 'gray', 'black', 'white', 'silver', 'yellow');
 
 CREATE TABLE drivers (
     id UUID PRIMARY KEY,

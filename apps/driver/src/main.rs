@@ -10,6 +10,7 @@ mod routes;
 use common::AppConfig;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
+use services::MailService;
 use std::sync::Arc;
 use dotenvy::dotenv;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -20,6 +21,7 @@ use service::DriverService;
 #[derive(Clone)]
 pub struct AppState {
     pub driver_service: Arc<DriverService>,
+    pub mail_service: Arc<MailService>,
 }
 
 #[tokio::main]
@@ -45,9 +47,14 @@ async fn main() -> Result<(), anyhow::Error> {
     let repo = DriverRepository::new(pool);
     let service = Arc::new(DriverService::new(repo));
 
+    let mail_service = Arc::new(MailService::new(
+        config.mail.api_key.clone(),
+        config.mail.from_email.clone(),
+    ));
     // Shared app state
     let state = AppState {
         driver_service: service,
+        mail_service,
     };
 
     // Use the routes module

@@ -21,3 +21,4 @@ diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono", 
 diesel-derive-enum = { version = "2.1", features = ["postgres"] }
 
 common = { path = "../../libs/common" }
+services = { path = "../../libs/services" }
