@@ -256,6 +256,11 @@ psql "${DATABASE_URL}" -f "$SQL_FILE"
 # Database Backup & Restore (with pg_dump check)
 # ==============================================================================
 
+[tasks.auth-seed]
+description = "Seed Auth database"
+command = "cargo"
+args = ["run", "--bin", "seed"]
+
 [tasks.db-backup]
 description = "Backup database to SQL file"
 script = '''
