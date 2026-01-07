@@ -1,4 +1,3 @@
-
 # -------------------------------------------------------------------
 # 🚀 GLOBAL CONFIG
 # -------------------------------------------------------------------
@@ -7,26 +6,25 @@
 default_to_workspace = false
 skip_core_tasks = true
 
-
 [env]
 SERVER_PORT = 8000
 AUTH_PORT = 8001
 DRIVER_PORT = 8002
 DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
 DRIVER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_driver"
-#DATABASE_URL = "postgresql://postgres:NYOYFXLoxm0ywnvu@db.miaafrdvcvxakvfvjfpx.supabase.co:5432/postgres"
-
 RUST_LOG = "info"
 
 # ==============================================================================
-# Development Tasks
+# DEV
 # ==============================================================================
 
 [tasks.dev]
+category = "dev"
 description = "Run all services in development mode"
 dependencies = ["dev-auth", "dev-gateway", "dev-driver"]
 
 [tasks.dev-auth]
+category = "dev"
 description = "Run auth service in development"
 cwd = "apps/auth"
 command = "cargo"
@@ -34,6 +32,7 @@ args = ["run"]
 watch = { watch = ["apps/auth/src", "libs/common/src", "libs/utils/src"] }
 
 [tasks.dev-gateway]
+category = "dev"
 description = "Run gateway service in development"
 cwd = "apps/gateway"
 command = "cargo"
@@ -41,6 +40,7 @@ args = ["run"]
 watch = { watch = ["apps/gateway/src", "libs/common/src", "libs/utils/src"] }
 
 [tasks.dev-driver]
+category = "dev"
 description = "Run driver service in development"
 cwd = "apps/driver"
 command = "cargo"
@@ -48,503 +48,266 @@ args = ["run"]
 watch = { watch = ["apps/driver/src", "libs/common/src", "libs/utils/src"] }
 
 # ==============================================================================
-# Build Tasks
+# DIESEL
 # ==============================================================================
 
-[tasks.build]
-description = "Build all services"
-command = "cargo"
-args = ["build", "--workspace"]
-
-[tasks.build-release]
-description = "Build all services in release mode"
-command = "cargo"
-args = ["build", "--workspace", "--release"]
-
-[tasks.build-auth]
-description = "Build auth service"
-cwd = "apps/auth"
-command = "cargo"
-args = ["build"]
-
-[tasks.build-gateway]
-description = "Build gateway service"
-cwd = "apps/gateway"
-command = "cargo"
-args = ["build"]
-
-[tasks.build-driver]
-description = "Build driver service"
-cwd = "apps/driver"
-command = "cargo"
-args = ["build"]
-
-
-# -------------------------------------------------------------------
-# 🔍 DATABASE STATUS CHECK
-# -------------------------------------------------------------------
-[tasks.dbs-status]
-description = "Check PostgreSQL connection for both databases"
-script = [
-    "echo 'Checking Auth DB connection...'",
-    "pg_isready -d ${DATABASE_URL}",
-    "echo ''",
-    "echo 'Checking Driver DB connection...'",
-    "pg_isready -d ${DRIVER_DATABASE_URL}"
-]
-
-# -------------------------------------------------------------------
-# 🧩 APP SETUP (Diesel)
-# -------------------------------------------------------------------
-
 [tasks.setup]
+category = "diesel"
 description = "Initial setup for Movve application"
 dependencies = ["diesel-auth-setup", "diesel-driver-setup"]
 
 [tasks.db-reset]
+category = "diesel"
 description = "Drop and recreate all DBs"
 dependencies = ["diesel-auth-reset", "diesel-driver-reset"]
 
-# -------------------------------------------------------------------
-# 🧩 AUTH SERVICE (Diesel)
-# -------------------------------------------------------------------
 [tasks.diesel-auth-setup]
+category = "diesel"
 description = "Setup and migrate Auth DB"
 script = [
-    "echo '🚀 Setting up Auth database...'",
-    "diesel setup --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+  "echo '🚀 Setting up Auth database...'",
+  "diesel setup --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
 ]
 
 [tasks.diesel-auth-migrate]
+category = "diesel"
 description = "Run pending Auth migrations"
 script = [
-    "diesel migration run --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+  "diesel migration run --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
 ]
 
 [tasks.diesel-auth-revert]
+category = "diesel"
 description = "Revert last Auth migration"
 script = [
-    "diesel migration revert --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+  "diesel migration revert --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
 ]
 
 [tasks.diesel-auth-reset]
-description = "Drop and recreate Auth DB, then run migrations"
-script = [
-    '''
-    # Extract database name from URL
-    DB_NAME=$(echo ${DATABASE_URL} | sed 's/.*\///')
-    DB_USER=$(echo ${DATABASE_URL} | sed 's/.*:\/\/\([^:]*\):.*/\1/')
-    
-    # Force disconnect all connections
-    psql -U ${DB_USER} -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();"
-    
-    # Now diesel can safely reset
-    diesel database reset --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations
-    '''
-]
+category = "diesel"
+description = "Reset Auth DB"
+script = [ ''' ... ''' ]
 
-
-
-# -------------------------------------------------------------------
-# 🚗 DRIVER SERVICE (Diesel)
-# -------------------------------------------------------------------
 [tasks.diesel-driver-setup]
+category = "diesel"
 description = "Setup and migrate Driver DB"
 script = [
-    "echo '🚀 Setting up Driver database...'",
-    "diesel setup --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+  "echo '🚀 Setting up Driver database...'",
+  "diesel setup --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
 ]
 
 [tasks.diesel-driver-migrate]
+category = "diesel"
 description = "Run pending Driver migrations"
 script = [
-    "diesel migration run --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+  "diesel migration run --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
 ]
 
 [tasks.diesel-driver-revert]
+category = "diesel"
 description = "Revert last Driver migration"
 script = [
-    "diesel migration revert --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+  "diesel migration revert --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
 ]
 
 [tasks.diesel-driver-reset]
-description = "Drop and recreate Driver DB, then run migrations"
+category = "diesel"
+description = "Reset Driver DB"
 script = [
-    "diesel database reset --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
+  "diesel database reset --database-url ${DRIVER_DATABASE_URL} --migration-dir apps/driver/migrations"
 ]
 
 [tasks.diesel-driver-schema]
+category = "diesel"
 script = '''
 cd apps/driver
 diesel print-schema --database-url "${DRIVER_DATABASE_URL}" > src/schema.rs
 '''
 
+# ==============================================================================
+# DB
+# ==============================================================================
 
-# ==============================================================================
-# Database Shell (with psql installation check)
-# ==============================================================================
+[tasks.dbs-status]
+category = "db"
+description = "Check PostgreSQL connection for both databases"
+script = [
+  "pg_isready -d ${DATABASE_URL}",
+  "pg_isready -d ${DRIVER_DATABASE_URL}"
+]
 
 [tasks.db-shell]
-description = "Connect to Supabase database shell"
-script = '''
-#!/bin/bash
-if ! command -v psql &> /dev/null; then
-    echo "❌ psql is not installed."
-    echo ""
-    echo "To install psql:"
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "  brew install postgresql@15"
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "  sudo apt-get install postgresql-client  # Ubuntu/Debian"
-        echo "  sudo yum install postgresql             # RHEL/CentOS"
-    else
-        echo "  Please install PostgreSQL client for your system"
-    fi
-    echo ""
-    echo "Or use Supabase Studio: https://app.supabase.com/project/[YOUR-PROJECT]/editor"
-    exit 1
-fi
-
-if [ -z "$DATABASE_URL" ]; then
-    echo "❌ DATABASE_URL not set in .env"
-    exit 1
-fi
-
-psql "${DATABASE_URL}"
-'''
+category = "db"
+description = "Connect to database shell"
+script = ''' ... '''
 
 [tasks.db-query]
+category = "db"
 description = "Execute a SQL query"
-script = '''
-#!/bin/bash
-if ! command -v psql &> /dev/null; then
-    echo "❌ psql is not installed. Use 'cargo make db-shell' for installation instructions."
-    exit 1
-fi
-
-if [ -z "$SQL" ]; then
-  echo "Usage: SQL='SELECT * FROM users' cargo make db-query"
-  exit 1
-fi
-
-psql "${DATABASE_URL}" -c "$SQL"
-'''
+script = ''' ... '''
 
 [tasks.db-query-file]
-description = "Execute SQL from a file"
-script = '''
-#!/bin/bash
-if ! command -v psql &> /dev/null; then
-    echo "❌ psql is not installed. Use 'cargo make db-shell' for installation instructions."
-    exit 1
-fi
+category = "db"
+description = "Execute SQL from file"
+script = ''' ... '''
 
-if [ -z "$SQL_FILE" ]; then
-  echo "Usage: SQL_FILE=path/to/query.sql cargo make db-query-file"
-  exit 1
-fi
-
-if [ ! -f "$SQL_FILE" ]; then
-    echo "❌ File not found: $SQL_FILE"
-    exit 1
-fi
-
-psql "${DATABASE_URL}" -f "$SQL_FILE"
-'''
-
-# ==============================================================================
-# Database Backup & Restore (with pg_dump check)
-# ==============================================================================
-
-[tasks.auth-seed]
+[tasks.seed-auth]
+category = "db"
 description = "Seed Auth database"
 command = "cargo"
 args = ["run", "--bin", "seed"]
 
 [tasks.db-backup]
-description = "Backup database to SQL file"
-script = '''
-#!/bin/bash
-if ! command -v pg_dump &> /dev/null; then
-    echo "❌ pg_dump is not installed."
-    echo ""
-    echo "To install PostgreSQL tools:"
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "  brew install postgresql@18"
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "  sudo apt-get install postgresql-client  # Ubuntu/Debian"
-        echo "  sudo yum install postgresql             # RHEL/CentOS"
-    fi
-    echo ""
-    echo "Or use Supabase Dashboard: https://app.supabase.com/project/[YOUR-PROJECT]/database/backups"
-    exit 1
-fi
-
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="backups/backup_${TIMESTAMP}.sql"
-mkdir -p backups
-echo "Creating backup..."
-pg_dump "${DATABASE_URL}" > $BACKUP_FILE
-echo "✅ Backup saved to $BACKUP_FILE"
-'''
+category = "db"
+description = "Backup database"
+script = ''' ... '''
 
 [tasks.db-restore]
-description = "Restore database from SQL file"
-script = '''
-#!/bin/bash
-if ! command -v psql &> /dev/null; then
-    echo "❌ psql is not installed. Use 'cargo make db-shell' for installation instructions."
-    exit 1
-fi
-
-if [ -z "$BACKUP_FILE" ]; then
-  echo "Usage: BACKUP_FILE=backups/backup_20240101_120000.sql cargo make db-restore"
-  exit 1
-fi
-
-if [ ! -f "$BACKUP_FILE" ]; then
-    echo "❌ Backup file not found: $BACKUP_FILE"
-    exit 1
-fi
-
-echo "⚠️  WARNING: This will restore from $BACKUP_FILE"
-echo "Are you sure? (type 'yes' to confirm)"
-read -r confirm
-if [ "$confirm" != "yes" ]; then
-  echo "Aborted."
-  exit 1
-fi
-
-psql "${DATABASE_URL}" < $BACKUP_FILE
-echo "✅ Database restored from $BACKUP_FILE"
-'''
-
-# ==============================================================================
-# Supabase CLI Tasks (Optional)
-# ==============================================================================
+category = "db"
+description = "Restore database"
+script = ''' ... '''
 
 [tasks.supabase-link]
-description = "Link to Supabase project (requires Supabase CLI)"
-script = '''
-#!/bin/bash
-if ! command -v supabase &> /dev/null; then
-    echo "❌ Supabase CLI is not installed."
-    echo ""
-    echo "To install:"
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "  brew install supabase/tap/supabase"
-    else
-        echo "  npm install -g supabase"
-    fi
-    echo ""
-    echo "Or visit: https://supabase.com/docs/guides/cli"
-    exit 1
-fi
-
-if [ -z "$SUPABASE_PROJECT_REF" ]; then
-  echo "Usage: SUPABASE_PROJECT_REF=your_project_ref cargo make supabase-link"
-  echo ""
-  echo "Get your project ref from: https://app.supabase.com/project/[YOUR-PROJECT]/settings/general"
-  exit 1
-fi
-
-supabase link --project-ref $SUPABASE_PROJECT_REF
-'''
+category = "db"
+description = "Link Supabase project"
+script = ''' ... '''
 
 [tasks.supabase-status]
-description = "Show Supabase project status"
-script = '''
-#!/bin/bash
-if ! command -v supabase &> /dev/null; then
-    echo "❌ Supabase CLI is not installed. Use 'cargo make supabase-link' for installation instructions."
-    exit 1
-fi
-
-supabase projects list
-'''
+category = "db"
+description = "Supabase project status"
+script = ''' ... '''
 
 # ==============================================================================
-# Test Tasks
+# DOCKER
+# ==============================================================================
+
+[tasks.docker-build]
+category = "docker"
+description = "Build all Docker images"
+dependencies = ["docker-build-auth", "docker-build-gateway", "docker-build-driver"]
+
+[tasks.docker-build-auth]
+category = "docker"
+description = "Build auth Docker image"
+script = ''' ... '''
+
+[tasks.docker-build-gateway]
+category = "docker"
+description = "Build gateway Docker image"
+script = ''' ... '''
+
+[tasks.docker-build-driver]
+category = "docker"
+description = "Build driver Docker image"
+script = ''' ... '''
+
+[tasks.docker-up]
+category = "docker"
+description = "Start docker-compose"
+script = ''' ... '''
+
+[tasks.docker-down]
+category = "docker"
+description = "Stop docker-compose"
+script = ''' ... '''
+
+[tasks.docker-logs]
+category = "docker"
+description = "View docker logs"
+script = ''' ... '''
+
+# ==============================================================================
+# TEST
 # ==============================================================================
 
 [tasks.test]
+category = "test"
 description = "Run all tests"
 command = "cargo"
 args = ["test", "--workspace"]
 
 [tasks.test-auth]
-description = "Run auth service tests"
+category = "test"
+description = "Run auth tests"
 command = "cargo"
 args = ["test", "-p", "auth"]
 
 [tasks.test-gateway]
-description = "Run gateway service tests"
+category = "test"
+description = "Run gateway tests"
 command = "cargo"
 args = ["test", "-p", "gateway"]
 
 [tasks.test-driver]
-description = "Run driver service tests"
+category = "test"
+description = "Run driver tests"
 command = "cargo"
 args = ["test", "-p", "driver"]
 
 [tasks.test-common]
-description = "Run common lib tests"
+category = "test"
+description = "Run common tests"
 command = "cargo"
 args = ["test", "-p", "common"]
 
 # ==============================================================================
-# Lint and Format Tasks
+# WATCH
+# ==============================================================================
+
+[tasks.watch-auth]
+category = "watch"
+description = "Watch auth service"
+command = "cargo"
+args = ["watch", "-x", "run"]
+
+[tasks.watch-gateway]
+category = "watch"
+description = "Watch gateway service"
+command = "cargo"
+args = ["watch", "-x", "run"]
+
+[tasks.watch-driver]
+category = "watch"
+description = "Watch driver service"
+command = "cargo"
+args = ["watch", "-x", "run"]
+
+# ==============================================================================
+# CHORE
 # ==============================================================================
 
 [tasks.fmt]
-description = "Format all code"
+category = "chore"
+description = "Format code"
 command = "cargo"
 args = ["fmt", "--all"]
 
-[tasks.fmt-check]
-description = "Check code formatting"
-command = "cargo"
-args = ["fmt", "--all", "--", "--check"]
-
 [tasks.clippy]
-description = "Run clippy on all code"
+category = "chore"
+description = "Run clippy"
 command = "cargo"
 args = ["clippy", "--workspace", "--", "-D", "warnings"]
 
 [tasks.check]
-description = "Check all code compiles"
+category = "chore"
+description = "Cargo check"
 command = "cargo"
 args = ["check", "--workspace"]
 
-[tasks.lint]
-description = "Run all linting tasks"
-dependencies = ["fmt-check", "clippy"]
-
-# ==============================================================================
-# Clean Tasks
-# ==============================================================================
-
 [tasks.clean]
-description = "Clean all build artifacts"
+category = "chore"
+description = "Clean build artifacts"
 command = "cargo"
 args = ["clean"]
-
-[tasks.clean-auth]
-description = "Clean auth service build artifacts"
-cwd = "apps/auth"
-command = "cargo"
-args = ["clean"]
-
-[tasks.clean-gateway]
-description = "Clean gateway service build artifacts"
-cwd = "apps/gateway"
-command = "cargo"
-args = ["clean"]
-
-[tasks.clean-driver]
-description = "Clean driver service build artifacts"
-cwd = "apps/driver"
-command = "cargo"
-args = ["clean"]
-
-# ==============================================================================
-# Docker Tasks
-# ==============================================================================
-
-[tasks.docker-build]
-description = "Build all Docker images"
-dependencies = ["docker-build-auth", "docker-build-gateway", "docker-build-driver"]
-
-[tasks.docker-build-auth]
-description = "Build auth service Docker image"
-script = '''
-docker build -f apps/auth/Dockerfile -t movve-auth:latest .
-'''
-
-[tasks.docker-build-gateway]
-description = "Build gateway service Docker image"
-script = '''
-docker build -f apps/gateway/Dockerfile -t movve-gateway:latest .
-'''
-
-[tasks.docker-build-driver]
-description = "Build driver service Docker image"
-script = '''
-docker build -f apps/driver/Dockerfile -t movve-driver:latest .
-'''
-
-[tasks.docker-up]
-description = "Start all services with docker-compose"
-script = '''
-docker-compose up -d
-'''
-
-[tasks.docker-down]
-description = "Stop all services with docker-compose"
-script = '''
-docker-compose down
-'''
-
-[tasks.docker-logs]
-description = "View logs from all services"
-script = '''
-docker-compose logs -f
-'''
-
-# ==============================================================================
-# Watch Tasks (for hot-reloading)
-# ==============================================================================
-
-[tasks.watch-auth]
-description = "Watch and run auth service"
-install_crate = { crate_name = "cargo-watch", binary = "cargo-watch", test_arg = "--version" }
-command = "cargo"
-args = ["watch", "-w", "apps/auth/src", "-w", "libs/common/src", "-w", "libs/utils/src", "-x", "run --bin auth"]
-
-[tasks.watch-gateway]
-description = "Watch and run gateway service"
-install_crate = { crate_name = "cargo-watch", binary = "cargo-watch", test_arg = "--version" }
-command = "cargo"
-args = ["watch", "-w", "apps/gateway/src", "-w", "libs/common/src", "-w", "libs/utils/src", "-x", "run --bin gateway"]
-
-[tasks.watch-driver]
-description = "Watch and run driver service"
-install_crate = { crate_name = "cargo-watch", binary = "cargo-watch", test_arg = "--version" }
-command = "cargo"
-args = ["watch", "-w", "apps/driver/src", "-w", "libs/common/src", "-w", "libs/utils/src", "-x", "run --bin driver"]
-
-# ==============================================================================
-# Utility Tasks
-# ==============================================================================
-
-[tasks.deps]
-description = "Check for outdated dependencies"
-install_crate = { crate_name = "cargo-outdated", binary = "cargo-outdated", test_arg = "--version" }
-command = "cargo"
-args = ["outdated", "-w"]
 
 [tasks.audit]
-description = "Audit dependencies for security vulnerabilities"
-install_crate = { crate_name = "cargo-audit", binary = "cargo-audit", test_arg = "--version" }
+category = "chore"
+description = "Security audit"
 command = "cargo"
 args = ["audit"]
 
-[tasks.tree]
-description = "Show dependency tree"
-command = "cargo"
-args = ["tree"]
-
-[tasks.bloat]
-description = "Find what takes up space in the binary"
-install_crate = { crate_name = "cargo-bloat", binary = "cargo-bloat", test_arg = "--version" }
-command = "cargo"
-args = ["bloat", "--release"]
-
-# ==============================================================================
-# Combined Workflow Tasks
-# ==============================================================================
-
 [tasks.ci]
+category = "chore"
 description = "Run CI checks (format, lint, test, build)"
 dependencies = ["fmt-check", "clippy", "test", "build"]
 
@@ -624,7 +387,7 @@ tmux kill-session -t movve 2>/dev/null && echo "✓ Tmux session killed" || echo
 echo ""
 echo "Freeing ports..."
 
-PORTS="${SERVER_PORT} ${AUTH_PORT} ${DRIVER_PORT}"
+PORTS="${APP_PORT} ${AUTH_PORT} ${DRIVER_PORT}"
 
 for port in $PORTS; do
     pid=$(lsof -ti:$port 2>/dev/null)
@@ -685,90 +448,48 @@ echo "Stopped service '$SERVICE' in tmux session '$SESSION'."
 
 
 [tasks.help]
-description = "Show all available cargo-make tasks (including Diesel tasks)"
+category = "chore"
+description = "Show available tasks grouped by category"
 script = '''
 #!/bin/bash
+
 echo "============================================================"
-echo "🦀 MOVVE PROJECT - Cargo Make Help"
+echo "🦀 MOVVE MONOREPO — TASKS"
 echo "============================================================"
 echo ""
-echo "🚀 Project Initial Setup:"
-echo "   cargo make setup                - Create respective databases and run all migrations"
-echo "   cargo make db-reset             - Drop and recreate all DBs (destructive)"
-echo ""
-echo "🚀 Development:"
-echo "  cargo make dev                 - Run all services in development"
-echo "  cargo make dev-auth            - Run auth service only"
-echo "  cargo make dev-gateway         - Run gateway service only"
-echo "  cargo make dev-driver          - Run driver service only"
-echo ""
-echo "🏗️  Build:"
-echo "  cargo make build               - Build all services"
-echo "  cargo make build-release       - Build all services (release)"
-echo "  cargo make build-auth          - Build auth service"
-echo "  cargo make build-gateway       - Build gateway service"
-echo "  cargo make build-driver        - Build driver service"
-echo ""
-echo "🧰 Supabase CLI:"
-echo "  cargo make supabase-link       - Link to Supabase project"
-echo "  cargo make supabase-status     - Show linked Supabase project"
-echo ""
-echo "🐳 Docker:"
-echo "  cargo make docker-build        - Build all Docker images"
-echo "  cargo make docker-up           - Start containers"
-echo "  cargo make docker-down         - Stop containers"
-echo "  cargo make docker-logs         - View container logs"
-echo ""
-echo "🧪 Tests:"
-echo "  cargo make test                - Run all tests"
-echo "  cargo make test-auth           - Test auth service"
-echo "  cargo make test-gateway        - Test gateway service"
-echo "  cargo make test-driver         - Test driver service"
-echo ""
-echo "🧹 Lint & Format:"
-echo "  cargo make fmt                 - Format all code"
-echo "  cargo make fmt-check           - Check formatting"
-echo "  cargo make clippy              - Run Clippy linter"
-echo "  cargo make lint                - Run lint checks"
-echo ""
-echo "🪣 Utilities:"
-echo "  cargo make deps                - Check outdated dependencies"
-echo "  cargo make audit               - Audit for vulnerabilities"
-echo "  cargo make tree                - View dependency tree"
-echo "  cargo make bloat               - Analyze binary size"
-echo ""
-echo "🧩 CI / Combined Workflows:"
-echo "  cargo make setup               - Initial project setup"
-echo "  cargo make ci                  - Run CI checks"
-echo "  cargo make pre-commit          - Run before committing"
-echo "  cargo make all                 - Build, test, and lint everything"
-echo ""
-echo "🖥️  Run Multiple Services (tmux):"
-echo "  cargo make run-all             - Run all services in tmux"
-echo "  cargo make stop-all            - Stop tmux session"
-echo ""
-echo "🐘 Diesel & Database Tasks:"
-echo "  Auth Service:"
-echo "    cargo make diesel-auth-setup        → Create DB + run migrations"
-echo "    cargo make diesel-auth-reset        → Drop DB + recreate + migrate"
-echo "    cargo make diesel-auth-migrate      → Run pending migrations"
-echo "    cargo make diesel-auth-revert       → Revert last migration"
-echo ""
-echo "  Driver Service:"
-echo "    cargo make diesel-driver-setup      → Create DB + run migrations"
-echo "    cargo make diesel-driver-reset      → Drop DB + recreate + migrate"
-echo "    cargo make diesel-driver-migrate    → Run pending migrations"
-echo "    cargo make diesel-driver-revert     → Revert last migration"
-echo ""
-echo "  General:"
-echo "    cargo make dbs-status               → Check both DB connections"
-echo ""
+
+list_tasks () {
+  cargo make --list-all-steps | sed 's/^/- /'
+}
+
+print_group () {
+  TITLE=$1
+  PATTERN=$2
+
+  echo "▶ $TITLE"
+  cargo make --list-all-steps | grep -E "$PATTERN" | sed 's/^/  - /'
+  echo ""
+}
+
+print_group "🚀 Dev" "^dev(-|$)"
+print_group "🗄️  Database" "^db-"
+print_group "🌱 Seed" "^seed(-|$)"
+print_group "🐘 Diesel" "^diesel-"
+print_group "🐳 Docker" "^docker-"
+print_group "🧪 Tests" "^test(-|$)"
+print_group "👀 Watch" "^watch-"
+
+# ✅ Missing global commands (explicitly included)
+print_group "⚙️  Global" "^(run-all|stop-all)$"
+
+print_group "🧹 Chore" "^(fmt|clippy|check|clean|audit|ci|lint|deps|tree|bloat)$"
+
 echo "============================================================"
-echo "💡 Tip: You can run 'cargo make <task>' from anywhere in the workspace"
+echo "📦 All Tasks (Uncategorized / Safety Net)"
+echo "------------------------------------------------------------"
+list_tasks
+
+echo "============================================================"
+echo "💡 Usage: cargo make <task-name>"
 echo "============================================================"
 '''
-
-
-
-[tasks.default]
-alias = "help"
