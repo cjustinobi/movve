@@ -24,3 +24,4 @@ diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono"] 
 # Reference local workspace crates
 common = { path = "../../libs/common" }
 utils = { path = "../../libs/utils" }
+services = { path = "../../libs/services" }

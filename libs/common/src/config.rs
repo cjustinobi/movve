@@ -6,6 +6,7 @@ pub struct AppConfig {
     pub server: ServerConfig,
     pub jwt: JwtConfig,
     pub services: ServicesConfig,
+    pub mail: MailConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -19,6 +20,14 @@ pub struct JwtConfig {
     pub secret: String,
     pub expiration_hours: i64,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MailConfig {
+    pub api_key: String,
+    pub from_email: String,
+    pub frontend_url: String,
+}
+
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ServicesConfig {
@@ -69,6 +78,14 @@ impl AppConfig {
                     .unwrap_or_else(|_| "8002".to_string())
                     .parse()
                     .context("Failed to parse DRIVER_SERVICE_PORT")?,
+            },
+            mail: MailConfig {
+                api_key: std::env::var("RESEND_API_KEY")
+                    .context("RESEND_API_KEY must be set in environment")?,
+                from_email: std::env::var("MAIL_FROM_EMAIL")
+                    .context("MAIL_FROM_EMAIL must be set in environment")?,
+                frontend_url: std::env::var("FRONTEND_URL")
+                    .unwrap_or_else(|_| "http://localhost:3000".to_string()),
             },
         };
 

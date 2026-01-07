@@ -11,12 +11,14 @@ use diesel::r2d2::{self, ConnectionManager};
 use diesel::PgConnection;
 use repository::UserRepository;
 use service::AuthService;
+use services::MailService;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
 pub struct AppState {
     pub auth_service: Arc<AuthService>,
+    pub mail_service: Arc<MailService>,
 }
 
 #[tokio::main]
@@ -41,7 +43,15 @@ async fn main() -> Result<(), anyhow::Error> {
     let user_repo = UserRepository::new(pool);
     let auth_service = Arc::new(AuthService::new(user_repo, config.jwt.clone()));
 
-    let app_state = AppState { auth_service };
+    let mail_service = Arc::new(MailService::new(
+        config.mail.api_key.clone(),
+        config.mail.from_email.clone(),
+    ));
+
+    let app_state = AppState { 
+        auth_service,
+        mail_service
+     };
 
     // Use the routes module
     let app = routes::create_routes(app_state);

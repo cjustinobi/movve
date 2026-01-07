@@ -84,8 +84,27 @@ pub async fn forgot_password(
 ) -> Result<ApiResponse<ForgotPasswordResponse>, AppError> {
     let token = state.auth_service.forgot_password(&req.email).await?;
     
-    // TODO: In production, send email here instead of returning token
-    // Example: state.email_service.send_reset_email(&req.email, &token).await?;
+    // Get user details for email
+    let user = state.auth_service.get_user_by_email(&req.email).await?;
+    let user_name = format!("{} {}", user.first_name, user.last_name);
+    
+    // Get frontend URL from config
+    let frontend_url = std::env::var("FRONTEND_URL")
+        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    
+    // Send password reset email
+    match state.mail_service.send_password_reset_email(
+        &req.email,
+        &user_name,
+        &token,
+        &frontend_url,
+    ).await {
+        Ok(_) => tracing::info!("Password reset email sent to {}", req.email),
+        Err(e) => {
+            tracing::error!("Failed to send password reset email: {:?}", e);
+            // TODO: queue for retry
+        }
+    }
     
     Ok(ApiResponse::success_with_message(
         "Password reset instructions have been sent to your email",

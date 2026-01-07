@@ -1,0 +1,10 @@
+[package]
+name = "services"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+resend-rs = "0.19.0"
