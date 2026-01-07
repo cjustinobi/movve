@@ -38,7 +38,6 @@ async fn main() -> Result<(), anyhow::Error> {
         http_client,
     };
 
-    let config_for_middleware = config.clone();
 
     pub fn public_routes() -> Router<AppState> {
         Router::new()
@@ -67,7 +66,7 @@ pub fn auth_routes(jwt_secret: String) -> Router<AppState> {
     // Protected auth endpoints (require JWT)
     let protected = Router::new()
         .route("/api/auth/verify", get(proxy::proxy_by_prefix))
-        .route("/api/auth/*path", any(proxy::proxy_by_prefix))
+        .route("/api/auth/{*path}", any(proxy::proxy_by_prefix))
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
             async move {
@@ -81,9 +80,9 @@ pub fn auth_routes(jwt_secret: String) -> Router<AppState> {
 /// Protected service routes (all require JWT authentication)
 pub fn protected_routes(jwt_secret: String) -> Router<AppState> {
     Router::new()
-        .route("/api/driver/*path", any(proxy::proxy_by_prefix))
-        .route("/api/rider/*path", any(proxy::proxy_by_prefix))
-        .route("/api/trip/*path", any(proxy::proxy_by_prefix))
+        .route("/api/driver/{*path}", any(proxy::proxy_by_prefix))
+        .route("/api/rider/{*path}", any(proxy::proxy_by_prefix))
+        .route("/api/trip/{*path}", any(proxy::proxy_by_prefix))
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
             async move {
@@ -93,17 +92,10 @@ pub fn protected_routes(jwt_secret: String) -> Router<AppState> {
 }
 
     let app = Router::new()
-        .merge(public_routes)
-        .merge(public_auth_routes)
-        .merge(protected_routes)
-        // OpenAPI spec
-        .route("/api-docs/openapi.json", get(docs::get_merged_openapi))
-        // Swagger UI
-        .merge(
-            SwaggerUi::new("/docs").config(
-                Config::new(["/api-docs/openapi.json"])
-            )
-        )
+        .merge(public_routes())
+        .merge(auth_routes(config.jwt.secret.clone()))
+        .merge(protected_routes(config.jwt.secret.clone()))
+        .merge(docs_routes())
         .with_state(app_state);
 
     let port = std::env::var("PORT")

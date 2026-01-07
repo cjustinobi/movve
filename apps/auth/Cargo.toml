@@ -13,7 +13,6 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 dotenvy = { workspace = true }
 chrono = { workspace = true }
-sqlx = { workspace = true }
 uuid = { workspace = true }
 jsonwebtoken = { workspace = true }
 utoipa = { workspace = true }

@@ -11,7 +11,6 @@ anyhow = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 axum = { workspace = true }
-sqlx = { workspace = true }
 jsonwebtoken = { workspace = true }
 utoipa = { workspace = true }
 dotenvy = { workspace = true }

@@ -10,16 +10,6 @@ pub mod sql_types {
     pub struct UserRole;
 }
 
-diesel::table! {
-    _sqlx_migrations (version) {
-        version -> Int8,
-        description -> Text,
-        installed_on -> Timestamptz,
-        success -> Bool,
-        checksum -> Bytea,
-        execution_time -> Int8,
-    }
-}
 
 diesel::table! {
     password_resets (id) {
@@ -63,4 +53,4 @@ diesel::table! {
 
 diesel::joinable!(password_resets -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(_sqlx_migrations, password_resets, users,);
+diesel::allow_tables_to_appear_in_same_query!(password_resets, users,);
