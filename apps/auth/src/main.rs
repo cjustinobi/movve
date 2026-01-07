@@ -44,7 +44,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let app_state = AppState { auth_service };
 
     // Use the routes module
-    let app = routes::create_routes().with_state(app_state);
+    let app = routes::create_routes(app_state);
 
     let addr = format!("{}:{}", config.services.auth_service_host, config.services.auth_service_port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;

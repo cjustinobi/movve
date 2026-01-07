@@ -1,4 +1,4 @@
-use utoipa::OpenApi;
+use utoipa::{OpenApi, openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme}};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -8,18 +8,8 @@ use utoipa::OpenApi;
         crate::handlers::verify_token,
         crate::handlers::forgot_password
     ),
-    components(schemas(
-        crate::model::RegisterRequest,
-        crate::model::RegisterResponse,
-        crate::model::LoginRequest,
-        crate::model::AuthResponse,
-        crate::model::UserInfo,
-        crate::model::UserRole,
-        crate::model::Claims,
-        crate::model::ForgotPasswordRequest,
-        crate::model::ResetPasswordRequest,
-        crate::model::ResetPasswordResponse,
-    )),
+    modifiers(&SecurityAddon),
+
     tags(
         (name = "Auth", description = "User registration and authentication endpoints")
     ),
@@ -30,3 +20,21 @@ use utoipa::OpenApi;
     )
 )]
 pub struct AuthApiDoc;
+
+struct SecurityAddon;
+
+impl utoipa::Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "bearer_auth",
+                SecurityScheme::Http(
+                    HttpBuilder::new()
+                        .scheme(HttpAuthScheme::Bearer)
+                        .bearer_format("JWT")
+                        .build()
+                ),
+            )
+        }
+    }
+}

@@ -1,18 +1,15 @@
-use axum::{extract::State, http::HeaderMap, Json};
+use axum::{extract::State, Extension, Json};
 use common::{AppError, ApiResponse};
 use tracing::{info, error, instrument};
 use crate::{
     AppState,
     model::{
-        AuthResponse,
-        LoginRequest, RegisterRequest, RegisterResponse,
-        ForgotPasswordRequest, 
-        ForgotPasswordResponse,
-        Claims,
+        AuthResponse, LoginRequest, RegisterRequest, RegisterResponse,
+        ForgotPasswordRequest, ForgotPasswordResponse, Claims,
     }
 };
 
-///  Registers a new user
+/// Registers a new user
 #[utoipa::path(
     post,
     path = "/api/auth/register",
@@ -23,7 +20,6 @@ use crate::{
     ),
     tag = "Auth"
 )]
-
 pub async fn register(
     State(state): State<AppState>,
     Json(req): Json<RegisterRequest>,
@@ -51,29 +47,23 @@ pub async fn login(
     Ok(ApiResponse::success_with_message("User logged in successfully", response))
 }
 
-/// Verifies a JWT token and returns the associated user claims 
+/// Verifies a JWT token and returns the associated user claims
+/// This endpoint is protected by JWT middleware, so if you reach here, you're authenticated
 #[utoipa::path(
     get,
     path = "/api/auth/verify",
     responses(
-        (status = 201, description = "User verified successfully", body = ApiResponse<Claims>),
+        (status = 200, description = "User verified successfully", body = ApiResponse<Claims>),
+        (status = 401, description = "Unauthorized"),
     ),
-    tag = "Auth"
+    tag = "Auth",
+    security(("bearerAuth" = []))
 )]
 pub async fn verify_token(
-    State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
 ) -> Result<ApiResponse<Claims>, AppError> {
-    let auth_header = headers
-        .get("Authorization")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| AppError::Unauthorized("Missing authorization header".to_string()))?;
-
-    let token = auth_header
-        .strip_prefix("Bearer ")
-        .ok_or_else(|| AppError::Unauthorized("Invalid authorization header".to_string()))?;
-
-    let claims = state.auth_service.verify_token(token)?;
+    // No need to manually verify - middleware already did it
+    // Claims are injected via Extension
     Ok(ApiResponse::success_with_message("User verified successfully", claims))
 }
 
@@ -92,11 +82,13 @@ pub async fn forgot_password(
     State(state): State<AppState>,
     Json(req): Json<ForgotPasswordRequest>,
 ) -> Result<ApiResponse<ForgotPasswordResponse>, AppError> {
-   
     let token = state.auth_service.forgot_password(&req.email).await?;
     
     // TODO: In production, send email here instead of returning token
     // Example: state.email_service.send_reset_email(&req.email, &token).await?;
     
-    Ok(ApiResponse::success_with_message("Password reset instructions have been sent to your email", ForgotPasswordResponse { token: Some(token) }))
+    Ok(ApiResponse::success_with_message(
+        "Password reset instructions have been sent to your email",
+        ForgotPasswordResponse { token: Some(token) }
+    ))
 }

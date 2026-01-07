@@ -17,7 +17,7 @@ use crate::{
 
 pub struct AuthService {
     repo: UserRepository,
-    jwt_config: JwtConfig,
+    pub jwt_config: JwtConfig,
 }
 
 impl AuthService {

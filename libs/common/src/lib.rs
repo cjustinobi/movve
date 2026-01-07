@@ -7,3 +7,4 @@ pub use config::AppConfig;
 pub use config::*;
 pub use error::*;
 pub use response::*;
+pub use middleware::*;
