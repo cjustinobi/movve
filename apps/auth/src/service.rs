@@ -202,7 +202,11 @@ pub async fn forgot_password(&self, email: &str) -> Result<String, AppError> {
     }
 
     pub async fn get_user_by_email(&self, email: &str) -> Result<User, AppError> {
-        self.repo.find_by_email(email).await
+        self.repo
+            .find_by_email(email)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))
     }
 }
 

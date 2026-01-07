@@ -12,6 +12,8 @@ use std::io::Write;
 pub struct User {
     pub id: Uuid,
     pub email: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
     pub created_at: NaiveDateTime,

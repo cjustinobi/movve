@@ -86,7 +86,9 @@ pub async fn forgot_password(
     
     // Get user details for email
     let user = state.auth_service.get_user_by_email(&req.email).await?;
-    let user_name = format!("{} {}", user.first_name, user.last_name);
+    let user_name = format!("{} {}", 
+        user.first_name.as_deref().unwrap_or("User"), 
+        user.last_name.as_deref().unwrap_or(""));
     
     // Get frontend URL from config
     let frontend_url = std::env::var("FRONTEND_URL")

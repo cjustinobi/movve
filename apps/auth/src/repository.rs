@@ -26,6 +26,8 @@ pub struct NewUser<'a> {
 pub struct UserDb {
     pub id: Uuid,
     pub email: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
     pub created_at: NaiveDateTime,
@@ -37,6 +39,8 @@ impl From<UserDb> for User {
         User {
             id: user_db.id,
             email: user_db.email,
+            first_name: user_db.first_name,
+            last_name: user_db.last_name,
             password_hash: user_db.password_hash,
             role: user_db.role,
             created_at: user_db.created_at,
