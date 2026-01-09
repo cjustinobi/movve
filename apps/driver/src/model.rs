@@ -1,5 +1,7 @@
 use diesel::{Queryable, Selectable, Identifiable, Insertable};
+use diesel::expression::AsExpression;
 use serde::{Deserialize, Serialize};
+use diesel::deserialize::{FromSqlRow};
 use utoipa::ToSchema;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
@@ -54,6 +56,17 @@ pub enum VehicleColor {
 
 }
 
+#[derive(Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow)]
+#[diesel(sql_type = crate::schema::sql_types::UserRole)]
+#[serde(rename_all = "lowercase")]
+pub enum UserRole {
+    Admin,
+    Driver,
+    Vendor,
+    Dispatcher,
+    User,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, Identifiable, ToSchema)]
 #[diesel(table_name = drivers)]
 pub struct Driver {
@@ -89,4 +102,14 @@ pub struct NewDriver {
     pub vehicle_model: String,
     pub vehicle_year: i32,
     pub status: DriverStatus,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+pub struct Claims {
+    pub sub: String,  // user id
+    pub email: String,
+    pub role: UserRole,
+    pub exp: i64,
+    pub iat: i64,
 }

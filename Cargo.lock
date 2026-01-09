@@ -592,6 +592,7 @@ dependencies = [
  "diesel",
  "diesel-derive-enum",
  "dotenvy",
+ "jsonwebtoken",
  "serde",
  "serde_json",
  "services",

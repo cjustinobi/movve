@@ -45,7 +45,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Initialize repository and service layer
     let repo = DriverRepository::new(pool);
-    let service = Arc::new(DriverService::new(repo));
+    let service = Arc::new(DriverService::new(repo, config.jwt.clone()));
 
     let mail_service = Arc::new(MailService::new(
         config.mail.api_key.clone(),
@@ -58,7 +58,7 @@ async fn main() -> Result<(), anyhow::Error> {
     };
 
     // Use the routes module
-    let app = routes::create_routes().with_state(state);
+    let app = routes::create_routes(state);
 
     let addr = format!("{}:{}", config.services.driver_service_host, config.services.driver_service_port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
