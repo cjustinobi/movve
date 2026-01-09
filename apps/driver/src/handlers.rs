@@ -1,28 +1,34 @@
 use axum::{extract::{State, Path}, Json};
 use common::{ApiResponse, AppError};
+use tracing::info;
 use uuid::Uuid;
 use crate::{
     AppState,
     model::{Driver, NewDriver}};
 use serde_json::json;
 
+/// Creates a new driver
+/// 
+/// Creates a new driver with the provided details.
 #[utoipa::path(
     post,
     path = "/api/driver/drivers",
     responses(
-        (status = 200, description = "Create a driver", body = [Driver])
+        (status = 200, description = "Create a driver", body = ApiResponse<Driver>)
     ),
-    tag = "Driver"
+    tag = "Driver",
+    security(("bearerAuth" = []))
 )]
 
 pub async fn create_driver(
     State(state): State<AppState>,
     Json(req): Json<NewDriver>,
-) -> Result<Json<Driver>, axum::http::StatusCode> {
-    match state.driver_service.register_driver(req) {
-        Ok(driver) => Ok(Json(driver)),
-        Err(_) => Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR),
-    }
+) -> Result<ApiResponse<Driver>, AppError> {
+    info!("Creating new driver: {:?}", req);
+    let response = state.driver_service.create_driver(req)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+    Ok(ApiResponse::success_with_message("Driver created successfully", response))
+       
 }
 
 #[utoipa::path(

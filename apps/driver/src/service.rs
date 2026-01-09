@@ -1,6 +1,7 @@
 use crate::repository::DriverRepository;
 use crate::model::{NewDriver, Driver};
 use anyhow::Result;
+use tracing::info;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -13,7 +14,8 @@ impl DriverService {
         Self { repo }
     }
 
-    pub fn register_driver(&self, new_driver: NewDriver) -> Result<Driver> {
+    pub fn create_driver(&self, new_driver: NewDriver) -> Result<Driver> {
+        info!("Registering new driver: {:?}", new_driver);
         let driver = self.repo.create_driver(new_driver)?;
         Ok(driver)
     }
