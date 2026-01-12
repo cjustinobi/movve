@@ -1,6 +1,7 @@
 use anyhow::Result;
 use resend_rs::{types::CreateEmailBaseOptions, Resend};
 use tracing::{error, info};
+use crate::templates::EmailTemplates;
 
 #[derive(Clone)]
 pub struct MailService {
@@ -104,6 +105,12 @@ impl MailService {
                 Err(anyhow::anyhow!("Failed to send email: {}", e))
             }
         }
+    }
+
+
+    pub async fn send_welcome_email(&self, to_email: &str, user_name: &str) -> Result<()> {
+        let (subject, html, text) = EmailTemplates::welcome_email(user_name);
+        self.send_notification(to_email, &subject, &html, Some(&text)).await
     }
 
     pub async fn send_notification(

@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension, Json};
 use common::{AppError, ApiResponse};
-use tracing::{info, error, instrument};
+
 use crate::{
     AppState,
     model::{
@@ -25,8 +25,11 @@ pub async fn register(
     Json(req): Json<RegisterRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
     let response = state.auth_service.register(req).await?;
-    // send email
-    state.mail_service.send_welcome_email(&response.email).await?;  
+    // send email 
+    let user_name = response.user.email.split('@').next().unwrap_or("User");
+    state.mail_service.send_welcome_email(&response.user.email, user_name)
+        .await
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
     Ok(ApiResponse::success_with_message("User registered successfully", response))
 }
 

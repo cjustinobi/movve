@@ -1,8 +1,8 @@
 pub struct EmailTemplates;
 
 impl EmailTemplates {
-    pub fn welcome_email(user_name: &str) -> (String, String) {
-        let subject = "Welcome to Movve!";
+    pub fn welcome_email(user_name: &str) -> (String, String, String) {
+        let subject = "Welcome to Movve!".to_string();
         let html = format!(
             r#"
             <!DOCTYPE html>
@@ -16,11 +16,11 @@ impl EmailTemplates {
             user_name
         );
         let text = format!("Welcome to Movve, {}!\n\nThank you for joining us.", user_name);
-        (html, text)
+        (subject, html, text)
     }
     
     pub fn ride_confirmation(rider_name: &str, driver_name: &str, pickup_location: &str) -> (String, String) {
-        let subject = "Ride Confirmed";
+        let _subject = "Ride Confirmed";
         let html = format!(
             r#"
             <!DOCTYPE html>
