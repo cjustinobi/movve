@@ -12,6 +12,7 @@ use crate::schema::drivers;
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::DriverStatus"]
+#[serde(rename_all = "lowercase")] 
 pub enum DriverStatus {
     #[db_rename = "offline"]
     Offline,
@@ -23,6 +24,7 @@ pub enum DriverStatus {
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::VehicleType"]
+#[serde(rename_all = "lowercase")] 
 pub enum VehicleType {
     #[db_rename = "sedan"]
     Sedan,
@@ -36,6 +38,7 @@ pub enum VehicleType {
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::VehicleColor"]
+#[serde(rename_all = "lowercase")] 
 pub enum VehicleColor {
     #[db_rename = "red"]
     Red,

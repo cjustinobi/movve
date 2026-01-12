@@ -18,11 +18,15 @@ impl DriverService {
         Self { repo, jwt_config }
     }
 
-    pub fn create_driver(&self, new_driver: NewDriver) -> Result<Driver, AppError>{
-        info!("Registering new driver: {:?}", new_driver);
-        let driver = self.repo.create_driver(new_driver)?;
+    pub fn create_driver(&self, new_driver: NewDriver) -> Result<Driver, AppError> {
+        // info!("Registering new driver: {:?}", new_driver);
+
+        let driver = self.repo.create_driver(new_driver)
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
         Ok(driver)
-    }
+}
+
 
     pub fn list_drivers(&self) -> Result<Vec<Driver>> {
         self.repo.find_all().map_err(Into::into)

@@ -25,6 +25,8 @@ pub async fn register(
     Json(req): Json<RegisterRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
     let response = state.auth_service.register(req).await?;
+    // send email
+    state.mail_service.send_welcome_email(&response.email).await?;  
     Ok(ApiResponse::success_with_message("User registered successfully", response))
 }
 

@@ -30,7 +30,6 @@ pub async fn proxy_to_driver(
     proxy_request(state.http_client, url, method, headers, req).await
 }
 
-/// Generic proxy handler that forwards requests based on path prefix
 pub async fn proxy_by_prefix(
     State(state): State<AppState>,
     method: Method,
@@ -39,12 +38,11 @@ pub async fn proxy_by_prefix(
 ) -> Result<Response, StatusCode> {
     let path = req.uri().path();
     
-    // Determine target service based on path prefix
     let (target_base_url, stripped_path) = if path.starts_with("/api/auth/") {
         (&state.config.services.auth_service_url, path)
     } else if path.starts_with("/api/driver/") {
-        let stripped = path.strip_prefix("/api/driver").unwrap_or("");
-        (&state.config.services.driver_service_url, stripped)
+        // Don't strip the prefix - send the full path
+        (&state.config.services.driver_service_url, path)
     } else {
         tracing::warn!("No matching service for path: {}", path);
         return Err(StatusCode::NOT_FOUND);
@@ -54,6 +52,30 @@ pub async fn proxy_by_prefix(
     
     proxy_request(state.http_client, url, method, headers, req).await
 }
+/// Generic proxy handler that forwards requests based on path prefix
+// pub async fn proxy_by_prefix(
+//     State(state): State<AppState>,
+//     method: Method,
+//     headers: HeaderMap,
+//     req: Request,
+// ) -> Result<Response, StatusCode> {
+//     let path = req.uri().path();
+    
+//     // Determine target service based on path prefix
+//     let (target_base_url, stripped_path) = if path.starts_with("/api/auth/") {
+//         (&state.config.services.auth_service_url, path)
+//     } else if path.starts_with("/api/driver/") {
+//         let stripped = path.strip_prefix("/api/driver").unwrap_or("");
+//         (&state.config.services.driver_service_url, stripped)
+//     } else {
+//         tracing::warn!("No matching service for path: {}", path);
+//         return Err(StatusCode::NOT_FOUND);
+//     };
+
+//     let url = format!("{}{}", target_base_url, stripped_path);
+    
+//     proxy_request(state.http_client, url, method, headers, req).await
+// }
 
 async fn proxy_request(
     client: reqwest::Client,
