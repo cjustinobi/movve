@@ -25,12 +25,17 @@ pub async fn register(
     Json(req): Json<RegisterRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
     let response = state.auth_service.register(req).await?;
-    // send email 
+    // send email
     let user_name = response.user.email.split('@').next().unwrap_or("User");
-    state.mail_service.send_welcome_email(&response.user.email, user_name)
+    state
+        .mail_service
+        .send_welcome_email(&response.user.email, user_name)
         .await
         .map_err(|e| AppError::InternalError(e.to_string()))?;
-    Ok(ApiResponse::success_with_message("User registered successfully", response))
+    Ok(ApiResponse::success_with_message(
+        "User registered successfully",
+        response,
+    ))
 }
 
 /// Logs in an existing user
@@ -49,7 +54,10 @@ pub async fn login(
     Json(req): Json<LoginRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
     let response = state.auth_service.login(req).await?;
-    Ok(ApiResponse::success_with_message("User logged in successfully", response))
+    Ok(ApiResponse::success_with_message(
+        "User logged in successfully",
+        response,
+    ))
 }
 
 /// Verifies a JWT token and returns the associated user claims
@@ -65,11 +73,25 @@ pub async fn login(
     security(("bearerAuth" = []))
 )]
 pub async fn verify_token(
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Result<ApiResponse<Claims>, AppError> {
-    // No need to manually verify - middleware already did it
-    // Claims are injected via Extension
-    Ok(ApiResponse::success_with_message("User verified successfully", claims))
+    // Get frontend URL from config
+    let frontend_url =
+        std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let verification_link = format!("{}/verify", frontend_url);
+
+    // send verification email
+    let user_name = claims.email.split('@').next().unwrap_or("User");
+    state
+        .mail_service
+        .send_verification_email(&claims.email, user_name, &verification_link)
+        .await
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+    Ok(ApiResponse::success_with_message(
+        "User verified successfully",
+        claims,
+    ))
 }
 
 /// Initiates the forgot password process for a user
@@ -88,33 +110,34 @@ pub async fn forgot_password(
     Json(req): Json<ForgotPasswordRequest>,
 ) -> Result<ApiResponse<ForgotPasswordResponse>, AppError> {
     let token = state.auth_service.forgot_password(&req.email).await?;
-    
+
     // Get user details for email
     let user = state.auth_service.get_user_by_email(&req.email).await?;
-    let user_name = format!("{} {}", 
-        user.first_name.as_deref().unwrap_or("User"), 
-        user.last_name.as_deref().unwrap_or(""));
-    
+    let user_name = format!(
+        "{} {}",
+        user.first_name.as_deref().unwrap_or("User"),
+        user.last_name.as_deref().unwrap_or("")
+    );
+
     // Get frontend URL from config
-    let frontend_url = std::env::var("FRONTEND_URL")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
-    
+    let frontend_url =
+        std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+
     // Send password reset email
-    match state.mail_service.send_password_reset_email(
-        &req.email,
-        &user_name,
-        &token,
-        &frontend_url,
-    ).await {
+    match state
+        .mail_service
+        .send_password_reset_email(&req.email, &user_name, &token, &frontend_url)
+        .await
+    {
         Ok(_) => tracing::info!("Password reset email sent to {}", req.email),
         Err(e) => {
             tracing::error!("Failed to send password reset email: {:?}", e);
             // TODO: queue for retry
         }
     }
-    
+
     Ok(ApiResponse::success_with_message(
         "Password reset instructions have been sent to your email",
-        ForgotPasswordResponse { token: Some(token) }
+        ForgotPasswordResponse { token: Some(token) },
     ))
 }

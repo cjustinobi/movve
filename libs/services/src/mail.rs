@@ -1,7 +1,7 @@
-use anyhow::Result;
-use resend_rs::{types::CreateEmailBaseOptions, Resend};
-use tracing::{error, info};
 use crate::templates::EmailTemplates;
+use anyhow::Result;
+use resend_rs::{Resend, types::CreateEmailBaseOptions};
+use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct MailService {
@@ -23,8 +23,8 @@ impl MailService {
         frontend_url: &str,
     ) -> Result<()> {
         let reset_link = format!("{}/reset-password?token={}", frontend_url, reset_token);
-        
-        let subject = "Reset Your Password - HealthBridge";
+
+        let subject = "Reset Your Password - Movve";
         let html_body = format!(
             r#"
             <!DOCTYPE html>
@@ -65,7 +65,7 @@ impl MailService {
                         <p>If you didn't request a password reset, you can safely ignore this email.</p>
                     </div>
                     <div class="footer">
-                        <p>© 2024 HealthBridge. All rights reserved.</p>
+                        <p>© Movve. All rights reserved.</p>
                         <p>This is an automated message, please do not reply.</p>
                     </div>
                 </div>
@@ -87,13 +87,9 @@ impl MailService {
             user_name, reset_link
         );
 
-        let email = CreateEmailBaseOptions::new(
-            &self.from_email,
-            vec![to_email],
-            subject,
-        )
-        .with_html(&html_body)
-        .with_text(&text_body);
+        let email = CreateEmailBaseOptions::new(&self.from_email, vec![to_email], subject)
+            .with_html(&html_body)
+            .with_text(&text_body);
 
         match self.client.emails.send(email).await {
             Ok(_) => {
@@ -113,6 +109,18 @@ impl MailService {
         self.send_notification(to_email, &subject, &html, Some(&text)).await
     }
 
+    pub async fn send_verification_email(
+        &self,
+        to_email: &str,
+        user_name: &str,
+        verification_link: &str,
+    ) -> Result<()> {
+        let (subject, html, text) =
+            EmailTemplates::verification_email(user_name, verification_link);
+        self.send_notification(to_email, &subject, &html, Some(&text))
+            .await
+    }
+
     pub async fn send_notification(
         &self,
         to_email: &str,
@@ -120,12 +128,8 @@ impl MailService {
         html_body: &str,
         text_body: Option<&str>,
     ) -> Result<()> {
-        let mut email = CreateEmailBaseOptions::new(
-            &self.from_email,
-            vec![to_email],
-            subject,
-        )
-        .with_html(html_body);
+        let mut email = CreateEmailBaseOptions::new(&self.from_email, vec![to_email], subject)
+            .with_html(html_body);
 
         if let Some(text) = text_body {
             email = email.with_text(text);
