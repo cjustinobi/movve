@@ -18,6 +18,22 @@ diesel::table! {
         #[max_length = 255]
         token -> Varchar,
         expires_at -> Timestamptz,
+        used -> Bool,
+        created_at -> Timestamptz,
+    }
+}
+
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use diesel::sql_types::Uuid as DieselUuid;
+
+    email_verification_tokens (id) {
+        id -> DieselUuid,
+        user_id -> DieselUuid,
+        code -> Varchar,
+        expires_at -> Timestamptz,
+        used -> Bool,
         created_at -> Timestamptz,
     }
 }

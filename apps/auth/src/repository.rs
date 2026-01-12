@@ -303,6 +303,23 @@ impl PasswordResetRepository {
         Ok(reset)
     }
 
+    pub async fn mark_token_as_used(&self, token: &str) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+        let token = token.to_string();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            use crate::schema::password_resets::dsl::*;
+            diesel::update(password_resets.filter(token.eq(&token)))
+                .set(used.eq(true))
+                .execute(&mut conn)?;
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
+    }
+
     pub async fn delete_token(&self, reset_id: Uuid) -> Result<(), DbError> {
         let pool = self.pool.clone();
 

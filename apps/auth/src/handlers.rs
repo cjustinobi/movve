@@ -1,11 +1,11 @@
-use axum::{extract::State, Extension, Json};
-use common::{AppError, ApiResponse};
+use axum::{extract::State, Extension, Json, http::StatusCode};
+use common::{ApiResponse, AppError, EmptyData};
+use tracing::info;
 
 use crate::{
     AppState,
     model::{
-        AuthResponse, LoginRequest, RegisterRequest, RegisterResponse,
-        ForgotPasswordRequest, ForgotPasswordResponse, Claims,
+        AuthResponse, Claims, ForgotPasswordRequest, ForgotPasswordResponse, LoginRequest, RegisterRequest, RegisterResponse, ResetPasswordRequest
     }
 };
 
@@ -139,5 +139,29 @@ pub async fn forgot_password(
     Ok(ApiResponse::success_with_message(
         "Password reset instructions have been sent to your email",
         ForgotPasswordResponse { token: Some(token) },
+    ))
+}
+
+pub async fn reset_password(
+    State(state): State<AppState>,
+    Json(payload): Json<ResetPasswordRequest>,
+) -> Result<ApiResponse<EmptyData>, AppError> {
+    let mut conn = state.pool.get()?;
+
+    // Verify the token and get user_id
+    let user_id = state.auth_service.verify_reset_token(&payload.token)
+        .map_err(|_| AppError::BadRequest("Invalid or expired token".to_string()))?;
+
+    // Reset the password
+    state.auth_service.reset_password(user_id, &payload.new_password)?;
+
+    // Mark token as used
+    state.auth_service.mark_token_as_used(&payload.token)?;
+
+    info!("Password successfully reset for user: {}", user_id);
+
+    Ok(ApiResponse::message_only(
+        StatusCode::OK,
+        "Password has been reset successfully.",
     ))
 }

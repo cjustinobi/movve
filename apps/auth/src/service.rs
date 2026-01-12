@@ -143,6 +143,15 @@ pub async fn forgot_password(&self, email: &str) -> Result<String, AppError> {
         Ok(user_id)
     }
 
+    pub async fn mark_token_as_used(&self, token: &str) -> Result<(), AppError> {
+        self.repo
+            .mark_token_as_used(token)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        Ok(())
+    }
+
     // ---------- Reset Password ----------
     pub async fn reset_password(&self, token: &str, new_password: &str) -> Result<(), AppError> {
         // Verify token is valid before hashing password
