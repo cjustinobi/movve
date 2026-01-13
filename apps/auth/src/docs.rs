@@ -6,7 +6,8 @@ use utoipa::{OpenApi, openapi::security::{HttpAuthScheme, HttpBuilder, SecurityS
         crate::handlers::register,
         crate::handlers::login,
         crate::handlers::verify_token,
-        crate::handlers::forgot_password
+        crate::handlers::forgot_password,
+        crate::handlers::reset_password
     ),
     modifiers(&SecurityAddon),
 

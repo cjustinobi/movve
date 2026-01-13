@@ -1,21 +1,16 @@
 use argon2::{
-    Argon2, 
-    PasswordHash, 
-    PasswordHasher, 
-    PasswordVerifier,
-    password_hash::{rand_core::OsRng, SaltString}
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+    password_hash::{SaltString, rand_core::OsRng},
 };
-use tracing::{info, error, instrument};
-use uuid::Uuid;
 use chrono::Utc;
-use common::{
-    AppError, JwtConfig,
-};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use common::{AppError, JwtConfig};
+use jsonwebtoken::{EncodingKey, Header, encode};
+use tracing::{error, info, instrument};
+use uuid::Uuid;
 
 use crate::{
+    model::{AuthResponse, Claims, LoginRequest, RegisterRequest, User, UserInfo},
     repository::UserRepository,
-    model::{AuthResponse, LoginRequest, RegisterRequest, User, UserInfo, Claims}
 };
 
 pub struct AuthService {
@@ -93,43 +88,41 @@ impl AuthService {
         Ok(claims)
     }
 
-     // ---------- Forgot Password ----------
+    // ---------- Forgot Password ----------
 
+    #[instrument(skip(self), fields(email = %email))]
+    pub async fn forgot_password(&self, email: &str) -> Result<String, AppError> {
+        info!("Starting forgot_password process");
 
-#[instrument(skip(self), fields(email = %email))]
-pub async fn forgot_password(&self, email: &str) -> Result<String, AppError> {
-    info!("Starting forgot_password process");
+        // 1️⃣ Find user by email
+        let user = match self.repo.find_by_email(email).await {
+            Ok(Some(user)) => {
+                info!(user_id = %user.id, "User found");
+                user
+            }
+            Ok(None) => {
+                error!("User not found for email: {}", email);
+                return Err(AppError::NotFound("User not found".to_string()));
+            }
+            Err(e) => {
+                error!(error = ?e, "Database error while finding user");
+                return Err(AppError::InternalError(e.to_string()));
+            }
+        };
 
-    // 1️⃣ Find user by email
-    let user = match self.repo.find_by_email(email).await {
-        Ok(Some(user)) => {
-            info!(user_id = %user.id, "User found");
-            user
-        }
-        Ok(None) => {
-            error!("User not found for email: {}", email);
-            return Err(AppError::NotFound("User not found".to_string()));
-        }
-        Err(e) => {
-            error!(error = ?e, "Database error while finding user");
-            return Err(AppError::InternalError(e.to_string()));
-        }
-    };
-
-    // 2️⃣ Create password reset token
-    match self.repo.create_password_reset(user.id).await {
-        Ok(token) => {
-            info!(user_id = %user.id, token = %token, "Password reset token created successfully");
-            // In production: send email here
-            Ok(token)
-        }
-        Err(e) => {
-            error!(user_id = %user.id, error = ?e, "Failed to create password reset token");
-            Err(AppError::InternalError(e.to_string()))
+        // 2️⃣ Create password reset token
+        match self.repo.create_password_reset(user.id).await {
+            Ok(token) => {
+                info!(user_id = %user.id, token = %token, "Password reset token created successfully");
+                // In production: send email here
+                Ok(token)
+            }
+            Err(e) => {
+                error!(user_id = %user.id, error = ?e, "Failed to create password reset token");
+                Err(AppError::InternalError(e.to_string()))
+            }
         }
     }
-}
-
 
     // ---------- Verify Reset Token ----------
     pub async fn verify_reset_token(&self, token: &str) -> Result<Uuid, AppError> {
@@ -141,15 +134,6 @@ pub async fn forgot_password(&self, email: &str) -> Result<String, AppError> {
             .ok_or_else(|| AppError::Unauthorized("Invalid or expired token".to_string()))?;
 
         Ok(user_id)
-    }
-
-    pub async fn mark_token_as_used(&self, token: &str) -> Result<(), AppError> {
-        self.repo
-            .mark_token_as_used(token)
-            .await
-            .map_err(|e| AppError::InternalError(e.to_string()))?;
-
-        Ok(())
     }
 
     // ---------- Reset Password ----------
@@ -218,4 +202,3 @@ pub async fn forgot_password(&self, email: &str) -> Result<String, AppError> {
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))
     }
 }
-

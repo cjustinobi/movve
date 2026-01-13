@@ -50,7 +50,9 @@ pub fn create_routes(state: AppState) -> Router {
     let public_routes = Router::new()
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
-        .route("/api/auth/forgot-password", post(handlers::forgot_password));
+        .route("/api/auth/forgot-password", post(handlers::forgot_password))
+        .route("/api/auth/reset-password", post(handlers::reset_password));
+
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()

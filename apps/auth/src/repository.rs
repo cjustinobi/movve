@@ -1,12 +1,12 @@
+use crate::{
+    model::{User, UserRole},
+    schema::{password_resets, users},
+};
+use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
-use uuid::Uuid;
-use chrono::{NaiveDateTime, Utc, Duration};
-use crate::{
-    schema::{users, password_resets},
-    model::{User, UserRole}
-};
 use diesel::result::Error as DieselError;
+use uuid::Uuid;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type DbError = Box<dyn std::error::Error + Send + Sync>;
@@ -17,7 +17,7 @@ pub struct NewUser<'a> {
     pub id: Uuid,
     pub email: &'a str,
     pub password_hash: &'a str,
-    pub role: UserRole,  // UserRole enum (it implements Copy/Clone)
+    pub role: UserRole, // UserRole enum (it implements Copy/Clone)
 }
 
 #[derive(Queryable, Selectable)]
@@ -57,6 +57,7 @@ pub struct PasswordResetDb {
     pub user_id: Uuid,
     pub token: String,
     pub expires_at: NaiveDateTime,
+    pub used: bool,
     pub created_at: NaiveDateTime,
 }
 
@@ -90,10 +91,10 @@ impl UserRepository {
         let email = email.to_string();
         let password_hash = password_hash.to_string();
         // let role_str = role.to_string();
-        
+
         let user = tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()?;
-            
+
             let new_user = NewUser {
                 id: Uuid::new_v4(),
                 email: &email,
@@ -116,10 +117,10 @@ impl UserRepository {
     pub async fn find_by_email(&self, email: &str) -> Result<Option<User>, DbError> {
         let pool = self.pool.clone();
         let email = email.to_string();
-        
+
         let user = tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()?;
-            
+
             let user_db = users::table
                 .filter(users::email.eq(email))
                 .select(UserDb::as_select())
@@ -135,10 +136,10 @@ impl UserRepository {
 
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, DbError> {
         let pool = self.pool.clone();
-        
+
         let user = tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()?;
-            
+
             let user_db = users::table
                 .filter(users::id.eq(id))
                 .select(UserDb::as_select())
@@ -151,7 +152,6 @@ impl UserRepository {
 
         Ok(user)
     }
-
 
     // ---------- Forgot Password ----------
     pub async fn create_password_reset(&self, user_id: Uuid) -> Result<String, DbError> {
@@ -186,7 +186,7 @@ impl UserRepository {
     // ---------- Verify Token ----------
     pub async fn verify_reset_token(&self, token: &str) -> Result<Option<Uuid>, DbError> {
         let pool = self.pool.clone();
-        let token = token.to_string();
+        let token_str = token.to_string();
 
         let result = tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()?;
@@ -194,7 +194,7 @@ impl UserRepository {
             let now = Utc::now().naive_utc();
 
             let reset = password_resets
-                .filter(token.eq(&token))
+                .filter(token.eq(&token_str))
                 .filter(expires_at.gt(now))
                 .first::<PasswordResetDb>(&mut conn)
                 .optional()?;
@@ -284,7 +284,7 @@ impl PasswordResetRepository {
 
     pub async fn find_valid_token(&self, token: &str) -> Result<Option<PasswordResetDb>, DbError> {
         let pool = self.pool.clone();
-        let token = token.to_string();
+        let token_str = token.to_string();
 
         let now = chrono::Utc::now().naive_utc();
 
@@ -292,7 +292,7 @@ impl PasswordResetRepository {
             let mut conn = pool.get()?;
             use crate::schema::password_resets::dsl::*;
             let record = password_resets
-                .filter(token.eq(&token))
+                .filter(token.eq(&token_str))
                 .filter(expires_at.gt(now))
                 .first::<PasswordResetDb>(&mut conn)
                 .optional()?;
@@ -305,12 +305,12 @@ impl PasswordResetRepository {
 
     pub async fn mark_token_as_used(&self, token: &str) -> Result<(), DbError> {
         let pool = self.pool.clone();
-        let token = token.to_string();
+        let token_str = token.to_string();
 
         tokio::task::spawn_blocking(move || {
             let mut conn = pool.get()?;
             use crate::schema::password_resets::dsl::*;
-            diesel::update(password_resets.filter(token.eq(&token)))
+            diesel::update(password_resets.filter(token.eq(&token_str)))
                 .set(used.eq(true))
                 .execute(&mut conn)?;
             Ok::<(), DbError>(())
@@ -334,4 +334,3 @@ impl PasswordResetRepository {
         Ok(())
     }
 }
-
