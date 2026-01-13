@@ -131,7 +131,7 @@ impl AuthService {
             .verify_reset_token(token)
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))?
-            .ok_or_else(|| AppError::Unauthorized("Invalid or expired token".to_string()))?;
+            .ok_or_else(|| AppError::BadRequest("Invalid or expired token".to_string()))?;
 
         Ok(user_id)
     }

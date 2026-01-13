@@ -162,8 +162,7 @@ pub async fn reset_password(
     let user_id = state
         .auth_service
         .verify_reset_token(&payload.token)
-        .await
-        .map_err(|_| AppError::BadRequest("Invalid or expired token".to_string()))?;
+        .await?;
 
     // Reset the password
     state
