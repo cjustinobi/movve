@@ -1,0 +1,42 @@
+name: Deploy Gateway - Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+    paths:
+      - 'apps/gateway/**'
+      - 'libs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build gateway in release mode
+        run: cargo build --release --bin gateway
+      
+      - name: Stop gateway service
+        run: sudo systemctl stop movve-gateway
+      
+      - name: Copy binary to deployment location
+        run: |
+          sudo mkdir -p /opt/movve/bin
+          sudo cp target/release/gateway /opt/movve/bin/
+          sudo chmod +x /opt/movve/bin/gateway
+      
+      - name: Start gateway service
+        run: sudo systemctl start movve-gateway
+      
+      - name: Wait for service to start
+        run: sleep 3
+      
+      - name: Check service status
+        run: sudo systemctl status movve-gateway --no-pager
+      
+      - name: Health check
+        run: curl -f http://localhost:8080/health || exit 1

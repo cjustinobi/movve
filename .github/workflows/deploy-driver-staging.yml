@@ -1,0 +1,39 @@
+name: Deploy Driver Service - Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+    paths:
+      - 'apps/driver-service/**'
+      - 'libs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build driver-service in release mode
+        run: cargo build --release --bin driver-service
+      
+      - name: Stop driver service
+        run: sudo systemctl stop movve-driver
+      
+      - name: Copy binary to deployment location
+        run: |
+          sudo mkdir -p /opt/movve/bin
+          sudo cp target/release/driver-service /opt/movve/bin/
+          sudo chmod +x /opt/movve/bin/driver-service
+      
+      - name: Start driver service
+        run: sudo systemctl start movve-driver
+      
+      - name: Wait for service to start
+        run: sleep 3
+      
+      - name: Check service status
+        run: sudo systemctl status movve-driver --no-pager

@@ -1,0 +1,39 @@
+name: Deploy Auth Service - Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+    paths:
+      - 'apps/auth-service/**'
+      - 'libs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build auth-service in release mode
+        run: cargo build --release --bin auth-service
+      
+      - name: Stop auth service
+        run: sudo systemctl stop movve-auth
+      
+      - name: Copy binary to deployment location
+        run: |
+          sudo mkdir -p /opt/movve/bin
+          sudo cp target/release/auth-service /opt/movve/bin/
+          sudo chmod +x /opt/movve/bin/auth-service
+      
+      - name: Start auth service
+        run: sudo systemctl start movve-auth
+      
+      - name: Wait for service to start
+        run: sleep 3
+      
+      - name: Check service status
+        run: sudo systemctl status movve-auth --no-pager
