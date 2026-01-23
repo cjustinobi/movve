@@ -33,19 +33,19 @@ jobs:
           cargo build --release --bin auth
       
       - name: Stop auth service
-        run: sudo systemctl stop movve-auth || true
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-auth || true
       
       - name: Copy binary to deployment location
         run: |
-          sudo mkdir -p /opt/movve/bin
-          sudo cp target/release/auth /opt/movve/bin/
-          sudo chmod +x /opt/movve/bin/auth
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/auth /opt/movve/bin/
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/auth
       
       - name: Start auth service
-        run: sudo systemctl start movve-auth
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-auth
       
       - name: Wait for service to start
         run: sleep 3
       
       - name: Check service status
-        run: sudo systemctl status movve-auth --no-pager
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-auth --no-pager

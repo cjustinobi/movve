@@ -33,19 +33,19 @@ jobs:
           cargo build --release --bin driver
       
       - name: Stop driver service
-        run: sudo systemctl stop movve-driver || true
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-driver || true
       
       - name: Copy binary to deployment location
         run: |
-          sudo mkdir -p /opt/movve/bin
-          sudo cp target/release/driver /opt/movve/bin/
-          sudo chmod +x /opt/movve/bin/driver
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/driver /opt/movve/bin/
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/driver
       
       - name: Start driver service
-        run: sudo systemctl start movve-driver
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-driver
       
       - name: Wait for service to start
         run: sleep 3
       
       - name: Check service status
-        run: sudo systemctl status movve-driver --no-pager
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-driver --no-pager

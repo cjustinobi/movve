@@ -33,22 +33,22 @@ jobs:
           cargo build --release --bin gateway
       
       - name: Stop gateway service
-        run: sudo systemctl stop movve-gateway || true
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-gateway || true
       
       - name: Copy binary to deployment location
         run: |
-          sudo mkdir -p /opt/movve/bin
-          sudo cp target/release/gateway /opt/movve/bin/
-          sudo chmod +x /opt/movve/bin/gateway
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/gateway /opt/movve/bin/
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/gateway
       
       - name: Start gateway service
-        run: sudo systemctl start movve-gateway
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-gateway
       
       - name: Wait for service to start
         run: sleep 3
       
       - name: Check service status
-        run: sudo systemctl status movve-gateway --no-pager
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager
       
       - name: Health check
         run: curl -f http://localhost:8080/health || exit 1
