@@ -38,8 +38,8 @@ jobs:
       - name: Copy binary to deployment location
         run: |
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/driver /opt/movve/bin/
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/driver
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/driver /opt/movve/bin/driver-service
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/driver-service
       
       - name: Start driver service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-driver
