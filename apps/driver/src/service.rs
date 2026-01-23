@@ -4,7 +4,7 @@ use anyhow::Result;
 use common::{
     AppError, JwtConfig,
 };
-// use tracing::info;
+use tracing::info;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -19,7 +19,7 @@ impl DriverService {
     }
 
     pub fn create_driver(&self, new_driver: NewDriver) -> Result<Driver, AppError> {
-        // info!("Registering new driver: {:?}", new_driver);
+        info!("Registering new driver: {:?}", new_driver);
 
         let driver = self.repo.create_driver(new_driver)
             .map_err(|e| AppError::InternalError(e.to_string()))?;
