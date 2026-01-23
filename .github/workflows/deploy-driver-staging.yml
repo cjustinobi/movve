@@ -16,9 +16,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Rust environment
+        run: |
+          source $HOME/.cargo/env
+          rustc --version
+          cargo --version
       
       - name: Build driver-service in release mode
-        run: cargo build --release --bin driver
+        run: |
+          source $HOME/.cargo/env
+          cargo build --release --bin driver
       
       - name: Stop driver service
         run: sudo systemctl stop movve-driver
