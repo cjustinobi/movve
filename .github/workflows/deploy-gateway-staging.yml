@@ -44,7 +44,7 @@ jobs:
       - name: Start gateway service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-gateway
       
-      - name: Wait for service to start
+      - name: Wait for service to start for 3 seconds
         run: sleep 3
       
       - name: Check service status
