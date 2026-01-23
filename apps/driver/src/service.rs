@@ -4,7 +4,7 @@ use anyhow::Result;
 use common::{
     AppError, JwtConfig,
 };
-use tracing::info;
+// use tracing::info;
 use uuid::Uuid;
 
 #[derive(Clone)]
