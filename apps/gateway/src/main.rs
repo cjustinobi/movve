@@ -115,7 +115,7 @@ pub fn protected_routes(jwt_secret: String) -> Router<AppState> {
 
 
 async fn health_check() -> &'static str {
-    "Gateway is healthy"
+    "Gateway is healthy."
 }
 async fn root_handler() -> &'static str {
     "Movve API Gateway - Visit /docs for API documentation"
