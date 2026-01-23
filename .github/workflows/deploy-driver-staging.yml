@@ -29,7 +29,7 @@ jobs:
           cargo build --release --bin driver
       
       - name: Stop driver service
-        run: sudo systemctl stop movve-driver
+        run: sudo systemctl stop movve-driver || true
       
       - name: Copy binary to deployment location
         run: |

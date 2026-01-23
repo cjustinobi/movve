@@ -17,11 +17,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
+      - name: Setup Rust environment
+        run: |
+          source $HOME/.cargo/env
+          rustc --version
+          cargo --version
+      
       - name: Build auth-service in release mode
-        run: cargo build --release --bin auth
+        run: |
+          source $HOME/.cargo/env
+          cargo build --release --bin auth
       
       - name: Stop auth service
-        run: sudo systemctl stop movve-auth
+        run: sudo systemctl stop movve-auth || true
       
       - name: Copy binary to deployment location
         run: |
