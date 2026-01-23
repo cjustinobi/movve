@@ -8,6 +8,7 @@ on:
       - 'libs/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
+      - '.github/workflows/deploy-gateway-staging.yml'
 
 jobs:
   deploy:
