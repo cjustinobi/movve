@@ -13,7 +13,7 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,34 +26,45 @@ jobs:
           source $HOME/.cargo/env
           rustc --version
           cargo --version
-      
+
       - name: Build driver-service in release mode
         run: |
           source $HOME/.cargo/env
           cargo build --release --bin driver
-      
-      - name: Stop driver service
-        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-driver || true
-      
-      - name: Run Diesel migrations (auth)
+
+      - name: Copy binary and migrations to VPS
         run: |
-          set -e
-          source /opt/movve/.env
-          export DRIVER_DATABASE_URL=$DRIVER_DATABASE_URL
-          cd apps/driver
-          diesel migration run
-          
-      - name: Copy binary to deployment location
-        run: |
+          # Create directories on VPS
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/driver
+          
+          # Copy binary
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/driver /opt/movve/bin/driver-service
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/driver-service
-      
+          
+          # Copy migrations and env
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/driver/migrations /opt/movve/driver/migrations
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp /opt/movve/.env /opt/movve/driver/.env
+
+      - name: Stop driver service
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-driver || true
+
+      - name: Run Diesel migrations on VPS
+        run: |
+          cd /opt/movve/driver
+          export DATABASE_URL=$DRIVER_DATABASE_URL
+          # Install Diesel CLI temporarily (only if not installed)
+          if ! command -v diesel &> /dev/null; then
+            source $HOME/.cargo/env
+            cargo install diesel_cli --no-default-features --features postgres
+          fi
+          diesel migration run
+
       - name: Start driver service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-driver
-      
-      - name: Wait for service to start for 3 seconds
+
+      - name: Wait for service to start
         run: sleep 3
-      
+
       - name: Check service status
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-driver --no-pager
