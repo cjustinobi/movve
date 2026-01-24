@@ -52,6 +52,7 @@ jobs:
       - name: Run Diesel migrations on VPS
         run: |
           cd /opt/movve/auth
+          export DIESEL_DOTENV=0
           export DATABASE_URL=$AUTH_DATABASE_URL
           # Install Diesel CLI temporarily (only if not installed)
           if ! command -v diesel &> /dev/null; then
