@@ -52,14 +52,14 @@ jobs:
       - name: Run Diesel migrations on VPS
         run: |
           cd /opt/movve/driver
-          export DIESEL_DOTENV=0
+
           export DATABASE_URL=$DRIVER_DATABASE_URL
           # Install Diesel CLI temporarily (only if not installed)
           if ! command -v diesel &> /dev/null; then
             source $HOME/.cargo/env
             cargo install diesel_cli --no-default-features --features postgres
           fi
-          diesel migration run
+          diesel migration run --no-dotenv
 
       - name: Start driver service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-driver
