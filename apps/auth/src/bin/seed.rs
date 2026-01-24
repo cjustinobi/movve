@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
 
     let database_url =
-        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        std::env::var("AUTH_DATABASE_URL").expect("AUTH_DATABASE_URL must be set");
 
     let mut conn =
         PgConnection::establish(&database_url)

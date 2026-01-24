@@ -10,7 +10,7 @@ skip_core_tasks = true
 APP_PORT = 8000
 AUTH_PORT = 8001
 DRIVER_PORT = 8002
-DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
+AUTH_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
 DRIVER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_driver"
 RUST_LOG = "info"
 
@@ -66,21 +66,21 @@ category = "diesel"
 description = "Setup and migrate Auth DB"
 script = [
   "echo '🚀 Setting up Auth database...'",
-  "diesel setup --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+  "diesel setup --database-url ${AUTH_DATABASE_URL} --migration-dir apps/auth/migrations"
 ]
 
 [tasks.diesel-auth-migrate]
 category = "diesel"
 description = "Run pending Auth migrations"
 script = [
-  "diesel migration run --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+  "diesel migration run --database-url ${AUTH_DATABASE_URL} --migration-dir apps/auth/migrations"
 ]
 
 [tasks.diesel-auth-revert]
 category = "diesel"
 description = "Revert last Auth migration"
 script = [
-  "diesel migration revert --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations"
+  "diesel migration revert --database-url ${AUTH_DATABASE_URL} --migration-dir apps/auth/migrations"
 ]
 
 [tasks.diesel-auth-reset]
@@ -132,7 +132,7 @@ diesel print-schema --database-url "${DRIVER_DATABASE_URL}" > src/schema.rs
 category = "db"
 description = "Check PostgreSQL connection for both databases"
 script = [
-  "pg_isready -d ${DATABASE_URL}",
+  "pg_isready -d ${AUTH_DATABASE_URL}",
   "pg_isready -d ${DRIVER_DATABASE_URL}"
 ]
 

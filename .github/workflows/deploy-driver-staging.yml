@@ -35,6 +35,14 @@ jobs:
       - name: Stop driver service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-driver || true
       
+      - name: Run Diesel migrations (auth)
+        run: |
+          set -e
+          source /opt/movve/.env
+          export DRIVER_DATABASE_URL=$DRIVER_DATABASE_URL
+          cd apps/driver
+          diesel migration run
+          
       - name: Copy binary to deployment location
         run: |
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin

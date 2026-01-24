@@ -34,8 +34,8 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Load configuration (from libs/common)
     let config = AppConfig::load()?;
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    let database_url = std::env::var("DRIVER_DATABASE_URL")
+        .expect("DRIVER_DATABASE_URL must be set");
 
     // Setup Diesel connection pool
     let manager = ConnectionManager::<PgConnection>::new(database_url);
