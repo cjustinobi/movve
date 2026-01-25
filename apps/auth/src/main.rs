@@ -58,7 +58,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let addr = format!("{}:{}", config.services.auth_service_host, config.services.auth_service_port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    tracing::info!("🔐 Auth service listening on {} (localhost only)", addr);
+    tracing::info!("🔐 Auth service listening on: {} (localhost only)", addr);
 
     axum::serve(listener, app).await?;
 
