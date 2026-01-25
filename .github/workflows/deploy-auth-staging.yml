@@ -51,7 +51,6 @@ jobs:
 
       - name: Run Diesel migrations on VPS
         run: |
-          cd /opt/movve/auth
           source /opt/movve/.env
           export AUTH_DATABASE_URL=$AUTH_DATABASE_URL
           
@@ -61,8 +60,7 @@ jobs:
             cargo install diesel_cli --no-default-features --features postgres
           fi
           
-          # Run migrations with sudo to avoid permission issues
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S bash -c "export AUTH_DATABASE_URL=$AUTH_DATABASE_URL && diesel migration run --migration-dir /opt/movve/auth/migrations"
+          diesel migration run --migration-dir /opt/movve/auth/migrations
 
       - name: Start auth service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-auth

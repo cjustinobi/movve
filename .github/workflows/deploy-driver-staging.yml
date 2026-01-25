@@ -51,7 +51,6 @@ jobs:
 
       - name: Run Diesel migrations on VPS
         run: |
-          cd /opt/movve/driver
           source /opt/movve/.env
           export DRIVER_DATABASE_URL=$DRIVER_DATABASE_URL
           
@@ -61,8 +60,7 @@ jobs:
             cargo install diesel_cli --no-default-features --features postgres
           fi
           
-          # Run migrations with sudo to avoid permission issues
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S bash -c "export DRIVER_DATABASE_URL=$DRIVER_DATABASE_URL && diesel migration run --migration-dir /opt/movve/driver/migrations"
+          diesel migration run --migration-dir /opt/movve/driver/migrations
 
       - name: Start driver service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-driver
