@@ -32,6 +32,9 @@ jobs:
           source $HOME/.cargo/env
           cargo build --release --bin driver
 
+      - name: Stop driver service
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-driver || true
+
       - name: Copy binary and migrations to VPS
         run: |
           # Create directories on VPS
@@ -46,9 +49,6 @@ jobs:
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S rm -rf /opt/movve/driver/migrations
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/driver/migrations /opt/movve/driver/migrations
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp /opt/movve/.env /opt/movve/driver/.env
-
-      - name: Stop driver service
-        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-driver || true
 
       - name: Run Diesel migrations on VPS
         run: |

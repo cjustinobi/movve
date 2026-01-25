@@ -32,6 +32,9 @@ jobs:
           source $HOME/.cargo/env
           cargo build --release --bin auth
 
+      - name: Stop auth service
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-auth || true
+
       - name: Copy binary and migrations to VPS
         run: |
           # Create directories on VPS
@@ -46,9 +49,6 @@ jobs:
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S rm -rf /opt/movve/auth/migrations
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/auth/migrations /opt/movve/auth/migrations
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp /opt/movve/.env /opt/movve/auth/.env
-
-      - name: Stop auth service
-        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-auth || true
 
       - name: Run Diesel migrations on VPS
         run: |
