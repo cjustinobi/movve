@@ -43,6 +43,7 @@ jobs:
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/auth-service
           
           # Copy migrations and env
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S rm -rf /opt/movve/auth/migrations
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/auth/migrations /opt/movve/auth/migrations
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp /opt/movve/.env /opt/movve/auth/.env
 
