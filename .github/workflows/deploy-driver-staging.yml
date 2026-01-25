@@ -60,7 +60,7 @@ jobs:
             cargo install diesel_cli --no-default-features --features postgres
           fi
           
-          diesel migration run --migration-dir /opt/movve/driver/migrations
+          diesel migration run --migration-dir /opt/movve/driver/migrations --database-url $DRIVER_DATABASE_URL
 
       - name: Start driver service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-driver

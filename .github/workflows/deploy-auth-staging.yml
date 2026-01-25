@@ -60,7 +60,7 @@ jobs:
             cargo install diesel_cli --no-default-features --features postgres
           fi
           
-          diesel migration run --migration-dir /opt/movve/auth/migrations
+          diesel migration run --migration-dir /opt/movve/auth/migrations --database-url $AUTH_DATABASE_URL
 
       - name: Start auth service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-auth

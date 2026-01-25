@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use anyhow::Context;
+use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AppConfig {
@@ -28,7 +28,6 @@ pub struct MailConfig {
     pub frontend_url: String,
 }
 
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct ServicesConfig {
     pub auth_service_host: String,
@@ -41,13 +40,11 @@ pub struct ServicesConfig {
 
 impl AppConfig {
     pub fn load() -> Result<Self, anyhow::Error> {
-
         dotenvy::dotenv().ok();
 
         let config = AppConfig {
             server: ServerConfig {
-                host: std::env::var("SERVER_HOST")
-                    .unwrap_or_else(|_| "0.0.0.0".to_string()),
+                host: std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
                 port: std::env::var("SERVER_PORT")
                     .unwrap_or_else(|_| "8080".to_string())
                     .parse()
@@ -67,9 +64,9 @@ impl AppConfig {
                 driver_service_host: std::env::var("DRIVER_SERVICE_HOST")
                     .unwrap_or_else(|_| "127.0.0.1".to_string()),
                 auth_service_url: std::env::var("AUTH_SERVICE_URL")
-                    .unwrap_or_else(|_| "http://localhost:8001".to_string()),
+                    .unwrap_or_else(|_| "http://127.0.0.1:8001".to_string()),
                 driver_service_url: std::env::var("DRIVER_SERVICE_URL")
-                    .unwrap_or_else(|_| "http://localhost:8002".to_string()),
+                    .unwrap_or_else(|_| "http://127.0.0.1:8002".to_string()),
                 auth_service_port: std::env::var("AUTH_SERVICE_PORT")
                     .unwrap_or_else(|_| "8001".to_string())
                     .parse()
