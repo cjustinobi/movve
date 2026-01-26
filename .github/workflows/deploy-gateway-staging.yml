@@ -50,7 +50,7 @@ jobs:
           sleep 5
 
       - name: Verify tunnel connectivity
-        run: curl -f https://staging.movve.xyz/ || echo "Warning: Tunnel not immediately available" || exit 1
+        run: curl -f https://staging.movve.xyz/ || echo "Warning Tunnel not immediately available"
       
       - name: Check service status
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager
