@@ -53,6 +53,7 @@ impl AuthService {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                email_verified: user.email_verified,
             },
         })
     }
@@ -77,6 +78,7 @@ impl AuthService {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                email_verified: user.email_verified,
             },
         })
     }
@@ -179,6 +181,7 @@ impl AuthService {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                email_verified: user.email_verified,
             },
         })
     }
@@ -217,6 +220,10 @@ impl AuthService {
             .map_err(|e| AppError::InternalError(e.to_string()))?
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
 
+        if user.email_verified {
+            return Err(AppError::BadRequest("Email already verified".to_string()));
+        }
+
         let code = generate_numeric_code(4);
         let expires_at = Utc::now() + chrono::Duration::minutes(15);
 
@@ -229,7 +236,19 @@ impl AuthService {
     }
 
     pub async fn verify_email(&self, user_id: Uuid, code: &str) -> Result<(), AppError> {
-        // 1. Find valid verification code
+        // 1. Check if user is already verified
+        let user = self
+            .repo
+            .find_by_id(user_id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
+
+        if user.email_verified {
+            return Err(AppError::BadRequest("Email already verified".to_string()));
+        }
+
+        // 2. Find valid verification code
         let token = self
             .repo
             .find_verification_code(user_id, code)
@@ -239,9 +258,15 @@ impl AuthService {
                 AppError::BadRequest("Invalid or expired verification code".to_string())
             })?;
 
-        // 2. Mark code as used
+        // 3. Mark code as used
         self.repo
             .mark_verification_code_as_used(token.id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        // 4. Mark user as verified
+        self.repo
+            .mark_user_as_verified(user_id)
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))?;
 

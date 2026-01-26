@@ -16,6 +16,7 @@ pub struct User {
     pub last_name: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
+    pub email_verified: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -107,6 +108,7 @@ pub struct UserInfo {
     pub id: Uuid,
     pub email: String,
     pub role: UserRole,
+    pub email_verified: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]

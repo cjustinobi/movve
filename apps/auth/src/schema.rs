@@ -70,6 +70,7 @@ diesel::table! {
         #[max_length = 255]
         password_hash -> Varchar,
         role -> UserRole,
+        email_verified -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

@@ -18,6 +18,7 @@ pub struct NewUser<'a> {
     pub email: &'a str,
     pub password_hash: &'a str,
     pub role: UserRole, // UserRole enum (it implements Copy/Clone)
+    pub email_verified: bool,
 }
 
 #[derive(Queryable, Selectable)]
@@ -30,6 +31,7 @@ pub struct UserDb {
     pub last_name: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
+    pub email_verified: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -43,6 +45,7 @@ impl From<UserDb> for User {
             last_name: user_db.last_name,
             password_hash: user_db.password_hash,
             role: user_db.role,
+            email_verified: user_db.email_verified,
             created_at: user_db.created_at,
             updated_at: user_db.updated_at,
         }
@@ -144,6 +147,7 @@ impl UserRepository {
                 email: &email,
                 password_hash: &password_hash,
                 role,
+                email_verified: false,
             };
 
             let user_db: UserDb = diesel::insert_into(users::table)
@@ -308,7 +312,7 @@ impl UserRepository {
         let code = code.to_string();
 
         tokio::task::spawn_blocking(move || {
-            let mut conn = pool.get()?;
+            let mut conn = pool.get().map_err(|e| Box::new(e) as DbError)?;
             let new_token = NewEmailVerificationTokenDb {
                 id: Uuid::new_v4(),
                 user_id,
@@ -319,7 +323,16 @@ impl UserRepository {
 
             diesel::insert_into(email_verification_tokens::table)
                 .values(&new_token)
-                .execute(&mut conn)?;
+                .on_conflict(email_verification_tokens::user_id)
+                .do_update()
+                .set((
+                    email_verification_tokens::code.eq(&code),
+                    email_verification_tokens::expires_at.eq(expires_at),
+                    email_verification_tokens::used.eq(false),
+                    email_verification_tokens::created_at.eq(Utc::now().naive_utc()),
+                ))
+                .execute(&mut conn)
+                .map_err(|e| Box::new(e) as DbError)?;
 
             Ok::<(), DbError>(())
         })
@@ -356,12 +369,29 @@ impl UserRepository {
         let pool = self.pool.clone();
 
         tokio::task::spawn_blocking(move || {
-            let mut conn = pool.get()?;
+            let mut conn = pool.get().map_err(|e| Box::new(e) as DbError)?;
             diesel::update(
                 email_verification_tokens::table.filter(email_verification_tokens::id.eq(id)),
             )
             .set(email_verification_tokens::used.eq(true))
-            .execute(&mut conn)?;
+            .execute(&mut conn)
+            .map_err(|e| Box::new(e) as DbError)?;
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
+    }
+
+    pub async fn mark_user_as_verified(&self, user_id: Uuid) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get().map_err(|e| Box::new(e) as DbError)?;
+            diesel::update(users::table.filter(users::id.eq(user_id)))
+                .set(users::email_verified.eq(true))
+                .execute(&mut conn)
+                .map_err(|e| Box::new(e) as DbError)?;
             Ok::<(), DbError>(())
         })
         .await??;
