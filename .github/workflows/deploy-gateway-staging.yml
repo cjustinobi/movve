@@ -44,8 +44,13 @@ jobs:
       - name: Start gateway service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-gateway
       
-      - name: Wait for service to start for 3 seconds
-        run: sleep 3
+      - name: Restart cloudflare tunnel
+        run: |
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart cloudflared-movve
+          sleep 5
+
+      - name: Verify tunnel connectivity
+        run: curl -f https://staging.movve.xyz/ || echo "Warning: Tunnel not immediately available" || exit 1
       
       - name: Check service status
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager

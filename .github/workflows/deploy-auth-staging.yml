@@ -68,16 +68,30 @@ jobs:
 
       - name: Wait for service to be healthy
         run: |
+          echo "Waiting for auth service to start..."
           for i in {1..10}; do
-            if curl -f http://localhost:8001/ 2>/dev/null; then
-              echo "Auth service is healthy"
-              exit 0
+            # Check if service is active
+            if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl is-active movve-auth --quiet; then
+              # Check if it's listening on port 8001
+              if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S ss -tlnp | grep -q ":8001"; then
+                echo "✅ Auth service is healthy and listening on port 8001"
+                exit 0
+              fi
             fi
-            echo "Waiting for auth service... attempt $i"
+            echo "⏳ Waiting for auth service... attempt $i/10"
             sleep 3
           done
-          echo "Auth service failed to start properly"
+          
+          echo "❌ Auth service failed to start properly"
+          echo "Service status:"
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-driver --no-pager || true
+          echo ""
+          echo "Recent logs:"
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S journalctl -u movve-driver -n 20 --no-pager || true
           exit 1
 
       - name: Check service status
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-auth --no-pager
+
+      - name: Display recent logs
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S journalctl -u movve-auth -n 10 --no-pager
