@@ -66,8 +66,18 @@ jobs:
       - name: Start driver service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-driver
 
-      - name: Wait for service to start
-        run: sleep 3
+      - name: Wait for service to be healthy
+        run: |
+          for i in {1..10}; do
+            if curl -f http://localhost:8002/ 2>/dev/null; then
+              echo "Driver service is healthy"
+              exit 0
+            fi
+            echo "Waiting for driver service... attempt $i"
+            sleep 3
+          done
+          echo "Driver service failed to start properly"
+          exit 1
 
       - name: Check service status
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-driver --no-pager

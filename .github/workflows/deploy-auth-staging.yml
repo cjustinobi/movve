@@ -66,8 +66,18 @@ jobs:
       - name: Start auth service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-auth
 
-      - name: Wait for service to start
-        run: sleep 3
+      - name: Wait for service to be healthy
+        run: |
+          for i in {1..10}; do
+            if curl -f http://localhost:8001/ 2>/dev/null; then
+              echo "Auth service is healthy"
+              exit 0
+            fi
+            echo "Waiting for auth service... attempt $i"
+            sleep 3
+          done
+          echo "Auth service failed to start properly"
+          exit 1
 
       - name: Check service status
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-auth --no-pager

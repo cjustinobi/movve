@@ -51,4 +51,4 @@ jobs:
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager
       
       - name: Health check
-        run: curl -f http://localhost:8080/health || exit 1
+        run: curl -f http://localhost:8000/health || exit 1
