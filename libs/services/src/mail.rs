@@ -19,11 +19,8 @@ impl MailService {
         &self,
         to_email: &str,
         user_name: &str,
-        reset_token: &str,
-        frontend_url: &str,
+        reset_code: &str,
     ) -> Result<()> {
-        let reset_link = format!("{}/reset-password?token={}", frontend_url, reset_token);
-
         let subject = "Reset Your Password - Movve";
         let html_body = format!(
             r#"
@@ -35,13 +32,16 @@ impl MailService {
                     .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
                     .header {{ background-color: #4F46E5; color: white; padding: 20px; text-align: center; }}
                     .content {{ padding: 30px; background-color: #f9fafb; }}
-                    .button {{ 
-                        display: inline-block; 
-                        padding: 12px 24px; 
-                        background-color: #4F46E5; 
-                        color: white; 
-                        text-decoration: none; 
-                        border-radius: 6px; 
+                    .code {{ 
+                        display: block; 
+                        padding: 20px; 
+                        background-color: #EEF2FF; 
+                        color: #4F46E5; 
+                        font-size: 32px; 
+                        font-weight: bold; 
+                        text-align: center; 
+                        letter-spacing: 5px;
+                        border-radius: 8px;
                         margin: 20px 0;
                     }}
                     .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }}
@@ -50,18 +50,14 @@ impl MailService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>Password Reset Request</h1>
+                        <h1>Password Reset Code</h1>
                     </div>
                     <div class="content">
                         <p>Hi {},</p>
-                        <p>We received a request to reset your password for your HealthBridge account.</p>
-                        <p>Click the button below to reset your password:</p>
-                        <p style="text-align: center;">
-                            <a href="{}" class="button">Reset Password</a>
-                        </p>
-                        <p>Or copy and paste this link into your browser:</p>
-                        <p style="word-break: break-all; color: #4F46E5;">{}</p>
-                        <p><strong>This link will expire in 1 hour.</strong></p>
+                        <p>We received a request to reset your password for your Movve account.</p>
+                        <p>Use the following code to reset your password:</p>
+                        <div class="code">{}</div>
+                        <p><strong>This code will expire in 30 minutes.</strong></p>
                         <p>If you didn't request a password reset, you can safely ignore this email.</p>
                     </div>
                     <div class="footer">
@@ -72,19 +68,19 @@ impl MailService {
             </body>
             </html>
             "#,
-            user_name, reset_link, reset_link
+            user_name, reset_code
         );
 
         let text_body = format!(
             "Hi {},\n\n\
-            We received a request to reset your password for your HealthBridge account.\n\n\
-            Click the link below to reset your password:\n\
+            We received a request to reset your password for your Movve account.\n\n\
+            Use the following code to reset your password:\n\
             {}\n\n\
-            This link will expire in 1 hour.\n\n\
+            This code will expire in 30 minutes.\n\n\
             If you didn't request a password reset, you can safely ignore this email.\n\n\
             Best regards,\n\
-            The HealthBridge Team",
-            user_name, reset_link
+            The Movve Team",
+            user_name, reset_code
         );
 
         let email = CreateEmailBaseOptions::new(&self.from_email, vec![to_email], subject)
@@ -103,20 +99,19 @@ impl MailService {
         }
     }
 
-
     pub async fn send_welcome_email(&self, to_email: &str, user_name: &str) -> Result<()> {
         let (subject, html, text) = EmailTemplates::welcome_email(user_name);
-        self.send_notification(to_email, &subject, &html, Some(&text)).await
+        self.send_notification(to_email, &subject, &html, Some(&text))
+            .await
     }
 
-    pub async fn send_verification_email(
+    pub async fn send_verification_code_email(
         &self,
         to_email: &str,
         user_name: &str,
-        verification_link: &str,
+        code: &str,
     ) -> Result<()> {
-        let (subject, html, text) =
-            EmailTemplates::verification_email(user_name, verification_link);
+        let (subject, html, text) = EmailTemplates::verification_code_email(user_name, code);
         self.send_notification(to_email, &subject, &html, Some(&text))
             .await
     }

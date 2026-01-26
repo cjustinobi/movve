@@ -12,6 +12,7 @@ use crate::{
     model::{AuthResponse, Claims, LoginRequest, RegisterRequest, User, UserInfo},
     repository::UserRepository,
 };
+use utils::generate_numeric_code;
 
 pub struct AuthService {
     repo: UserRepository,
@@ -43,9 +44,11 @@ impl AuthService {
             .map_err(|e| AppError::InternalError(e.to_string()))?;
 
         let token = self.generate_token(&user)?;
+        let refresh_token = self.generate_refresh_token(&user).await?;
 
         Ok(AuthResponse {
             token,
+            refresh_token,
             user: UserInfo {
                 id: user.id,
                 email: user.email,
@@ -65,9 +68,11 @@ impl AuthService {
         self.verify_password(&req.password, &user.password_hash)?;
 
         let token = self.generate_token(&user)?;
+        let refresh_token = self.generate_refresh_token(&user).await?;
 
         Ok(AuthResponse {
             token,
+            refresh_token,
             user: UserInfo {
                 id: user.id,
                 email: user.email,
@@ -110,18 +115,117 @@ impl AuthService {
             }
         };
 
-        // 2️⃣ Create password reset token
-        match self.repo.create_password_reset(user.id).await {
+        // 2️⃣ Create 4-digit password reset code
+        let code = generate_numeric_code(4);
+        match self.repo.create_password_reset(user.id, &code).await {
             Ok(token) => {
-                info!(user_id = %user.id, token = %token, "Password reset token created successfully");
-                // In production: send email here
+                info!(user_id = %user.id, token = %token, "Password reset code created successfully");
                 Ok(token)
             }
             Err(e) => {
-                error!(user_id = %user.id, error = ?e, "Failed to create password reset token");
+                error!(user_id = %user.id, error = ?e, "Failed to create password reset code");
                 Err(AppError::InternalError(e.to_string()))
             }
         }
+    }
+
+    // ---------- Refresh Tokens ----------
+    pub async fn generate_refresh_token(&self, user: &User) -> Result<String, AppError> {
+        let token = Uuid::new_v4().to_string();
+        let expires_at =
+            Utc::now() + chrono::Duration::hours(self.jwt_config.refresh_expiration_hours);
+
+        self.repo
+            .create_refresh_token(user.id, &token, expires_at.naive_utc())
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        Ok(token)
+    }
+
+    pub async fn refresh_tokens(&self, refresh_token: &str) -> Result<AuthResponse, AppError> {
+        // 1. Find and validate refresh token
+        let rt = self
+            .repo
+            .find_refresh_token(refresh_token)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| {
+                AppError::Unauthorized("Invalid or expired refresh token".to_string())
+            })?;
+
+        // 2. Get user
+        let user = self
+            .repo
+            .find_by_id(rt.user_id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
+
+        // 3. Revoke old token
+        self.repo
+            .revoke_refresh_token(refresh_token)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        // 4. Generate new tokens
+        let token = self.generate_token(&user)?;
+        let new_refresh_token = self.generate_refresh_token(&user).await?;
+
+        Ok(AuthResponse {
+            token,
+            refresh_token: new_refresh_token,
+            user: UserInfo {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+            },
+        })
+    }
+
+    // ---------- Update Password ----------
+    pub async fn update_password(
+        &self,
+        user_id: Uuid,
+        old_password: &str,
+        new_password: &str,
+    ) -> Result<(), AppError> {
+        let user = self
+            .repo
+            .find_by_id(user_id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
+
+        self.verify_password(old_password, &user.password_hash)?;
+
+        let new_hash = self.hash_password(new_password)?;
+        self.repo
+            .update_password(user_id, &new_hash)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        Ok(())
+    }
+
+    // ---------- Email Verification ----------
+    pub async fn resend_verification_code(&self, email: &str) -> Result<String, AppError> {
+        let user = self
+            .repo
+            .find_by_email(email)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
+
+        let code = generate_numeric_code(4);
+        let expires_at = Utc::now() + chrono::Duration::minutes(15);
+
+        self.repo
+            .create_verification_code(user.id, &code, expires_at.naive_utc())
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        Ok(code)
     }
 
     // ---------- Verify Reset Token ----------

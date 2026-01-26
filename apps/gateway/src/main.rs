@@ -61,7 +61,9 @@ pub fn auth_routes(jwt_secret: String) -> Router<AppState> {
     let public = Router::new()
         .route("/api/auth/register", post(proxy::proxy_by_prefix))
         .route("/api/auth/login", post(proxy::proxy_by_prefix))
-        .route("/api/auth/forgot-password", post(proxy::proxy_by_prefix));
+        .route("/api/auth/forgot-password", post(proxy::proxy_by_prefix))
+        .route("/api/auth/reset-password", post(proxy::proxy_by_prefix))
+        .route("/api/auth/resend-verification", post(proxy::proxy_by_prefix));
 
     // Protected auth endpoints (require JWT)
     let protected = Router::new()

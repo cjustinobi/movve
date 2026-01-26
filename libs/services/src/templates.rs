@@ -15,11 +15,18 @@ impl EmailTemplates {
             "#,
             user_name
         );
-        let text = format!("Welcome to Movve, {}!\n\nThank you for joining us.", user_name);
+        let text = format!(
+            "Welcome to Movve, {}!\n\nThank you for joining us.",
+            user_name
+        );
         (subject, html, text)
     }
 
-    pub fn ride_confirmation(rider_name: &str, driver_name: &str, pickup_location: &str) -> (String, String) {
+    pub fn ride_confirmation(
+        rider_name: &str,
+        driver_name: &str,
+        pickup_location: &str,
+    ) -> (String, String) {
         let _subject = "Ride Confirmed";
         let html = format!(
             r#"
@@ -41,10 +48,7 @@ impl EmailTemplates {
         (html, text)
     }
 
-    pub fn verification_email(
-        user_name: &str,
-        verification_link: &str,
-    ) -> (String, String, String) {
+    pub fn verification_code_email(user_name: &str, code: &str) -> (String, String, String) {
         let subject = "Verify your email address".to_string();
         let html = format!(
             r#"
@@ -53,16 +57,17 @@ impl EmailTemplates {
             <body style="font-family: Arial, sans-serif;">
                 <h1>Verify your email address</h1>
                 <p>Hi {},</p>
-                <p>Thank you for signing up with Movve. Please verify your email address by clicking the link below:</p>
-                <p><a href="{}">Verify Email</a></p>
+                <p>Thank you for signing up with Movve. Please use the following code to verify your email address:</p>
+                <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">{}</p>
+                <p>This code will expire in 15 minutes.</p>
             </body>
             </html>
             "#,
-            user_name, verification_link
+            user_name, code
         );
         let text = format!(
-            "Verify your email address\n\nHi {},\n\nThank you for signing up with Movve. Please verify your email address by clicking the link below:\n\n{}",
-            user_name, verification_link
+            "Verify your email address\n\nHi {},\n\nThank you for signing up with Movve. Please use the following code to verify your email address:\n\n{}\n\nThis code will expire in 15 minutes.",
+            user_name, code
         );
         (subject, html, text)
     }

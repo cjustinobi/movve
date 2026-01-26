@@ -1,18 +1,14 @@
 use axum::{
-    Router, middleware, routing::{get, post}
+    Router, middleware,
+    routing::{get, post},
 };
 
-use crate::{handlers, docs, AppState};
+use crate::{AppState, docs, handlers};
 use utoipa::OpenApi;
 
-use axum::{
-    extract::Request,
-    http::StatusCode,
-    middleware::Next,
-    response::Response,
-};
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use crate::model::Claims;
+use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 
 async fn jwt_auth_middleware(
     secret: String,
@@ -51,18 +47,21 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/forgot-password", post(handlers::forgot_password))
-        .route("/api/auth/reset-password", post(handlers::reset_password));
-
+        .route("/api/auth/reset-password", post(handlers::reset_password))
+        .route(
+            "/api/auth/resend-verification",
+            post(handlers::resend_verification),
+        )
+        .route("/api/auth/refresh", post(handlers::refresh_token));
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()
         .route("/api/auth/verify", get(handlers::verify_token))
+        .route("/api/auth/update-password", post(handlers::update_password))
         // Add more protected routes here as needed
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
-            async move {
-                jwt_auth_middleware(secret, req, next).await
-            }
+            async move { jwt_auth_middleware(secret, req, next).await }
         }));
 
     // Combine routes
@@ -70,25 +69,13 @@ pub fn create_routes(state: AppState) -> Router {
         .merge(public_routes)
         .merge(protected_routes)
         // OpenAPI spec endpoint
-        .route("/openapi.json", get(|| async {
-            axum::Json(docs::AuthApiDoc::openapi())
-        }))
+        .route(
+            "/openapi.json",
+            get(|| async { axum::Json(docs::AuthApiDoc::openapi()) }),
+        )
         .with_state(state)
 }
 
-
-// pub fn create_routes() -> Router<AppState> {
-//     Router::new()
-//         .route("/api/auth/health", get(health_check))
-//         .route("/api/auth/register", post(handlers::register))
-//         .route("/api/auth/login", post(handlers::login))
-//         .route("/api/auth/verify", get(handlers::verify_token))
-//         .route("/api/auth/forgot-password", post(handlers::forgot_password))
-//         // Expose OpenAPI spec as JSON endpoint for gateway to fetch
-//         .route("/openapi.json", get(|| async {
-//             axum::Json(docs::AuthApiDoc::openapi())
-//         }))
-// }
 
 async fn health_check() -> &'static str {
     "Auth service is healthy"

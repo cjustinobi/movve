@@ -1,12 +1,14 @@
 use axum::{Extension, Json, extract::State, http::StatusCode};
 use common::{ApiResponse, AppError, EmptyData};
 use tracing::{info, info_span};
+use uuid::Uuid;
 
 use crate::{
     AppState,
     model::{
-        AuthResponse, Claims, ForgotPasswordRequest, ForgotPasswordResponse, LoginRequest,
-        RegisterRequest, RegisterResponse, ResetPasswordRequest,
+        AuthResponse, Claims, ForgotPasswordRequest, LoginRequest,
+        RefreshTokenRequest, RegisterRequest, RegisterResponse, ResendVerificationRequest,
+        ResetPasswordRequest, UpdatePasswordRequest,
     },
 };
 
@@ -77,21 +79,66 @@ pub async fn verify_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Result<ApiResponse<Claims>, AppError> {
-    // Get frontend URL from config
-    let frontend_url =
-        std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
-    let verification_link = format!("{}/verify", frontend_url);
-
-    // send verification email
+    // send verification email code
+    let code = state
+        .auth_service
+        .resend_verification_code(&claims.email)
+        .await?;
     let user_name = claims.email.split('@').next().unwrap_or("User");
+
     state
         .mail_service
-        .send_verification_email(&claims.email, user_name, &verification_link)
+        .send_verification_code_email(&claims.email, user_name, &code)
         .await
         .map_err(|e| AppError::InternalError(e.to_string()))?;
+
     Ok(ApiResponse::success_with_message(
-        "User verified successfully",
+        "Verification code has been sent to your email",
         claims,
+    ))
+}
+
+/// Resends the email verification code
+#[utoipa::path(
+    post,
+    path = "/api/auth/resend-verification",
+    request_body = ResendVerificationRequest,
+    responses(
+        (status = 200, description = "Verification code resent successfully", body = ApiResponse<EmptyData>),
+        (status = 404, description = "User not found"),
+    ),
+    tag = "Auth"
+)]
+pub async fn resend_verification(
+    State(state): State<AppState>,
+    Json(req): Json<ResendVerificationRequest>,
+) -> Result<ApiResponse<EmptyData>, AppError> {
+    let code = state
+        .auth_service
+        .resend_verification_code(&req.email)
+        .await?;
+
+    // Get user details for email
+    let user = state.auth_service.get_user_by_email(&req.email).await?;
+    let user_name = format!(
+        "{} {}",
+        user.first_name.as_deref().unwrap_or("User"),
+        user.last_name.as_deref().unwrap_or("")
+    );
+
+    // Send verification email
+    match state
+        .mail_service
+        .send_verification_code_email(&req.email, &user_name, &code)
+        .await
+    {
+        Ok(_) => tracing::info!("Verification code sent to {}", req.email),
+        Err(e) => tracing::error!("Failed to send verification email: {:?}", e),
+    }
+
+    Ok(ApiResponse::message_only(
+        StatusCode::OK,
+        "Verification code has been sent to your email",
     ))
 }
 
@@ -101,7 +148,7 @@ pub async fn verify_token(
     path = "/api/auth/forgot-password",
     request_body = ForgotPasswordRequest,
     responses(
-        (status = 200, description = "Password reset email sent", body = ApiResponse<ForgotPasswordResponse>),
+        (status = 200, description = "Password reset email sent", body = ApiResponse<EmptyData>),
         (status = 404, description = "User not found"),
     ),
     tag = "Auth"
@@ -109,7 +156,7 @@ pub async fn verify_token(
 pub async fn forgot_password(
     State(state): State<AppState>,
     Json(req): Json<ForgotPasswordRequest>,
-) -> Result<ApiResponse<ForgotPasswordResponse>, AppError> {
+) -> Result<ApiResponse<EmptyData>, AppError> {
     let token = state.auth_service.forgot_password(&req.email).await?;
 
     // Get user details for email
@@ -120,14 +167,10 @@ pub async fn forgot_password(
         user.last_name.as_deref().unwrap_or("")
     );
 
-    // Get frontend URL from config
-    let frontend_url =
-        std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
-
     // Send password reset email
     match state
         .mail_service
-        .send_password_reset_email(&req.email, &user_name, &token, &frontend_url)
+        .send_password_reset_email(&req.email, &user_name, &token)
         .await
     {
         Ok(_) => tracing::info!("Password reset email sent to {}", req.email),
@@ -137,9 +180,9 @@ pub async fn forgot_password(
         }
     }
 
-    Ok(ApiResponse::success_with_message(
+    Ok(ApiResponse::message_only(
+        StatusCode::OK,
         "Password reset instructions have been sent to your email",
-        ForgotPasswordResponse { token: Some(token) },
     ))
 }
 
@@ -175,5 +218,61 @@ pub async fn reset_password(
     Ok(ApiResponse::message_only(
         StatusCode::OK,
         "Password has been reset successfully.",
+    ))
+}
+
+/// Updates the password for a logged-in user
+#[utoipa::path(
+    post,
+    path = "/api/auth/update-password",
+    request_body = UpdatePasswordRequest,
+    responses(
+        (status = 200, description = "Password updated successfully", body = ApiResponse<EmptyData>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Auth",
+    security(("bearerAuth" = []))
+)]
+pub async fn update_password(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<UpdatePasswordRequest>,
+) -> Result<ApiResponse<EmptyData>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    state
+        .auth_service
+        .update_password(user_id, &req.old_password, &req.new_password)
+        .await?;
+
+    Ok(ApiResponse::message_only(
+        StatusCode::OK,
+        "Password has been updated successfully.",
+    ))
+}
+
+/// Refreshes the access token using a refresh token
+#[utoipa::path(
+    post,
+    path = "/api/auth/refresh",
+    request_body = RefreshTokenRequest,
+    responses(
+        (status = 200, description = "Token refreshed successfully", body = ApiResponse<AuthResponse>),
+        (status = 401, description = "Invalid or expired refresh token"),
+    ),
+    tag = "Auth"
+)]
+pub async fn refresh_token(
+    State(state): State<AppState>,
+    Json(req): Json<RefreshTokenRequest>,
+) -> Result<ApiResponse<AuthResponse>, AppError> {
+    let response = state
+        .auth_service
+        .refresh_tokens(&req.refresh_token)
+        .await?;
+    Ok(ApiResponse::success_with_message(
+        "Token refreshed successfully",
+        response,
     ))
 }

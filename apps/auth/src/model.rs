@@ -1,12 +1,12 @@
-use chrono::{NaiveDateTime};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use utoipa::ToSchema;
+use chrono::NaiveDateTime;
 use diesel::deserialize::{self, FromSql, FromSqlRow};
 use diesel::expression::AsExpression;
 use diesel::pg::{Pg, PgValue};
 use diesel::serialize::{self, IsNull, Output, ToSql};
+use serde::{Deserialize, Serialize};
 use std::io::Write;
+use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct User {
@@ -18,6 +18,26 @@ pub struct User {
     pub role: UserRole,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+pub struct RefreshToken {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub token: String,
+    pub expires_at: NaiveDateTime,
+    pub revoked: bool,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+pub struct EmailVerificationToken {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub code: String,
+    pub expires_at: NaiveDateTime,
+    pub used: bool,
+    pub created_at: NaiveDateTime,
 }
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow)]
@@ -57,7 +77,6 @@ impl FromSql<crate::schema::sql_types::UserRole, Pg> for UserRole {
     }
 }
 
-
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RegisterRequest {
     pub email: String,
@@ -79,6 +98,7 @@ pub struct LoginRequest {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AuthResponse {
     pub token: String,
+    pub refresh_token: String,
     pub user: UserInfo,
 }
 
@@ -91,24 +111,18 @@ pub struct UserInfo {
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct Claims {
-    pub sub: String,  // user id
+    pub sub: String, // user id
     pub email: String,
     pub role: UserRole,
     pub exp: i64,
     pub iat: i64,
 }
 
-
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ForgotPasswordRequest {
     pub email: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
-pub struct ForgotPasswordResponse {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub token: Option<String>, // Only for development/testing
-}
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ResetPasswordRequest {
@@ -119,4 +133,20 @@ pub struct ResetPasswordRequest {
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ResetPasswordResponse {
     pub message: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct UpdatePasswordRequest {
+    pub old_password: String,
+    pub new_password: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct RefreshTokenRequest {
+    pub refresh_token: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ResendVerificationRequest {
+    pub email: String,
 }

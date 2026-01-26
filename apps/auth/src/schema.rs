@@ -10,6 +10,17 @@ pub mod sql_types {
     pub struct UserRole;
 }
 
+diesel::table! {
+    email_verification_tokens (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        #[max_length = 10]
+        code -> Varchar,
+        expires_at -> Timestamptz,
+        used -> Bool,
+        created_at -> Timestamptz,
+    }
+}
 
 diesel::table! {
     password_resets (id) {
@@ -23,17 +34,14 @@ diesel::table! {
     }
 }
 
-
 diesel::table! {
-    use diesel::sql_types::*;
-    use diesel::sql_types::Uuid as DieselUuid;
-
-    email_verification_tokens (id) {
-        id -> DieselUuid,
-        user_id -> DieselUuid,
-        code -> Varchar,
+    refresh_tokens (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        #[max_length = 255]
+        token -> Varchar,
         expires_at -> Timestamptz,
-        used -> Bool,
+        revoked -> Bool,
         created_at -> Timestamptz,
     }
 }
@@ -67,6 +75,13 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(email_verification_tokens -> users (user_id));
 diesel::joinable!(password_resets -> users (user_id));
+diesel::joinable!(refresh_tokens -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(password_resets, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    email_verification_tokens,
+    password_resets,
+    refresh_tokens,
+    users,
+);

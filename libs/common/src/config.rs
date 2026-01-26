@@ -19,6 +19,7 @@ pub struct ServerConfig {
 pub struct JwtConfig {
     pub secret: String,
     pub expiration_hours: i64,
+    pub refresh_expiration_hours: i64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -57,6 +58,10 @@ impl AppConfig {
                     .unwrap_or_else(|_| "24".to_string())
                     .parse()
                     .context("Failed to parse JWT_EXPIRATION_HOURS")?,
+                refresh_expiration_hours: std::env::var("JWT_REFRESH_EXPIRATION_HOURS")
+                    .unwrap_or_else(|_| "168".to_string())
+                    .parse()
+                    .context("Failed to parse JWT_REFRESH_EXPIRATION_HOURS")?,
             },
             services: ServicesConfig {
                 auth_service_host: std::env::var("AUTH_SERVICE_HOST")

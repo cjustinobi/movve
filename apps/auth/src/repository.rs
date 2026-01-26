@@ -1,6 +1,6 @@
 use crate::{
     model::{User, UserRole},
-    schema::{password_resets, users},
+    schema::{email_verification_tokens, password_resets, refresh_tokens, users},
 };
 use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::prelude::*;
@@ -58,6 +58,50 @@ pub struct PasswordResetDb {
     pub token: String,
     pub expires_at: NaiveDateTime,
     pub used: bool,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Queryable, Insertable, Associations, Identifiable, Debug)]
+#[diesel(table_name = refresh_tokens)]
+#[diesel(belongs_to(UserDb, foreign_key = user_id))]
+pub struct RefreshTokenDb {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub token: String,
+    pub expires_at: NaiveDateTime,
+    pub revoked: bool,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Queryable, Insertable, Associations, Identifiable, Debug)]
+#[diesel(table_name = email_verification_tokens)]
+#[diesel(belongs_to(UserDb, foreign_key = user_id))]
+pub struct EmailVerificationTokenDb {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub code: String,
+    pub expires_at: NaiveDateTime,
+    pub used: bool,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = refresh_tokens)]
+pub struct NewRefreshTokenDb<'a> {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub token: &'a str,
+    pub expires_at: NaiveDateTime,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = email_verification_tokens)]
+pub struct NewEmailVerificationTokenDb<'a> {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub code: &'a str,
+    pub expires_at: NaiveDateTime,
     pub created_at: NaiveDateTime,
 }
 
@@ -154,9 +198,13 @@ impl UserRepository {
     }
 
     // ---------- Forgot Password ----------
-    pub async fn create_password_reset(&self, user_id: Uuid) -> Result<String, DbError> {
+    pub async fn create_password_reset(
+        &self,
+        user_id: Uuid,
+        token: &str,
+    ) -> Result<String, DbError> {
         let pool = self.pool.clone();
-        let token = Uuid::new_v4().to_string(); // could be replaced with a JWT or secure random
+        let token = token.to_string();
         let expires_at = Utc::now() + Duration::minutes(30);
         let created_at = Utc::now().naive_utc();
 
@@ -181,6 +229,144 @@ impl UserRepository {
         .await??;
 
         Ok(token)
+    }
+
+    // ---------- Refresh Tokens ----------
+    pub async fn create_refresh_token(
+        &self,
+        user_id: Uuid,
+        token: &str,
+        expires_at: NaiveDateTime,
+    ) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+        let token = token.to_string();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            let new_token = NewRefreshTokenDb {
+                id: Uuid::new_v4(),
+                user_id,
+                token: &token,
+                expires_at,
+                created_at: Utc::now().naive_utc(),
+            };
+
+            diesel::insert_into(refresh_tokens::table)
+                .values(&new_token)
+                .execute(&mut conn)?;
+
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
+    }
+
+    pub async fn find_refresh_token(&self, token: &str) -> Result<Option<RefreshTokenDb>, DbError> {
+        let pool = self.pool.clone();
+        let token = token.to_string();
+
+        let result = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get().map_err(|e| Box::new(e) as DbError)?;
+            refresh_tokens::table
+                .filter(refresh_tokens::token.eq(token))
+                .filter(refresh_tokens::revoked.eq(false))
+                .filter(refresh_tokens::expires_at.gt(Utc::now().naive_utc()))
+                .first::<RefreshTokenDb>(&mut conn)
+                .optional()
+                .map_err(|e| Box::new(e) as DbError)
+        })
+        .await??;
+
+        Ok(result)
+    }
+
+    pub async fn revoke_refresh_token(&self, token: &str) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+        let token = token.to_string();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            diesel::update(refresh_tokens::table.filter(refresh_tokens::token.eq(token)))
+                .set(refresh_tokens::revoked.eq(true))
+                .execute(&mut conn)?;
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
+    }
+
+    // ---------- Email Verification ----------
+    pub async fn create_verification_code(
+        &self,
+        user_id: Uuid,
+        code: &str,
+        expires_at: NaiveDateTime,
+    ) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+        let code = code.to_string();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            let new_token = NewEmailVerificationTokenDb {
+                id: Uuid::new_v4(),
+                user_id,
+                code: &code,
+                expires_at,
+                created_at: Utc::now().naive_utc(),
+            };
+
+            diesel::insert_into(email_verification_tokens::table)
+                .values(&new_token)
+                .execute(&mut conn)?;
+
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
+    }
+
+    pub async fn find_verification_code(
+        &self,
+        user_id: Uuid,
+        code: &str,
+    ) -> Result<Option<EmailVerificationTokenDb>, DbError> {
+        let pool = self.pool.clone();
+        let code = code.to_string();
+
+        let result = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get().map_err(|e| Box::new(e) as DbError)?;
+            email_verification_tokens::table
+                .filter(email_verification_tokens::user_id.eq(user_id))
+                .filter(email_verification_tokens::code.eq(code))
+                .filter(email_verification_tokens::used.eq(false))
+                .filter(email_verification_tokens::expires_at.gt(Utc::now().naive_utc()))
+                .first::<EmailVerificationTokenDb>(&mut conn)
+                .optional()
+                .map_err(|e| Box::new(e) as DbError)
+        })
+        .await??;
+
+        Ok(result)
+    }
+
+    pub async fn mark_verification_code_as_used(&self, id: Uuid) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            diesel::update(
+                email_verification_tokens::table.filter(email_verification_tokens::id.eq(id)),
+            )
+            .set(email_verification_tokens::used.eq(true))
+            .execute(&mut conn)?;
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
     }
 
     // ---------- Verify Token ----------
@@ -235,6 +421,25 @@ impl UserRepository {
             } else {
                 return Err(Box::new(DieselError::NotFound) as DbError);
             }
+
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
+    }
+
+    pub async fn update_password(&self, user_id: Uuid, new_hash: &str) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+        let new_hash = new_hash.to_string();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            use crate::schema::users::dsl::*;
+
+            diesel::update(users.filter(id.eq(user_id)))
+                .set(password_hash.eq(new_hash))
+                .execute(&mut conn)?;
 
             Ok::<(), DbError>(())
         })

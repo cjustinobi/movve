@@ -1,4 +1,7 @@
-use utoipa::{OpenApi, openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme}};
+use utoipa::{
+    OpenApi,
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -7,7 +10,10 @@ use utoipa::{OpenApi, openapi::security::{HttpAuthScheme, HttpBuilder, SecurityS
         crate::handlers::login,
         crate::handlers::verify_token,
         crate::handlers::forgot_password,
-        crate::handlers::reset_password
+        crate::handlers::reset_password,
+        crate::handlers::resend_verification,
+        crate::handlers::update_password,
+        crate::handlers::refresh_token
     ),
     modifiers(&SecurityAddon),
 
@@ -33,7 +39,7 @@ impl utoipa::Modify for SecurityAddon {
                     HttpBuilder::new()
                         .scheme(HttpAuthScheme::Bearer)
                         .bearer_format("JWT")
-                        .build()
+                        .build(),
                 ),
             )
         }

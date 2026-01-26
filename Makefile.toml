@@ -28,7 +28,7 @@ category = "dev"
 description = "Run auth service in development"
 cwd = "apps/auth"
 command = "cargo"
-args = ["run"]
+args = ["run", "--bin", "auth"]
 watch = { watch = ["apps/auth/src", "libs/common/src", "libs/utils/src", "libs/services/src"] }
 
 [tasks.dev-gateway]
@@ -36,7 +36,7 @@ category = "dev"
 description = "Run gateway service in development"
 cwd = "apps/gateway"
 command = "cargo"
-args = ["run"]
+args = ["run", "--bin", "gateway"]
 watch = { watch = ["apps/gateway/src", "libs/common/src", "libs/utils/src", "libs/services/src"] }
 
 [tasks.dev-driver]
@@ -44,7 +44,7 @@ category = "dev"
 description = "Run driver service in development"
 cwd = "apps/driver"
 command = "cargo"
-args = ["run"]
+args = ["run", "--bin", "driver"]
 watch = { watch = ["apps/driver/src", "libs/common/src", "libs/utils/src", "libs/services/src"] }
 
 # ==============================================================================
@@ -86,7 +86,9 @@ script = [
 [tasks.diesel-auth-reset]
 category = "diesel"
 description = "Reset Auth DB"
-script = [ ''' ... ''' ]
+script = [
+  "diesel database reset --database-url ${AUTH_DATABASE_URL} --migration-dir apps/auth/migrations"
+]
 
 [tasks.diesel-driver-setup]
 category = "diesel"
