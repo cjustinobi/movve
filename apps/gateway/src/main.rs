@@ -1,15 +1,14 @@
-mod proxy;
 mod docs;
+mod proxy;
 
 use axum::{
-    middleware,
+    Router, middleware,
     routing::{any, get, post},
-    Router,
 };
-use common::{middleware as app_middleware, AppConfig};
+use common::{AppConfig, middleware as app_middleware};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use utoipa_swagger_ui::{SwaggerUi, Config};
+use utoipa_swagger_ui::{Config, SwaggerUi};
 
 impl AsRef<AppConfig> for AppState {
     fn as_ref(&self) -> &AppConfig {
@@ -38,65 +37,31 @@ async fn main() -> Result<(), anyhow::Error> {
         http_client,
     };
 
-
     pub fn public_routes() -> Router<AppState> {
         Router::new()
             .route("/health", get(health_check))
             .route("/", get(root_handler))
-}
+    }
 
     /// Documentation routes (Swagger UI and OpenAPI spec)
     pub fn docs_routes() -> Router<AppState> {
         Router::new()
             .route("/api-docs/openapi.json", get(docs::get_merged_openapi))
-            .merge(
-                SwaggerUi::new("/docs")
-                    .config(Config::new(["/api-docs/openapi.json"]))
-            )
+            .merge(SwaggerUi::new("/docs").config(Config::new(["/api-docs/openapi.json"])))
     }
 
-/// Auth service routes - mix of public and protected
-pub fn auth_routes(jwt_secret: String) -> Router<AppState> {
-    // Public auth endpoints (no authentication required)
-    let public = Router::new()
-        .route("/api/auth/register", post(proxy::proxy_by_prefix))
-        .route("/api/auth/login", post(proxy::proxy_by_prefix))
-        .route("/api/auth/forgot-password", post(proxy::proxy_by_prefix))
-        .route("/api/auth/reset-password", post(proxy::proxy_by_prefix))
-        .route("/api/auth/resend-verification", post(proxy::proxy_by_prefix));
-
-    // Protected auth endpoints (require JWT)
-    let protected = Router::new()
-        .route("/api/auth/verify", get(proxy::proxy_by_prefix))
-        .route("/api/auth/{*path}", any(proxy::proxy_by_prefix))
-        .route_layer(middleware::from_fn(move |req, next| {
-            let secret = jwt_secret.clone();
-            async move {
-                app_middleware::jwt_auth_middleware(secret, req, next).await
-            }
-        }));
-
-    public.merge(protected)
-}
-
-/// Protected service routes (all require JWT authentication)
-pub fn protected_routes(jwt_secret: String) -> Router<AppState> {
-    Router::new()
-        .route("/api/driver/{*path}", any(proxy::proxy_by_prefix))
-        .route("/api/rider/{*path}", any(proxy::proxy_by_prefix))
-        .route("/api/trip/{*path}", any(proxy::proxy_by_prefix))
-        .route_layer(middleware::from_fn(move |req, next| {
-            let secret = jwt_secret.clone();
-            async move {
-                app_middleware::jwt_auth_middleware(secret, req, next).await
-            }
-        }))
-}
+    /// API service routes - proxy to microservices and let them handle their own security
+    pub fn api_routes() -> Router<AppState> {
+        Router::new()
+            .route("/api/auth/{*path}", any(proxy::proxy_by_prefix))
+            .route("/api/driver/{*path}", any(proxy::proxy_by_prefix))
+            .route("/api/rider/{*path}", any(proxy::proxy_by_prefix))
+            .route("/api/trip/{*path}", any(proxy::proxy_by_prefix))
+    }
 
     let app = Router::new()
         .merge(public_routes())
-        .merge(auth_routes(config.jwt.secret.clone()))
-        .merge(protected_routes(config.jwt.secret.clone()))
+        .merge(api_routes())
         .merge(docs_routes())
         .with_state(app_state);
 
@@ -115,11 +80,9 @@ pub fn protected_routes(jwt_secret: String) -> Router<AppState> {
     Ok(())
 }
 
-
 async fn health_check() -> &'static str {
     "Gateway is healthy."
 }
 async fn root_handler() -> &'static str {
     "Movve API Gateway - Visit /docs for API documentation"
 }
-
