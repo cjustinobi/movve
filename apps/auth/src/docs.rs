@@ -9,6 +9,7 @@ use utoipa::{
         crate::handlers::register,
         crate::handlers::login,
         crate::handlers::verify_token,
+        crate::handlers::verify_email,
         crate::handlers::forgot_password,
         crate::handlers::reset_password,
         crate::handlers::resend_verification,

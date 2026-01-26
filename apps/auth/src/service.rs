@@ -228,6 +228,26 @@ impl AuthService {
         Ok(code)
     }
 
+    pub async fn verify_email(&self, user_id: Uuid, code: &str) -> Result<(), AppError> {
+        // 1. Find valid verification code
+        let token = self
+            .repo
+            .find_verification_code(user_id, code)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| {
+                AppError::BadRequest("Invalid or expired verification code".to_string())
+            })?;
+
+        // 2. Mark code as used
+        self.repo
+            .mark_verification_code_as_used(token.id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        Ok(())
+    }
+
     // ---------- Verify Reset Token ----------
     pub async fn verify_reset_token(&self, token: &str) -> Result<Uuid, AppError> {
         let user_id = self

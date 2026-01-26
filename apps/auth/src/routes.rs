@@ -48,15 +48,13 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/forgot-password", post(handlers::forgot_password))
         .route("/api/auth/reset-password", post(handlers::reset_password))
-        .route(
-            "/api/auth/resend-verification",
-            post(handlers::resend_verification),
-        )
         .route("/api/auth/refresh", post(handlers::refresh_token));
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()
+        .route("/api/auth/resend-verification", post(handlers::resend_verification))
         .route("/api/auth/verify", get(handlers::verify_token))
+        .route("/api/auth/verify-email", post(handlers::verify_email))
         .route("/api/auth/update-password", post(handlers::update_password))
         // Add more protected routes here as needed
         .route_layer(middleware::from_fn(move |req, next| {
@@ -75,7 +73,6 @@ pub fn create_routes(state: AppState) -> Router {
         )
         .with_state(state)
 }
-
 
 async fn health_check() -> &'static str {
     "Auth service is healthy"

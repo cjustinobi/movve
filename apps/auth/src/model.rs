@@ -123,7 +123,6 @@ pub struct ForgotPasswordRequest {
     pub email: String,
 }
 
-
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ResetPasswordRequest {
     pub token: String,
@@ -149,4 +148,9 @@ pub struct RefreshTokenRequest {
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ResendVerificationRequest {
     pub email: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct VerifyEmailRequest {
+    pub code: String,
 }

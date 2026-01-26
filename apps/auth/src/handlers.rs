@@ -6,9 +6,9 @@ use uuid::Uuid;
 use crate::{
     AppState,
     model::{
-        AuthResponse, Claims, ForgotPasswordRequest, LoginRequest,
-        RefreshTokenRequest, RegisterRequest, RegisterResponse, ResendVerificationRequest,
-        ResetPasswordRequest, UpdatePasswordRequest,
+        AuthResponse, Claims, ForgotPasswordRequest, LoginRequest, RefreshTokenRequest,
+        RegisterRequest, RegisterResponse, ResendVerificationRequest, ResetPasswordRequest,
+        UpdatePasswordRequest, VerifyEmailRequest,
     },
 };
 
@@ -95,6 +95,35 @@ pub async fn verify_token(
     Ok(ApiResponse::success_with_message(
         "Verification code has been sent to your email",
         claims,
+    ))
+}
+
+/// Verifies the user's email using a 4-digit code
+#[utoipa::path(
+    post,
+    path = "/api/auth/verify-email",
+    request_body = VerifyEmailRequest,
+    responses(
+        (status = 200, description = "Email verified successfully", body = ApiResponse<EmptyData>),
+        (status = 400, description = "Invalid or expired verification code"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Auth",
+    security(("bearerAuth" = []))
+)]
+pub async fn verify_email(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<VerifyEmailRequest>,
+) -> Result<ApiResponse<EmptyData>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    state.auth_service.verify_email(user_id, &req.code).await?;
+
+    Ok(ApiResponse::message_only(
+        StatusCode::OK,
+        "Email has been verified successfully.",
     ))
 }
 
