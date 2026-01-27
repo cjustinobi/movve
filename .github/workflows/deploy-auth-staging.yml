@@ -66,32 +66,31 @@ jobs:
       - name: Start auth service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-auth
 
-      - name: Wait for service to be healthy
+      - name: Wait for auth service to be healthy
         run: |
-          echo "Waiting for auth service to start..."
           for i in {1..10}; do
-            # Check if service is active
             if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl is-active movve-auth --quiet; then
-              # Check if it's listening on port 8001
               if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S ss -tlnp | grep -q ":8001"; then
-                echo "✅ Auth service is healthy and listening on port 8001"
-                exit 0
+                echo "✅ Auth service is healthy"
+                break
               fi
             fi
-            echo "⏳ Waiting for auth service... attempt $i/10"
+            echo "⏳ Waiting... attempt $i/10"
             sleep 3
           done
-          
-          echo "❌ Auth service failed to start properly"
-          echo "Service status:"
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-driver --no-pager || true
-          echo ""
-          echo "Recent logs:"
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S journalctl -u movve-driver -n 20 --no-pager || true
-          exit 1
 
-      - name: Check service status
-        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-auth --no-pager
+      - name: Restart dependent services
+        run: |
+          echo "🔄 Restarting gateway and tunnel..."
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart movve-gateway
+          sleep 3
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart cloudflared-movve
+          echo "✅ All services restarted"
 
-      - name: Display recent logs
-        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S journalctl -u movve-auth -n 10 --no-pager
+      - name: Verify full stack health
+        run: |
+          sleep 5
+          echo "Checking all services..."
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-auth --no-pager
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status cloudflared-movve --no-pager

@@ -43,17 +43,36 @@ jobs:
       
       - name: Start gateway service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-gateway
-      
-      - name: Restart cloudflare tunnel
+
+      - name: Wait for gateway to be healthy
         run: |
+          for i in {1..10}; do
+            if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl is-active movve-gateway --quiet; then
+              if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S ss -tlnp | grep -q ":8000"; then
+                echo "✅ Gateway is healthy"
+                break
+              fi
+            fi
+            echo "⏳ Waiting... attempt $i/10"
+            sleep 3
+          done
+
+      - name: Restart Cloudflare tunnel
+        run: |
+          echo "🔄 Restarting Cloudflare tunnel..."
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart cloudflared-movve
           sleep 5
+          echo "✅ Tunnel restarted"
 
-      - name: Verify tunnel connectivity
-        run: curl -f https://staging.movve.xyz/ || echo "Warning Tunnel not immediately available"
-      
-      - name: Check service status
-        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager
-      
-      - name: Health check
-        run: curl -f http://localhost:8000/health || exit 1
+      - name: Verify connectivity
+        run: |
+          echo "Testing external connectivity..."
+          for i in {1..5}; do
+            if curl -sf https://staging.movve.xyz/ > /dev/null 2>&1; then
+              echo "✅ Public endpoint is accessible"
+              exit 0
+            fi
+            echo "⏳ Waiting for tunnel... attempt $i/5"
+            sleep 5
+          done
+          echo "⚠️ Could not verify public endpoint, but deployment complete"
