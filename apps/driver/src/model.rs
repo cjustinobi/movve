@@ -101,6 +101,7 @@ pub struct NewDriver {
     pub phone: String,
     pub license_number: String,
     pub vehicle_type: VehicleType,
+    pub vehicle_color: VehicleColor,
     pub vehicle_plate: String,
     pub vehicle_model: String,
     pub vehicle_year: i32,
