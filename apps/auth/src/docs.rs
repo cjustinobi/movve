@@ -14,7 +14,9 @@ use utoipa::{
         crate::handlers::reset_password,
         crate::handlers::resend_verification,
         crate::handlers::update_password,
-        crate::handlers::refresh_token
+        crate::handlers::refresh_token,
+        crate::handlers::me,
+        crate::handlers::logout
     ),
     modifiers(&SecurityAddon),
 

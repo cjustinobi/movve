@@ -156,3 +156,8 @@ pub struct ResendVerificationRequest {
 pub struct VerifyEmailRequest {
     pub code: String,
 }
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct LogoutRequest {
+    pub refresh_token: String,
+}

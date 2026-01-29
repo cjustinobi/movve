@@ -43,19 +43,25 @@ pub fn create_routes(state: AppState) -> Router {
     let jwt_secret = state.auth_service.jwt_config.secret.clone();
 
     // Public routes (no authentication required)
+    // Public routes (no authentication required)
     let public_routes = Router::new()
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/auth/forgot-password", post(handlers::forgot_password))
         .route("/api/auth/reset-password", post(handlers::reset_password))
-        .route("/api/auth/refresh", post(handlers::refresh_token));
+        .route("/api/auth/refresh", post(handlers::refresh_token))
+        .route("/api/auth/logout", post(handlers::logout));
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()
-        .route("/api/auth/resend-verification", post(handlers::resend_verification))
+        .route(
+            "/api/auth/resend-verification",
+            post(handlers::resend_verification),
+        )
         .route("/api/auth/verify", get(handlers::verify_token))
         .route("/api/auth/verify-email", post(handlers::verify_email))
         .route("/api/auth/update-password", post(handlers::update_password))
+        .route("/api/auth/me", get(handlers::me))
         // Add more protected routes here as needed
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();

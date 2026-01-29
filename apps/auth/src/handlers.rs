@@ -6,11 +6,56 @@ use uuid::Uuid;
 use crate::{
     AppState,
     model::{
-        AuthResponse, Claims, ForgotPasswordRequest, LoginRequest, RefreshTokenRequest,
-        RegisterRequest, RegisterResponse, ResendVerificationRequest, ResetPasswordRequest,
-        UpdatePasswordRequest, VerifyEmailRequest,
+        AuthResponse, Claims, ForgotPasswordRequest, LoginRequest, LogoutRequest,
+        RefreshTokenRequest, RegisterRequest, RegisterResponse, ResendVerificationRequest,
+        ResetPasswordRequest, UpdatePasswordRequest, User, VerifyEmailRequest,
     },
 };
+
+/// Gets the current user's profile
+#[utoipa::path(
+    get,
+    path = "/api/auth/me",
+    responses(
+        (status = 200, description = "Current user profile", body = ApiResponse<User>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Auth",
+    security(("bearerAuth" = []))
+)]
+pub async fn me(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<ApiResponse<User>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let user = state.auth_service.get_user_by_id(user_id).await?;
+
+    Ok(ApiResponse::success(user))
+}
+
+/// Logs out a user by revoking their refresh token
+#[utoipa::path(
+    post,
+    path = "/api/auth/logout",
+    request_body = LogoutRequest,
+    responses(
+        (status = 200, description = "User logged out successfully", body = ApiResponse<EmptyData>),
+        (status = 400, description = "Invalid input"),
+    ),
+    tag = "Auth"
+)]
+pub async fn logout(
+    State(state): State<AppState>,
+    Json(req): Json<LogoutRequest>,
+) -> Result<ApiResponse<EmptyData>, AppError> {
+    state.auth_service.logout(&req.refresh_token).await?;
+    Ok(ApiResponse::message_only(
+        StatusCode::OK,
+        "Logged out successfully",
+    ))
+}
 
 /// Registers a new user
 #[utoipa::path(

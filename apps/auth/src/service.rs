@@ -145,6 +145,13 @@ impl AuthService {
         Ok(token)
     }
 
+    pub async fn logout(&self, refresh_token: &str) -> Result<(), AppError> {
+        self.repo
+            .revoke_refresh_token(refresh_token)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
     pub async fn refresh_tokens(&self, refresh_token: &str) -> Result<AuthResponse, AppError> {
         // 1. Find and validate refresh token
         let rt = self
@@ -346,6 +353,14 @@ impl AuthService {
     pub async fn get_user_by_email(&self, email: &str) -> Result<User, AppError> {
         self.repo
             .find_by_email(email)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))
+    }
+
+    pub async fn get_user_by_id(&self, user_id: Uuid) -> Result<User, AppError> {
+        self.repo
+            .find_by_id(user_id)
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))?
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))
