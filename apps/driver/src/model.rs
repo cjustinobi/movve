@@ -1,18 +1,18 @@
-use diesel::{Queryable, Selectable, Identifiable, Insertable};
+use bigdecimal::BigDecimal;
+use chrono::{DateTime, Utc};
+use diesel::deserialize::FromSqlRow;
 use diesel::expression::AsExpression;
+use diesel::{Identifiable, Insertable, Queryable, Selectable};
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use diesel::deserialize::{FromSqlRow};
 use utoipa::ToSchema;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use bigdecimal::BigDecimal;
-use diesel_derive_enum::DbEnum;
 
 use crate::schema::drivers;
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::DriverStatus"]
-#[serde(rename_all = "lowercase")] 
+#[serde(rename_all = "lowercase")]
 pub enum DriverStatus {
     #[db_rename = "offline"]
     Offline,
@@ -24,7 +24,7 @@ pub enum DriverStatus {
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::VehicleType"]
-#[serde(rename_all = "lowercase")] 
+#[serde(rename_all = "lowercase")]
 pub enum VehicleType {
     #[db_rename = "sedan"]
     Sedan,
@@ -37,9 +37,9 @@ pub enum VehicleType {
 }
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
-#[ExistingTypePath = "crate::schema::sql_types::VehicleColor"]
-#[serde(rename_all = "lowercase")] 
-pub enum VehicleColor {
+#[ExistingTypePath = "crate::schema::sql_types::VehicleColour"]
+#[serde(rename_all = "lowercase")]
+pub enum VehicleColour {
     #[db_rename = "red"]
     Red,
     #[db_rename = "blue"]
@@ -56,7 +56,6 @@ pub enum VehicleColor {
     Silver,
     #[db_rename = "yellow"]
     Yellow,
-
 }
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow)]
@@ -78,7 +77,7 @@ pub struct Driver {
     pub phone: String,
     pub license_number: String,
     pub vehicle_type: VehicleType,
-    pub vehicle_color: VehicleColor,
+    pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,
     pub vehicle_model: String,
     pub vehicle_year: i32,
@@ -101,17 +100,16 @@ pub struct NewDriver {
     pub phone: String,
     pub license_number: String,
     pub vehicle_type: VehicleType,
-    pub vehicle_color: VehicleColor,
+    pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,
     pub vehicle_model: String,
     pub vehicle_year: i32,
     pub status: DriverStatus,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct Claims {
-    pub sub: String,  // user id
+    pub sub: String, // user id
     pub email: String,
     pub role: UserRole,
     pub exp: i64,

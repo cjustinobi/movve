@@ -1,14 +1,18 @@
-use axum::{extract::{State, Path}, Json};
-use common::{ApiResponse, AppError};
-use tracing::info;
-use uuid::Uuid;
 use crate::{
     AppState,
-    model::{Driver, NewDriver}};
+    model::{Driver, NewDriver},
+};
+use axum::{
+    Json,
+    extract::{Path, State},
+};
+use common::{ApiResponse, AppError};
 use serde_json::json;
+use tracing::info;
+use uuid::Uuid;
 
 /// Creates a new driver
-/// 
+///
 /// Creates a new driver with the provided details.
 #[utoipa::path(
     post,
@@ -25,28 +29,34 @@ pub async fn create_driver(
     Json(req): Json<NewDriver>,
 ) -> Result<ApiResponse<Driver>, AppError> {
     info!("Creating new driver: {:?}", req);
-    let response = state.driver_service.create_driver(req)
+    let response = state
+        .driver_service
+        .create_driver(req)
         .map_err(|e| AppError::InternalError(e.to_string()))?;
-    Ok(ApiResponse::success_with_message("Driver created successfully", response))
-       
+    Ok(ApiResponse::success_with_message(
+        "Driver created successfully",
+        response,
+    ))
 }
 
 #[utoipa::path(
     get,
     path = "/api/driver/drivers",
     responses(
-        (status = 200, description = "List all drivers", body = [Driver])
+        (status = 200, description = "List all drivers", body = ApiResponse<Vec<Driver>>)
     ),
     tag = "Driver"
 )]
 
 pub async fn list_drivers(
     State(state): State<AppState>,
-) -> Result<Json<Vec<Driver>>, axum::http::StatusCode> {
-    match state.driver_service.list_drivers() {
-        Ok(drivers) => Ok(Json(drivers)),
-        Err(_) => Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR),
-    }
+) -> Result<ApiResponse<Vec<Driver>>, AppError> {
+    let drivers = state
+        .driver_service
+        .list_drivers()
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    Ok(ApiResponse::success(drivers))
 }
 
 #[utoipa::path(
@@ -56,7 +66,7 @@ pub async fn list_drivers(
         ("id" = Uuid, Path, description = "Driver unique identifier")
     ),
     responses(
-        (status = 200, description = "Driver retrieved successfully", body = Driver),
+        (status = 200, description = "Driver retrieved successfully", body = ApiResponse<Driver>),
         (status = 404, description = "Driver not found")
     ),
     tag = "Driver"
@@ -64,11 +74,13 @@ pub async fn list_drivers(
 pub async fn get_driver(
     State(state): State<AppState>,
     Path(driver_id): Path<Uuid>,
-) -> Result<Json<Driver>, axum::http::StatusCode> {
-    match state.driver_service.get_driver(driver_id) {
-        Ok(driver) => Ok(Json(driver)),
-        Err(_) => Err(axum::http::StatusCode::NOT_FOUND),
-    }
+) -> Result<ApiResponse<Driver>, AppError> {
+    let driver = state
+        .driver_service
+        .get_driver(driver_id)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    Ok(ApiResponse::success(driver))
 }
 
 pub async fn health_check() -> Json<serde_json::Value> {
