@@ -1,5 +1,6 @@
 use axum::{Extension, Json, extract::{State, Path}, http::StatusCode};
 use common::{ApiResponse, AppError, EmptyData};
+use tracing::info;
 use uuid::Uuid;
 use crate::{
     AppState,
@@ -12,7 +13,7 @@ use crate::{
 // Estimate Ride
 #[utoipa::path(
     post,
-    path = "/api/rides/preview",
+    path = "/api/rider/preview",
     request_body = RideEstimateRequest,
     responses(
         (status = 200, description = "Ride estimated successfully", body = ApiResponse<RideEstimateResponse>),
@@ -31,7 +32,7 @@ pub async fn estimate_ride(
 // Create Ride
 #[utoipa::path(
     post,
-    path = "/api/rides",
+    path = "/api/rider/rides",
     request_body = CreateRideRequest,
     responses(
         (status = 201, description = "Ride created successfully", body = ApiResponse<RideResponse>),
@@ -44,8 +45,10 @@ pub async fn create_ride(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
+    info!("create_ride: {:?}", req);
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+    info!("create_ride: {:?}", user_id);
 
     let response = state.rider_service.create_ride(user_id, req).await?;
     Ok(ApiResponse::success_with_message("Ride requested successfully", response))
@@ -54,7 +57,7 @@ pub async fn create_ride(
 // Get Ride
 #[utoipa::path(
     get,
-    path = "/api/rides/{id}",
+    path = "/api/rider/{id}",
     responses(
         (status = 200, description = "Ride details", body = ApiResponse<RideResponse>),
         (status = 404, description = "Ride not found"),
@@ -76,7 +79,7 @@ pub async fn get_ride(
 // Get History
 #[utoipa::path(
     get,
-    path = "/api/rides",
+    path = "/api/rider/rides",
     responses(
         (status = 200, description = "Ride history", body = ApiResponse<Vec<RideResponse>>),
     ),
@@ -97,7 +100,7 @@ pub async fn get_rides(
 // Cancel Ride
 #[utoipa::path(
     post,
-    path = "/api/rides/{id}/cancel",
+    path = "/api/rider/{id}/cancel",
     responses(
         (status = 200, description = "Ride cancelled", body = ApiResponse<RideResponse>),
     ),
@@ -122,7 +125,7 @@ pub async fn cancel_ride(
 // Pay Ride
 #[utoipa::path(
     post,
-    path = "/api/rides/{id}/pay",
+    path = "/api/rider/{id}/pay",
     request_body = PayRideRequest,
     responses(
         (status = 200, description = "Ride paid", body = ApiResponse<RideResponse>),
@@ -149,7 +152,7 @@ pub async fn pay_ride(
 // Rate Driver
 #[utoipa::path(
     post,
-    path = "/api/rides/{id}/rate",
+    path = "/api/rider/{id}/rate",
     request_body = RateDriverRequest,
     responses(
         (status = 200, description = "Driver rated", body = ApiResponse<EmptyData>),
@@ -176,7 +179,7 @@ pub async fn rate_driver(
 // Driver Location (Mock)
 #[utoipa::path(
     get,
-    path = "/api/rides/{id}/driver-location",
+    path = "/api/rider/{id}/driver-location",
     responses(
         (status = 200, description = "Driver location"),
     ),
@@ -200,7 +203,7 @@ pub async fn get_driver_location(
 // Ride Status
 #[utoipa::path(
     get,
-    path = "/api/rides/{id}/status",
+    path = "/api/rider/{id}/status",
     responses(
         (status = 200, description = "Ride status"),
     ),

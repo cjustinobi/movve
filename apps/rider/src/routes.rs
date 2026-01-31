@@ -36,24 +36,17 @@ async fn jwt_auth_middleware(
 }
 
 pub fn create_routes(state: AppState) -> Router {
-    // Extract JWT secret
-    // Note: In auth service config.jwt_config.secret was used.
-    // Here we should probably load it from config as well.
-    // But AppState needs to hold the secret or we access it via state.
-    // Let's assume passed AppConfig or similar.
-    // For now I'll grab it from env in main and pass it or store in state.
-    // I'll add jwt_secret to AppState struct in main.rs.
     let jwt_secret = state.rider_service.jwt_config.secret.clone();
 
     let protected_routes = Router::new()
-        .route("/api/rides/preview", post(handlers::estimate_ride))
-        .route("/api/rides", post(handlers::create_ride).get(handlers::get_rides))
-        .route("/api/rides/{id}", get(handlers::get_ride))
-        .route("/api/rides/{id}/cancel", post(handlers::cancel_ride))
-        .route("/api/rides/{id}/pay", post(handlers::pay_ride))
-        .route("/api/rides/{id}/rate", post(handlers::rate_driver))
-        .route("/api/rides/{id}/driver-location", get(handlers::get_driver_location))
-        .route("/api/rides/{id}/status", get(handlers::get_ride_status))
+        .route("/api/rider/preview", post(handlers::estimate_ride))
+        .route("/api/rider/rides", post(handlers::create_ride).get(handlers::get_rides))
+        .route("/api/rider/{id}", get(handlers::get_ride))
+        .route("/api/rider/{id}/cancel", post(handlers::cancel_ride))
+        .route("/api/rider/{id}/pay", post(handlers::pay_ride))
+        .route("/api/rider/{id}/rate", post(handlers::rate_driver))
+        .route("/api/rider/{id}/driver-location", get(handlers::get_driver_location))
+        .route("/api/rider/{id}/status", get(handlers::get_ride_status))
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
             async move { jwt_auth_middleware(secret, req, next).await }
