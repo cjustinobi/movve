@@ -2,10 +2,10 @@ mod docs;
 mod proxy;
 
 use axum::{
-    Router, middleware,
-    routing::{any, get, post},
+    Router,
+    routing::{any, get},
 };
-use common::{AppConfig, middleware as app_middleware};
+use common::{AppConfig};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa_swagger_ui::{Config, SwaggerUi};

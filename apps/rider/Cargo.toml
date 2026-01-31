@@ -3,10 +3,6 @@ name = "rider"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
-name = "rider_lib" 
-path = "src/lib.rs"
-
 [dependencies]
 tokio = { workspace = true }
 axum = { workspace = true }
