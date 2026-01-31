@@ -24,7 +24,7 @@ pub async fn estimate_ride(
     State(state): State<AppState>,
     Json(req): Json<RideEstimateRequest>,
 ) -> Result<ApiResponse<RideEstimateResponse>, AppError> {
-    let response = state.ride_service.estimate_ride(req).await?;
+    let response = state.rider_service.estimate_ride(req).await?;
     Ok(ApiResponse::success(response))
 }
 
@@ -47,7 +47,7 @@ pub async fn create_ride(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
-    let response = state.ride_service.create_ride(user_id, req).await?;
+    let response = state.rider_service.create_ride(user_id, req).await?;
     Ok(ApiResponse::success_with_message("Ride requested successfully", response))
 }
 
@@ -69,7 +69,7 @@ pub async fn get_ride(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
-    let response = state.ride_service.get_ride(id).await?;
+    let response = state.rider_service.get_ride(id).await?;
     Ok(ApiResponse::success(response))
 }
 
@@ -90,7 +90,7 @@ pub async fn get_rides(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
-    let response = state.ride_service.get_rider_history(user_id).await?;
+    let response = state.rider_service.get_rider_history(user_id).await?;
     Ok(ApiResponse::success(response))
 }
 
@@ -115,7 +115,7 @@ pub async fn cancel_ride(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
-    let response = state.ride_service.cancel_ride(id, user_id).await?;
+    let response = state.rider_service.cancel_ride(id, user_id).await?;
     Ok(ApiResponse::success_with_message("Ride cancelled", response))
 }
 
@@ -142,7 +142,7 @@ pub async fn pay_ride(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
-    let response = state.ride_service.pay_ride(id, user_id, req).await?;
+    let response = state.rider_service.pay_ride(id, user_id, req).await?;
     Ok(ApiResponse::success_with_message("Payment successful", response))
 }
 
@@ -169,7 +169,7 @@ pub async fn rate_driver(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
-    state.ride_service.rate_driver(id, user_id, req).await?;
+    state.rider_service.rate_driver(id, user_id, req).await?;
     Ok(ApiResponse::message_only(StatusCode::OK, "Rating submitted thank you"))
 }
 
@@ -214,7 +214,7 @@ pub async fn get_ride_status(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let ride = state.ride_service.get_ride(id).await?;
+    let ride = state.rider_service.get_ride(id).await?;
     Ok(ApiResponse::success(serde_json::json!({
         "status": ride.status
     })))

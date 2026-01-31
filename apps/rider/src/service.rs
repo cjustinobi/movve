@@ -11,12 +11,12 @@ use crate::repository::RiderRepository;
 use chrono::Utc;
 
 #[derive(Clone)]
-pub struct RideService {
+pub struct RiderService {
     repository: RiderRepository,
     pub jwt_config: JwtConfig,
 }
 
-impl RideService {
+impl RiderService {
     pub fn new(repository: RiderRepository, jwt_config: JwtConfig) -> Self {
         Self { repository, jwt_config }
     }

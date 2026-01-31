@@ -16,11 +16,11 @@ use dotenvy::dotenv;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use repository::RiderRepository;
-use service::RideService;
+use service::RiderService;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub rider_service: Arc<RideService>,
+    pub rider_service: Arc<RiderService>,
     pub mail_service: Arc<MailService>,
 }
 
@@ -45,7 +45,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Initialize repository and service layer
     let repo = RiderRepository::new(pool);
-    let service = Arc::new(RideService::new(repo, config.jwt.clone()));
+    let service = Arc::new(RiderService::new(repo, config.jwt.clone()));
 
     let mail_service = Arc::new(MailService::new(
         config.mail.api_key.clone(),
