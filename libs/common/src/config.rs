@@ -33,10 +33,13 @@ pub struct MailConfig {
 pub struct ServicesConfig {
     pub auth_service_host: String,
     pub driver_service_host: String,
+    pub rider_service_host: String,
     pub auth_service_url: String,
     pub driver_service_url: String,
+    pub rider_service_url: String,
     pub auth_service_port: u16,
     pub driver_service_port: u16,
+    pub rider_service_port: u16,
 }
 
 impl AppConfig {
@@ -68,10 +71,14 @@ impl AppConfig {
                     .unwrap_or_else(|_| "127.0.0.1".to_string()),
                 driver_service_host: std::env::var("DRIVER_SERVICE_HOST")
                     .unwrap_or_else(|_| "127.0.0.1".to_string()),
+                rider_service_host: std::env::var("RIDER_SERVICE_HOST")
+                    .unwrap_or_else(|_| "127.0.0.1".to_string()),
                 auth_service_url: std::env::var("AUTH_SERVICE_URL")
                     .unwrap_or_else(|_| "http://127.0.0.1:8001".to_string()),
                 driver_service_url: std::env::var("DRIVER_SERVICE_URL")
                     .unwrap_or_else(|_| "http://127.0.0.1:8002".to_string()),
+                rider_service_url: std::env::var("RIDER_SERVICE_URL")
+                    .unwrap_or_else(|_| "http://127.0.0.1:8003".to_string()),
                 auth_service_port: std::env::var("AUTH_SERVICE_PORT")
                     .unwrap_or_else(|_| "8001".to_string())
                     .parse()
@@ -80,6 +87,10 @@ impl AppConfig {
                     .unwrap_or_else(|_| "8002".to_string())
                     .parse()
                     .context("Failed to parse DRIVER_SERVICE_PORT")?,
+                rider_service_port: std::env::var("RIDER_SERVICE_PORT")
+                    .unwrap_or_else(|_| "8003".to_string())
+                    .parse()
+                    .context("Failed to parse RIDER_SERVICE_PORT")?,
             },
             mail: MailConfig {
                 api_key: std::env::var("RESEND_API_KEY")

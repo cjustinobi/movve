@@ -1,0 +1,221 @@
+use axum::{Extension, Json, extract::{State, Path}, http::StatusCode};
+use common::{ApiResponse, AppError, EmptyData};
+use uuid::Uuid;
+use crate::{
+    AppState,
+    model::{
+        CreateRideRequest, PayRideRequest, RateDriverRequest, RideEstimateRequest, 
+        RideEstimateResponse, RideResponse, Claims
+    },
+};
+
+// Estimate Ride
+#[utoipa::path(
+    post,
+    path = "/api/rides/preview",
+    request_body = RideEstimateRequest,
+    responses(
+        (status = 200, description = "Ride estimated successfully", body = ApiResponse<RideEstimateResponse>),
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn estimate_ride(
+    State(state): State<AppState>,
+    Json(req): Json<RideEstimateRequest>,
+) -> Result<ApiResponse<RideEstimateResponse>, AppError> {
+    let response = state.ride_service.estimate_ride(req).await?;
+    Ok(ApiResponse::success(response))
+}
+
+// Create Ride
+#[utoipa::path(
+    post,
+    path = "/api/rides",
+    request_body = CreateRideRequest,
+    responses(
+        (status = 201, description = "Ride created successfully", body = ApiResponse<RideResponse>),
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn create_ride(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateRideRequest>,
+) -> Result<ApiResponse<RideResponse>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let response = state.ride_service.create_ride(user_id, req).await?;
+    Ok(ApiResponse::success_with_message("Ride requested successfully", response))
+}
+
+// Get Ride
+#[utoipa::path(
+    get,
+    path = "/api/rides/{id}",
+    responses(
+        (status = 200, description = "Ride details", body = ApiResponse<RideResponse>),
+        (status = 404, description = "Ride not found"),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn get_ride(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<RideResponse>, AppError> {
+    let response = state.ride_service.get_ride(id).await?;
+    Ok(ApiResponse::success(response))
+}
+
+// Get History
+#[utoipa::path(
+    get,
+    path = "/api/rides",
+    responses(
+        (status = 200, description = "Ride history", body = ApiResponse<Vec<RideResponse>>),
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn get_rides(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<ApiResponse<Vec<RideResponse>>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let response = state.ride_service.get_rider_history(user_id).await?;
+    Ok(ApiResponse::success(response))
+}
+
+// Cancel Ride
+#[utoipa::path(
+    post,
+    path = "/api/rides/{id}/cancel",
+    responses(
+        (status = 200, description = "Ride cancelled", body = ApiResponse<RideResponse>),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn cancel_ride(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<RideResponse>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let response = state.ride_service.cancel_ride(id, user_id).await?;
+    Ok(ApiResponse::success_with_message("Ride cancelled", response))
+}
+
+// Pay Ride
+#[utoipa::path(
+    post,
+    path = "/api/rides/{id}/pay",
+    request_body = PayRideRequest,
+    responses(
+        (status = 200, description = "Ride paid", body = ApiResponse<RideResponse>),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn pay_ride(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<PayRideRequest>,
+) -> Result<ApiResponse<RideResponse>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let response = state.ride_service.pay_ride(id, user_id, req).await?;
+    Ok(ApiResponse::success_with_message("Payment successful", response))
+}
+
+// Rate Driver
+#[utoipa::path(
+    post,
+    path = "/api/rides/{id}/rate",
+    request_body = RateDriverRequest,
+    responses(
+        (status = 200, description = "Driver rated", body = ApiResponse<EmptyData>),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn rate_driver(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<RateDriverRequest>,
+) -> Result<ApiResponse<EmptyData>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    state.ride_service.rate_driver(id, user_id, req).await?;
+    Ok(ApiResponse::message_only(StatusCode::OK, "Rating submitted thank you"))
+}
+
+// Driver Location (Mock)
+#[utoipa::path(
+    get,
+    path = "/api/rides/{id}/driver-location",
+    responses(
+        (status = 200, description = "Driver location"),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn get_driver_location(
+    State(_state): State<AppState>,
+    Path(_id): Path<Uuid>,
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    // Return mock lat/long
+    Ok(ApiResponse::success(serde_json::json!({
+        "lat": 37.7749,
+        "lng": -122.4194
+    })))
+}
+
+// Ride Status
+#[utoipa::path(
+    get,
+    path = "/api/rides/{id}/status",
+    responses(
+        (status = 200, description = "Ride status"),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn get_ride_status(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let ride = state.ride_service.get_ride(id).await?;
+    Ok(ApiResponse::success(serde_json::json!({
+        "status": ride.status
+    })))
+}

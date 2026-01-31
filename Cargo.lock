@@ -1884,6 +1884,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "rider"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "chrono",
+ "common",
+ "diesel",
+ "dotenvy",
+ "jsonwebtoken",
+ "serde",
+ "serde_json",
+ "services",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "utils",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
 name = "ring"
 version = "0.17.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
