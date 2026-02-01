@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-// Estimate Ride
+/// Ride Estimate
 #[utoipa::path(
     post,
     path = "/api/rider/preview",
@@ -32,7 +32,7 @@ pub async fn estimate_ride(
     Ok(ApiResponse::success(response))
 }
 
-// Create Ride
+/// Create Ride
 #[utoipa::path(
     post,
     path = "/api/rider/rides",
@@ -60,7 +60,7 @@ pub async fn create_ride(
     Ok(ApiResponse::success_with_message("Ride requested successfully", response))
 }
 
-// Get Ride
+/// Get Ride
 #[utoipa::path(
     get,
     path = "/api/rider/{id}",
@@ -82,7 +82,7 @@ pub async fn get_ride(
     Ok(ApiResponse::success(response))
 }
 
-// Get History
+/// Get Ride History
 #[utoipa::path(
     get,
     path = "/api/rider/rides",
@@ -103,7 +103,7 @@ pub async fn get_rides(
     Ok(ApiResponse::success(response))
 }
 
-// Cancel Ride
+/// Cancel Ride
 #[utoipa::path(
     post,
     path = "/api/rider/{id}/cancel",
@@ -128,7 +128,7 @@ pub async fn cancel_ride(
     Ok(ApiResponse::success_with_message("Ride cancelled", response))
 }
 
-// Pay Ride
+/// Pay Ride
 #[utoipa::path(
     post,
     path = "/api/rider/{id}/pay",
@@ -155,7 +155,7 @@ pub async fn pay_ride(
     Ok(ApiResponse::success_with_message("Payment successful", response))
 }
 
-// Rate Driver
+/// Rate Driver
 #[utoipa::path(
     post,
     path = "/api/rider/{id}/rate",
@@ -182,7 +182,7 @@ pub async fn rate_driver(
     Ok(ApiResponse::message_only(StatusCode::OK, "Rating submitted thank you"))
 }
 
-// Driver Location (Mock)
+/// Driver Location
 #[utoipa::path(
     get,
     path = "/api/rider/{id}/driver-location",
@@ -207,7 +207,7 @@ pub async fn get_driver_location(
     Ok(ApiResponse::success(location))
 }
 
-// Ride Status
+/// Ride Status
 #[utoipa::path(
     get,
     path = "/api/rider/{id}/status",
