@@ -54,6 +54,7 @@ impl DriverClient {
 
     /// Get a specific driver by ID
     pub async fn get_driver(&self, driver_id: Uuid) -> Result<Option<Driver>, AppError> {
+
         let url = format!(
             "{}/api/driver/drivers/{}",
             self.driver_service_url, driver_id
@@ -69,8 +70,19 @@ impl DriverClient {
         if response.status() == 404 {
             return Ok(None);
         }
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_else(|_| "Unable to read response body".to_string());
+            return Err(AppError::InternalError(format!(
+                "Driver service returned error status {}: {}",
+                status, body
+            )));
+        }
 
-        let driver_response: DriverApiResponse = response.json().await.map_err(|e| {
+        tracing::info!("Fetched driver with status: {}", response.status());
+        let response_text = response.text().await.map_err(|e| AppError::InternalError(format!("Failed to read response text: {}", e)))?;
+        tracing::info!("Response body: {}", response_text);
+        let driver_response: DriverApiResponse = serde_json::from_str(&response_text).map_err(|e| {
             AppError::InternalError(format!("Failed to parse driver response: {}", e))
         })?;
 
@@ -90,6 +102,15 @@ impl DriverClient {
             .send()
             .await
             .map_err(|e| AppError::InternalError(format!("Failed to fetch drivers: {}", e)))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_else(|_| "Unable to read response body".to_string());
+            return Err(AppError::InternalError(format!(
+                "Driver service returned error status {}: {}",
+                status, body
+            )));
+        }
 
         let drivers_response: DriversListResponse = response.json().await.map_err(|e| {
             AppError::InternalError(format!("Failed to parse drivers response: {}", e))
