@@ -1,32 +1,41 @@
+use chrono::{DateTime, Utc};
 use common::AppError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::model::Location;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Driver {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub name: String,
-    pub vehicle: String,
+    pub phone: String,
+    pub license_number: String,
     pub vehicle_type: String,
-    pub rating: f64,
-    pub total_rides: i32,
+    pub vehicle_colour: String,
+    pub vehicle_plate: String,
+    pub vehicle_model: String,
+    pub vehicle_year: i32,
+    pub status: String,
+    pub rating: Option<f64>,
+    pub total_rides: Option<i32>,
     pub is_available: bool,
     pub current_latitude: Option<f64>,
     pub current_longitude: Option<f64>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DriverApiResponse {
-    pub success: bool,
+    pub status_code: u16,
+    pub message: String,
     pub data: Option<Driver>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DriversListResponse {
-    pub success: bool,
-    pub data: Option<Vec<Driver>>,
+    pub status_code: u16,
+    pub message: String,
+    pub data: Vec<Driver>,
 }
 
 /// Client for communicating with the Driver microservice
@@ -45,8 +54,11 @@ impl DriverClient {
 
     /// Get a specific driver by ID
     pub async fn get_driver(&self, driver_id: Uuid) -> Result<Option<Driver>, AppError> {
-        let url = format!("{}/api/driver/drivers/{}", self.driver_service_url, driver_id);
-        
+        let url = format!(
+            "{}/api/driver/drivers/{}",
+            self.driver_service_url, driver_id
+        );
+
         let response = self
             .http_client
             .get(&url)
@@ -58,18 +70,20 @@ impl DriverClient {
             return Ok(None);
         }
 
-        let driver_response: DriverApiResponse = response
-            .json()
-            .await
-            .map_err(|e| AppError::InternalError(format!("Failed to parse driver response: {}", e)))?;
+        let driver_response: DriverApiResponse = response.json().await.map_err(|e| {
+            AppError::InternalError(format!("Failed to parse driver response: {}", e))
+        })?;
 
         Ok(driver_response.data)
     }
 
     /// Get all available drivers
     pub async fn get_available_drivers(&self) -> Result<Vec<Driver>, AppError> {
-        let url = format!("{}/api/driver/drivers?available=true", self.driver_service_url);
-        
+        let url = format!(
+            "{}/api/driver/drivers?available=true",
+            self.driver_service_url
+        );
+
         let response = self
             .http_client
             .get(&url)
@@ -77,12 +91,11 @@ impl DriverClient {
             .await
             .map_err(|e| AppError::InternalError(format!("Failed to fetch drivers: {}", e)))?;
 
-        let drivers_response: DriversListResponse = response
-            .json()
-            .await
-            .map_err(|e| AppError::InternalError(format!("Failed to parse drivers response: {}", e)))?;
+        let drivers_response: DriversListResponse = response.json().await.map_err(|e| {
+            AppError::InternalError(format!("Failed to parse drivers response: {}", e))
+        })?;
 
-        Ok(drivers_response.data.unwrap_or_default())
+        Ok(drivers_response.data)
     }
 
     /// Get drivers within a certain radius of a location
@@ -94,23 +107,25 @@ impl DriverClient {
         max_distance_meters: f64,
     ) -> Result<Vec<(Driver, f64)>, AppError> {
         let all_drivers = self.get_available_drivers().await?;
-        
+
         let mut nearby_drivers = Vec::new();
-        
+
         for driver in all_drivers {
             // Only include drivers with known locations
-            if let (Some(driver_lat), Some(driver_lon)) = (driver.current_latitude, driver.current_longitude) {
+            if let (Some(driver_lat), Some(driver_lon)) =
+                (driver.current_latitude, driver.current_longitude)
+            {
                 let distance = haversine_distance(pickup_lat, pickup_lon, driver_lat, driver_lon);
-                
+
                 if distance <= max_distance_meters {
                     nearby_drivers.push((driver, distance));
                 }
             }
         }
-        
+
         // Sort by distance (closest first)
         nearby_drivers.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         Ok(nearby_drivers)
     }
 }

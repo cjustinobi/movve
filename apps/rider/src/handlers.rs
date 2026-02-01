@@ -24,6 +24,10 @@ pub async fn estimate_ride(
     State(state): State<AppState>,
     Json(req): Json<RideEstimateRequest>,
 ) -> Result<ApiResponse<RideEstimateResponse>, AppError> {
+    info!("Estimating ride: pickup=({}, {}), destination=({}, {}), vehicle_type={}",
+        req.pickup.latitude, req.pickup.longitude,
+        req.destination.latitude, req.destination.longitude,
+        req.vehicle_type);
     let response = state.rider_service.estimate_ride(req).await?;
     Ok(ApiResponse::success(response))
 }

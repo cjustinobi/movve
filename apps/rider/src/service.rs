@@ -1,15 +1,15 @@
 use std::sync::Arc;
+use tracing::info;
 use utils::generate_numeric_code;
 use uuid::Uuid;
 use common::{AppError, JwtConfig};
 use crate::model::{
-    CreateRideRequest, DriverOption, Ride, NewRide, RideEstimateRequest, RideEstimateResponse, RideResponse,
+    CreateRideRequest, DriverOption, NewRide, RideEstimateRequest, RideEstimateResponse, RideResponse,
     PayRideRequest, RateDriverRequest, Location,
 };
 use crate::repository::RiderRepository;
 use crate::driver_client::DriverClient;
 use crate::distance_service::DistanceService;
-use rand::Rng;
 
 #[derive(Clone)]
 pub struct RiderService {
@@ -37,6 +37,10 @@ impl RiderService {
     /// Estimate ride with real driver availability and distance calculation
     pub async fn estimate_ride(&self, req: RideEstimateRequest) -> Result<RideEstimateResponse, AppError> {
         // Calculate real distance and duration
+        info!("Estimating ride: pickup=({}, {}), destination=({}, {}), vehicle_type={}",
+            req.pickup.latitude, req.pickup.longitude,
+            req.destination.latitude, req.destination.longitude,
+            req.vehicle_type);
         let (distance, duration) = self
             .distance_service
             .calculate_distance_and_duration(
@@ -72,9 +76,10 @@ impl RiderService {
             .filter(|(driver, _)| driver.vehicle_type == req.vehicle_type)
             .map(|(driver, distance_from_pickup)| {
                 // Calculate price based on driver rating (premium for higher rated drivers)
-                let price_multiplier = if driver.rating >= 4.8 {
+                let rating = driver.rating.unwrap_or(0.0);
+                let price_multiplier = if rating >= 4.8 {
                     1.1
-                } else if driver.rating >= 4.5 {
+                } else if rating >= 4.5 {
                     1.05
                 } else {
                     1.0
@@ -84,14 +89,14 @@ impl RiderService {
 
                 DriverOption {
                     driver_id: driver.id,
-                    name: driver.name,
-                    vehicle: driver.vehicle,
-                    vehicle_type: driver.vehicle_type,
-                    rating: driver.rating,
+                    name: format!("Driver {}", driver.id),
+                    vehicle: format!("{} {} ({})", driver.vehicle_model, driver.vehicle_year, driver.vehicle_colour),
+                    vehicle_type: driver.vehicle_type.clone(),
+                    rating,
                     price: estimated_fare * price_multiplier,
                     eta,
                     distance_from_pickup,
-                    total_rides: driver.total_rides,
+                    total_rides: driver.total_rides.unwrap_or(0),
                     current_location: Location {
                         address: "Current Location".to_string(),
                         latitude: driver.current_latitude.unwrap_or(0.0),

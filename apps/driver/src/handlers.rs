@@ -1,15 +1,21 @@
 use crate::{
     AppState,
-    model::{Driver, NewDriver},
+    model::{Driver, DriverStatus, NewDriver},
 };
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
 use common::{ApiResponse, AppError};
+use serde::Deserialize;
 use serde_json::json;
 use tracing::info;
 use uuid::Uuid;
+
+#[derive(Deserialize)]
+pub struct ListDriversQuery {
+    pub available: Option<bool>,
+}
 
 /// Creates a new driver
 ///
@@ -50,11 +56,23 @@ pub async fn create_driver(
 
 pub async fn list_drivers(
     State(state): State<AppState>,
+    Query(query): Query<ListDriversQuery>,
 ) -> Result<ApiResponse<Vec<Driver>>, AppError> {
-    let drivers = state
+    let mut drivers = state
         .driver_service
         .list_drivers()
         .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    // Filter by available if specified
+    if let Some(available) = query.available {
+        drivers.retain(|d| {
+            if available {
+                matches!(d.status, DriverStatus::Online)
+            } else {
+                !matches!(d.status, DriverStatus::Online)
+            }
+        });
+    }
 
     Ok(ApiResponse::success(drivers))
 }
