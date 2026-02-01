@@ -56,8 +56,14 @@ impl RiderRepository {
     pub async fn update_ride_status(&self, ride_id: Uuid, status_val: String) -> Result<Ride, AppError> {
         let mut conn = self.pool.get().map_err(|e| AppError::InternalError(e.to_string()))?;
         
-        let result = diesel::update(rides::table.find(ride_id))
-            .set(rides::status.eq(status_val))
+        use crate::schema::rides::dsl::*;
+        use chrono::Utc;
+        
+        let result = diesel::update(rides.find(ride_id))
+            .set((
+                status.eq(status_val),
+                updated_at.eq(Utc::now()),
+            ))
             .get_result(&mut conn)
             .map_err(|e| AppError::BadRequest(e.to_string()))?;
             
@@ -65,10 +71,21 @@ impl RiderRepository {
     }
 
     pub async fn update_payment_status(&self, ride_id: Uuid) -> Result<Ride, AppError> {
-        // Assuming we just mark it as paid or similar. For now just update status to "paid" if that's the flow, 
-        // or we might need a separate field. Agent says "pay for the ride". 
-        // I'll assume it changes status for now or we add a field later.
-        // Let's assume paying completes the flow or sets it to 'paid'.
         self.update_ride_status(ride_id, "paid".to_string()).await
+    }
+
+    pub async fn update_ride_rating(&self, ride_id: Uuid, rating_value: f64, comment: Option<String>) -> Result<(), AppError> {
+        let mut conn = self.pool.get().map_err(|e| AppError::InternalError(e.to_string()))?;
+        
+        // TODO: Add rating and comment fields to the rides table schema
+        // For now, just log the rating
+        tracing::info!(
+            "Rating submitted for ride {}: {} stars, comment: {:?}",
+            ride_id,
+            rating_value,
+            comment
+        );
+        
+        Ok(())
     }
 }

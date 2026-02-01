@@ -5,8 +5,7 @@ use uuid::Uuid;
 use crate::{
     AppState,
     model::{
-        CreateRideRequest, PayRideRequest, RateDriverRequest, RideEstimateRequest, 
-        RideEstimateResponse, RideResponse, Claims
+        Claims, CreateRideRequest, Location, PayRideRequest, RateDriverRequest, RideEstimateRequest, RideEstimateResponse, RideResponse
     },
 };
 
@@ -45,10 +44,13 @@ pub async fn create_ride(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
-    info!("create_ride: {:?}", req);
+    info!("Creating ride request: pickup={}, destination={}, driver_id={}", 
+        req.pickup.address, req.destination.address, req.driver_id);
+    
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
-    info!("create_ride: {:?}", user_id);
+    
+    info!("User ID from token: {}", user_id);
 
     let response = state.rider_service.create_ride(user_id, req).await?;
     Ok(ApiResponse::success_with_message("Ride requested successfully", response))
@@ -181,7 +183,7 @@ pub async fn rate_driver(
     get,
     path = "/api/rider/{id}/driver-location",
     responses(
-        (status = 200, description = "Driver location"),
+        (status = 200, description = "Driver location", body = ApiResponse<Location>),
     ),
     params(
         ("id" = Uuid, Path, description = "Ride ID")
@@ -190,14 +192,15 @@ pub async fn rate_driver(
     security(("bearerAuth" = []))
 )]
 pub async fn get_driver_location(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    // Return mock lat/long
-    Ok(ApiResponse::success(serde_json::json!({
-        "lat": 37.7749,
-        "lng": -122.4194
-    })))
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<Location>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let location = state.rider_service.get_driver_location(id, user_id).await?;
+    Ok(ApiResponse::success(location))
 }
 
 // Ride Status

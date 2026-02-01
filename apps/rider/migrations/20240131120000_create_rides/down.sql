@@ -1,1 +1,1 @@
-DROP TABLE rides;
+DROP TABLE IF EXISTS rides;

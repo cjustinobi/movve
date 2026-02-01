@@ -5,6 +5,8 @@ mod model;
 mod docs;
 mod schema;
 mod database;
+mod distance_service;
+mod driver_client;
 mod routes;
 
 use common::AppConfig;
@@ -17,6 +19,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use repository::RiderRepository;
 use service::RiderService;
+use driver_client::DriverClient;
+use distance_service::DistanceService;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -45,7 +49,28 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Initialize repository and service layer
     let repo = RiderRepository::new(pool);
-    let service = Arc::new(RiderService::new(repo, config.jwt.clone()));
+    
+    let driver_service_url = format!(
+        "http://{}:{}",
+        config.services.driver_service_host, // TODO: change this to driver service url
+        config.services.driver_service_port
+    );
+    let driver_client = Arc::new(DriverClient::new(driver_service_url));
+
+    // Initialize distance service with Google Maps API key (optional)
+    let google_api_key = std::env::var("GOOGLE_MAPS_API_KEY").ok();
+    if google_api_key.is_none() {
+        tracing::warn!("GOOGLE_MAPS_API_KEY not set, will use Haversine formula for distance calculation");
+    }
+    let distance_service = Arc::new(DistanceService::new(google_api_key));
+
+    // Initialize rider service with all dependencies
+    let service = Arc::new(RiderService::new(
+        repo,
+        config.jwt.clone(),
+        driver_client,
+        distance_service,
+    ));
 
     let mail_service = Arc::new(MailService::new(
         config.mail.api_key.clone(),
@@ -64,6 +89,13 @@ async fn main() -> Result<(), anyhow::Error> {
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
     tracing::info!("🚗 Rider service listening on {}", addr);
+    tracing::info!("📍 Distance calculation: {}", 
+        if std::env::var("GOOGLE_MAPS_API_KEY").is_ok() { 
+            "Google Maps API" 
+        } else { 
+            "Haversine formula (fallback)" 
+        }
+    );
 
     axum::serve(listener, app).await?;
     Ok(())

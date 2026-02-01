@@ -1,0 +1,133 @@
+use common::AppError;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use crate::model::Location;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Driver {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    pub vehicle: String,
+    pub vehicle_type: String,
+    pub rating: f64,
+    pub total_rides: i32,
+    pub is_available: bool,
+    pub current_latitude: Option<f64>,
+    pub current_longitude: Option<f64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DriverApiResponse {
+    pub success: bool,
+    pub data: Option<Driver>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DriversListResponse {
+    pub success: bool,
+    pub data: Option<Vec<Driver>>,
+}
+
+/// Client for communicating with the Driver microservice
+pub struct DriverClient {
+    http_client: reqwest::Client,
+    driver_service_url: String,
+}
+
+impl DriverClient {
+    pub fn new(driver_service_url: String) -> Self {
+        Self {
+            http_client: reqwest::Client::new(),
+            driver_service_url,
+        }
+    }
+
+    /// Get a specific driver by ID
+    pub async fn get_driver(&self, driver_id: Uuid) -> Result<Option<Driver>, AppError> {
+        let url = format!("{}/api/driver/drivers/{}", self.driver_service_url, driver_id);
+        
+        let response = self
+            .http_client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| AppError::InternalError(format!("Failed to fetch driver: {}", e)))?;
+
+        if response.status() == 404 {
+            return Ok(None);
+        }
+
+        let driver_response: DriverApiResponse = response
+            .json()
+            .await
+            .map_err(|e| AppError::InternalError(format!("Failed to parse driver response: {}", e)))?;
+
+        Ok(driver_response.data)
+    }
+
+    /// Get all available drivers
+    pub async fn get_available_drivers(&self) -> Result<Vec<Driver>, AppError> {
+        let url = format!("{}/api/driver/drivers?available=true", self.driver_service_url);
+        
+        let response = self
+            .http_client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| AppError::InternalError(format!("Failed to fetch drivers: {}", e)))?;
+
+        let drivers_response: DriversListResponse = response
+            .json()
+            .await
+            .map_err(|e| AppError::InternalError(format!("Failed to parse drivers response: {}", e)))?;
+
+        Ok(drivers_response.data.unwrap_or_default())
+    }
+
+    /// Get drivers within a certain radius of a location
+    /// Filters available drivers and calculates distance from pickup
+    pub async fn get_nearby_drivers(
+        &self,
+        pickup_lat: f64,
+        pickup_lon: f64,
+        max_distance_meters: f64,
+    ) -> Result<Vec<(Driver, f64)>, AppError> {
+        let all_drivers = self.get_available_drivers().await?;
+        
+        let mut nearby_drivers = Vec::new();
+        
+        for driver in all_drivers {
+            // Only include drivers with known locations
+            if let (Some(driver_lat), Some(driver_lon)) = (driver.current_latitude, driver.current_longitude) {
+                let distance = haversine_distance(pickup_lat, pickup_lon, driver_lat, driver_lon);
+                
+                if distance <= max_distance_meters {
+                    nearby_drivers.push((driver, distance));
+                }
+            }
+        }
+        
+        // Sort by distance (closest first)
+        nearby_drivers.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        
+        Ok(nearby_drivers)
+    }
+}
+
+/// Calculate distance between two points using Haversine formula
+fn haversine_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
+    use std::f64::consts::PI;
+    let r = 6371000.0; // Earth's radius in meters
+
+    let lat1_rad = lat1 * PI / 180.0;
+    let lat2_rad = lat2 * PI / 180.0;
+    let delta_lat = (lat2 - lat1) * PI / 180.0;
+    let delta_lon = (lon2 - lon1) * PI / 180.0;
+
+    let a = (delta_lat / 2.0).sin().powi(2)
+        + lat1_rad.cos() * lat2_rad.cos() * (delta_lon / 2.0).sin().powi(2);
+    let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
+
+    r * c
+}
