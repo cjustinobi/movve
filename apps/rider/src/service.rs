@@ -135,10 +135,6 @@ impl RiderService {
             .await?
             .ok_or_else(|| AppError::NotFound(format!("Driver {} not found", req.driver_id)))?;
 
-        if !driver.is_available {
-            return Err(AppError::BadRequest("Driver is not available".to_string()));
-        }
-
         // Verify driver has location
         if driver.current_latitude.is_none() || driver.current_longitude.is_none() {
             return Err(AppError::BadRequest("Driver location not available".to_string()));
