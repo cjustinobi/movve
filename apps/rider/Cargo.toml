@@ -18,7 +18,8 @@ uuid = { workspace = true }
 jsonwebtoken = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
-diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono"] }
+diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono", "serde_json"] }
+rand = "0.8"
 
 # Reference local workspace crates
 common = { path = "../../libs/common" }

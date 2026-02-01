@@ -3,13 +3,13 @@ use utils::generate_numeric_code;
 use uuid::Uuid;
 use common::{AppError, JwtConfig};
 use crate::model::{
-    CreateRideRequest, DriverOption, Ride, RideEstimateRequest, RideEstimateResponse, RideResponse,
+    CreateRideRequest, DriverOption, Ride, NewRide, RideEstimateRequest, RideEstimateResponse, RideResponse,
     PayRideRequest, RateDriverRequest, Location,
 };
 use crate::repository::RiderRepository;
 use crate::driver_client::DriverClient;
 use crate::distance_service::DistanceService;
-use chrono::Utc;
+use rand::Rng;
 
 #[derive(Clone)]
 pub struct RiderService {
@@ -164,23 +164,22 @@ impl RiderService {
         // Generate OTP for ride verification
         let otp = generate_numeric_code(4);
 
-        let ride = Ride {
-            id: Uuid::new_v4(),
+        // Create NewRide for insertion
+        let new_ride = NewRide::new(
             rider_id,
-            driver_id: Some(req.driver_id),
-            pickup: req.pickup.clone(),
-            destination: req.destination.clone(),
-            status: "requested".to_string(),
-            fare: req.fare,
+            req.driver_id,
+            req.pickup,
+            req.destination,
+            req.fare,
             distance,
             duration,
-            otp: Some(otp),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        };
+            otp,
+        );
 
-        let created_ride = self.repository.create_ride(ride).await?;
-        Ok(self.map_to_response(created_ride))
+        // Insert and get back the Ride
+        let created_ride = self.repository.create_ride(new_ride).await?;
+        
+        Ok(created_ride.into())
     }
 
     pub async fn get_ride(&self, ride_id: Uuid) -> Result<RideResponse, AppError> {
@@ -190,12 +189,12 @@ impl RiderService {
             .await?
             .ok_or(AppError::NotFound("Ride not found".to_string()))?;
 
-        Ok(self.map_to_response(ride))
+        Ok(ride.into())
     }
 
     pub async fn get_rider_history(&self, rider_id: Uuid) -> Result<Vec<RideResponse>, AppError> {
         let rides = self.repository.get_rides_by_rider(rider_id).await?;
-        Ok(rides.into_iter().map(|r| self.map_to_response(r)).collect())
+        Ok(rides.into_iter().map(|r| r.into()).collect())
     }
 
     pub async fn cancel_ride(&self, ride_id: Uuid, rider_id: Uuid) -> Result<RideResponse, AppError> {
@@ -221,7 +220,8 @@ impl RiderService {
             .repository
             .update_ride_status(ride_id, "cancelled".to_string())
             .await?;
-        Ok(self.map_to_response(updated_ride))
+        
+        Ok(updated_ride.into())
     }
 
     pub async fn pay_ride(
@@ -249,7 +249,7 @@ impl RiderService {
         }
 
         let updated_ride = self.repository.update_payment_status(ride_id).await?;
-        Ok(self.map_to_response(updated_ride))
+        Ok(updated_ride.into())
     }
 
     pub async fn rate_driver(
@@ -281,14 +281,7 @@ impl RiderService {
             return Err(AppError::BadRequest("Rating must be between 1 and 5".to_string()));
         }
 
-        // TODO: Store rating in database (could be in rides table or separate ratings table)
-        // For now, we'll just validate the request
-        tracing::info!(
-            "Rider {} rated ride {} with {} stars",
-            rider_id,
-            ride_id,
-            req.rating
-        );
+        self.repository.update_ride_rating(ride_id, req.rating, req.comment).await?;
 
         Ok(())
     }
@@ -322,21 +315,6 @@ impl RiderService {
             latitude: driver.current_latitude.unwrap_or(0.0),
             longitude: driver.current_longitude.unwrap_or(0.0),
         })
-    }
-
-    fn map_to_response(&self, ride: Ride) -> RideResponse {
-        RideResponse {
-            id: ride.id,
-            user: ride.rider_id.to_string(),
-            pickup: ride.pickup,
-            destination: ride.destination,
-            fare: ride.fare,
-            status: ride.status,
-            distance: ride.distance,
-            duration: ride.duration,
-            otp: ride.otp,
-            created_at: ride.created_at,
-        }
     }
 }
 
