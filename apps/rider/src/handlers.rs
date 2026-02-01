@@ -48,8 +48,7 @@ pub async fn create_ride(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
-    info!("Creating ride request: pickup={}, destination={}, driver_id={}", 
-        req.pickup.address, req.destination.address, req.driver_id);
+    info!("Creating ride request: {:?}", req);
     
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;

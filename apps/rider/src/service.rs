@@ -37,10 +37,7 @@ impl RiderService {
     /// Estimate ride with real driver availability and distance calculation
     pub async fn estimate_ride(&self, req: RideEstimateRequest) -> Result<RideEstimateResponse, AppError> {
         // Calculate real distance and duration
-        info!("Estimating ride: pickup=({}, {}), destination=({}, {}), vehicle_type={}",
-            req.pickup.latitude, req.pickup.longitude,
-            req.destination.latitude, req.destination.longitude,
-            req.vehicle_type);
+        info!("Estimating ride from");
         let (distance, duration) = self
             .distance_service
             .calculate_distance_and_duration(
@@ -76,7 +73,7 @@ impl RiderService {
             .filter(|(driver, _)| driver.vehicle_type == req.vehicle_type)
             .map(|(driver, distance_from_pickup)| {
                 // Calculate price based on driver rating (premium for higher rated drivers)
-                let rating = driver.rating.unwrap_or(0.0);
+                let rating = driver.rating.as_ref().map(|r| *r).unwrap_or(0.0);
                 let price_multiplier = if rating >= 4.8 {
                     1.1
                 } else if rating >= 4.5 {
@@ -99,8 +96,8 @@ impl RiderService {
                     total_rides: driver.total_rides.unwrap_or(0),
                     current_location: Location {
                         address: "Current Location".to_string(),
-                        latitude: driver.current_latitude.unwrap_or(0.0),
-                        longitude: driver.current_longitude.unwrap_or(0.0),
+                        latitude: driver.current_latitude.as_ref().map(|lat| *lat).unwrap_or(0.0),
+                        longitude: driver.current_longitude.as_ref().map(|lon| *lon).unwrap_or(0.0),
                     },
                 }
             })
