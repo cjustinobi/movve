@@ -4,17 +4,29 @@ use crate::{
 };
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{
+        Extension, Path, Query, State,
+        ws::{Message, WebSocket, WebSocketUpgrade},
+    },
+    http::StatusCode,
 };
 use common::{ApiResponse, AppError};
+use futures_util::SinkExt;
 use serde::Deserialize;
 use serde_json::json;
 use tracing::info;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct ListDriversQuery {
     pub available: Option<bool>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateLocationRequest {
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 /// Creates a new driver
@@ -99,6 +111,78 @@ pub async fn get_driver(
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     Ok(ApiResponse::success(driver))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/driver/location",
+    request_body = UpdateLocationRequest,
+    responses(
+        (status = 200, description = "Location updated", body = ApiResponse<common::EmptyData>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn update_location(
+    State(state): State<AppState>,
+    Extension(claims): Extension<crate::model::Claims>,
+    Json(req): Json<UpdateLocationRequest>,
+) -> Result<ApiResponse<common::EmptyData>, AppError> {
+    let driver_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
+
+    state
+        .driver_service
+        .update_driver_location(driver_id, req.latitude, req.longitude)
+        .await
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    Ok(ApiResponse::message_only(
+        StatusCode::OK,
+        "Location updated",
+    ))
+}
+
+pub async fn update_location_ws(
+    ws: WebSocketUpgrade,
+    State(state): State<AppState>,
+    Extension(claims): Extension<crate::model::Claims>,
+) -> impl axum::response::IntoResponse {
+    ws.on_upgrade(move |socket| handle_socket(socket, state, claims))
+}
+
+async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::model::Claims) {
+    let driver_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            let _ = socket.close().await;
+            return;
+        }
+    };
+
+    info!("Driver {} connected via WebSocket", driver_id);
+
+    while let Some(Ok(msg)) = socket.recv().await {
+        match msg {
+            Message::Text(text) => {
+                if let Ok(req) = serde_json::from_str::<UpdateLocationRequest>(&text) {
+                    if let Err(e) = state
+                        .driver_service
+                        .update_driver_location(driver_id, req.latitude, req.longitude)
+                        .await
+                    {
+                        info!(
+                            "Failed to update location via WS for driver {}: {}",
+                            driver_id, e
+                        );
+                    }
+                }
+            }
+            Message::Close(_) => break,
+            _ => {}
+        }
+    }
+    info!("Driver {} disconnected from WebSocket", driver_id);
 }
 
 pub async fn health_check() -> Json<serde_json::Value> {

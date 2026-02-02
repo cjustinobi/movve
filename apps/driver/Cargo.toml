@@ -20,6 +20,7 @@ utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono", "numeric"] }
 diesel-derive-enum = { version = "2.1", features = ["postgres"] }
+futures-util = "0.3"
 
 common = { path = "../../libs/common" }
 services = { path = "../../libs/services" }

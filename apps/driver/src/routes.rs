@@ -1,18 +1,14 @@
 use axum::{
-    Router, middleware, routing::{get, post}
+    Router, middleware,
+    routing::{get, post, put},
 };
 
-use crate::{handlers, docs, AppState};
+use crate::{AppState, docs, handlers};
 use utoipa::OpenApi;
 
-use axum::{
-    extract::Request,
-    http::StatusCode,
-    middleware::Next,
-    response::Response,
-};
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use crate::model::Claims;
+use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 
 async fn jwt_auth_middleware(
     secret: String,
@@ -48,20 +44,22 @@ pub fn create_routes(state: AppState) -> Router {
 
     // Public routes (no authentication required)
     let public_routes = Router::new()
-                .route("/api/driver/health", get(handlers::health_check))
-        .route("/api/driver/drivers", get(handlers::list_drivers).post(handlers::create_driver))
+        .route("/api/driver/health", get(handlers::health_check))
+        .route(
+            "/api/driver/drivers",
+            get(handlers::list_drivers).post(handlers::create_driver),
+        )
         .route("/api/driver/drivers/{id}", get(handlers::get_driver));
-       
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()
         .route("/api/driver/verify", post(handlers::create_driver))
+        .route("/api/driver/location", put(handlers::update_location))
+        .route("/api/driver/location/ws", get(handlers::update_location_ws))
         // Add more protected routes here as needed
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
-            async move {
-                jwt_auth_middleware(secret, req, next).await
-            }
+            async move { jwt_auth_middleware(secret, req, next).await }
         }));
 
     // Combine routes
@@ -69,9 +67,9 @@ pub fn create_routes(state: AppState) -> Router {
         .merge(public_routes)
         .merge(protected_routes)
         // OpenAPI spec endpoint
-        .route("/openapi.json", get(|| async {
-            axum::Json(docs::DriverApiDoc::openapi())
-        }))
+        .route(
+            "/openapi.json",
+            get(|| async { axum::Json(docs::DriverApiDoc::openapi()) }),
+        )
         .with_state(state)
 }
-

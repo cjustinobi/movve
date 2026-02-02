@@ -1,3 +1,4 @@
+use bigdecimal::{BigDecimal, FromPrimitive};
 use diesel::prelude::*;
 use diesel::result::Error;
 use uuid::Uuid;
@@ -68,5 +69,26 @@ impl DriverRepository {
             .filter(id.eq(driver_id))
             .select(Driver::as_select())
             .first::<Driver>(&mut conn)
+    }
+
+    pub async fn update_location(
+        &self,
+        driver_id: Uuid,
+        latitude: f64,
+        longitude: f64,
+    ) -> Result<(), Error> {
+        let mut conn = self.pool.get().expect("Failed to get DB connection");
+
+        let lat = BigDecimal::from_f64(latitude).unwrap_or_default();
+        let lon = BigDecimal::from_f64(longitude).unwrap_or_default();
+
+        diesel::update(drivers.filter(id.eq(driver_id)))
+            .set((
+                current_latitude.eq(Some(lat)),
+                current_longitude.eq(Some(lon)),
+            ))
+            .execute(&mut conn)?;
+
+        Ok(())
     }
 }

@@ -35,4 +35,10 @@ impl DriverService {
     pub fn get_driver(&self, id: Uuid) -> Result<Driver> {
         self.repo.find_by_id(id).map_err(Into::into)
     }
+
+    pub async fn update_driver_location(&self, driver_id: Uuid, latitude: f64, longitude: f64) -> Result<(), AppError> {
+        info!("Updating location for driver {}: lat={}, lon={}", driver_id, latitude, longitude);
+        self.repo.update_location(driver_id, latitude, longitude).await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
 }
