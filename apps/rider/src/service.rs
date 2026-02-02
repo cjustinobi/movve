@@ -36,8 +36,7 @@ impl RiderService {
 
     /// Estimate ride with real driver availability and distance calculation
     pub async fn estimate_ride(&self, req: RideEstimateRequest) -> Result<RideEstimateResponse, AppError> {
-        // Calculate real distance and duration
-        info!("Estimating ride from");
+
         let (distance, duration) = self
             .distance_service
             .calculate_distance_and_duration(

@@ -14,7 +14,7 @@ use utoipa::OpenApi;
         crate::model::VehicleType,
     )),
     tags(
-        (name = "Driver Service", description = "Endpoints for managing drivers")
+        (name = "Driver", description = "Endpoints for managing drivers")
     )
 )]
 pub struct DriverApiDoc;

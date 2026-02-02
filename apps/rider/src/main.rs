@@ -50,11 +50,7 @@ async fn main() -> Result<(), anyhow::Error> {
     // Initialize repository and service layer
     let repo = RiderRepository::new(pool);
     
-    let driver_service_url = format!(
-        "http://{}:{}",
-        config.services.driver_service_host, // TODO: change this to driver service url
-        config.services.driver_service_port
-    );
+    let driver_service_url = config.services.driver_service_url.clone();
     let driver_client = Arc::new(DriverClient::new(driver_service_url));
 
     // Initialize distance service with Google Maps API key (optional)
