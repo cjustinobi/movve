@@ -47,10 +47,7 @@ pub async fn create_driver(
     Json(req): Json<NewDriver>,
 ) -> Result<ApiResponse<Driver>, AppError> {
     info!("Creating new driver: {:?}", req);
-    let response = state
-        .driver_service
-        .create_driver(req)
-        .map_err(|e| AppError::InternalError(e.to_string()))?;
+    let response = state.driver_service.create_driver(req).await?;
     Ok(ApiResponse::success_with_message(
         "Driver created successfully",
         response,

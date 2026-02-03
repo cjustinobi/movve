@@ -1,7 +1,9 @@
+pub mod auth;
 pub mod mail;
 pub mod templates;
 
-pub use mail::*;
+pub use auth::AuthServiceClient;
+pub use mail::MailService;
 pub use templates::*;
 
 // Usage:

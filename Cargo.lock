@@ -2207,9 +2207,12 @@ name = "services"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "reqwest",
  "resend-rs",
+ "serde",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

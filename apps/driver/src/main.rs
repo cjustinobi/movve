@@ -1,18 +1,18 @@
-mod handlers;
-mod repository;
-mod service;
-mod model;
-mod docs;
-mod schema;
 mod database;
+mod docs;
+mod handlers;
+mod model;
+mod repository;
 mod routes;
+mod schema;
+mod service;
 
 use common::AppConfig;
-use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
-use services::MailService;
-use std::sync::Arc;
+use diesel::r2d2::{ConnectionManager, Pool};
 use dotenvy::dotenv;
+use services::{AuthServiceClient, MailService};
+use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use repository::DriverRepository;
@@ -22,6 +22,7 @@ use service::DriverService;
 pub struct AppState {
     pub driver_service: Arc<DriverService>,
     pub mail_service: Arc<MailService>,
+    pub auth_service: Arc<AuthServiceClient>,
 }
 
 #[tokio::main]
@@ -34,8 +35,8 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Load configuration (from libs/common)
     let config = AppConfig::load()?;
-    let database_url = std::env::var("DRIVER_DATABASE_URL")
-        .expect("DRIVER_DATABASE_URL must be set");
+    let database_url =
+        std::env::var("DRIVER_DATABASE_URL").expect("DRIVER_DATABASE_URL must be set");
 
     // Setup Diesel connection pool
     let manager = ConnectionManager::<PgConnection>::new(database_url);
@@ -44,8 +45,15 @@ async fn main() -> Result<(), anyhow::Error> {
         .expect("Failed to create DB pool");
 
     // Initialize repository and service layer
+    let auth_service = Arc::new(AuthServiceClient::new(
+        config.services.auth_service_url.clone(),
+    ));
     let repo = DriverRepository::new(pool);
-    let service = Arc::new(DriverService::new(repo, config.jwt.clone()));
+    let service = Arc::new(DriverService::new(
+        repo,
+        config.jwt.clone(),
+        auth_service.clone(),
+    ));
 
     let mail_service = Arc::new(MailService::new(
         config.mail.api_key.clone(),
@@ -55,12 +63,16 @@ async fn main() -> Result<(), anyhow::Error> {
     let state = AppState {
         driver_service: service,
         mail_service,
+        auth_service,
     };
 
     // Use the routes module
     let app = routes::create_routes(state);
 
-    let addr = format!("{}:{}", config.services.driver_service_host, config.services.driver_service_port);
+    let addr = format!(
+        "{}:{}",
+        config.services.driver_service_host, config.services.driver_service_port
+    );
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
     tracing::info!("🚗 Driver service listening on {}", addr);

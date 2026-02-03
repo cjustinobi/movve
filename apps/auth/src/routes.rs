@@ -50,7 +50,8 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/auth/forgot-password", post(handlers::forgot_password))
         .route("/api/auth/reset-password", post(handlers::reset_password))
         .route("/api/auth/refresh", post(handlers::refresh_token))
-        .route("/api/auth/logout", post(handlers::logout));
+        .route("/api/auth/logout", post(handlers::logout))
+        .route("/api/auth/users/{id}", get(handlers::get_user));
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()

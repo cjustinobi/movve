@@ -328,6 +328,24 @@ pub async fn update_password(
     ))
 }
 
+/// Gets a user by ID (Internal use)
+#[utoipa::path(
+    get,
+    path = "/api/auth/users/{id}",
+    responses(
+        (status = 200, description = "User profile", body = ApiResponse<User>),
+        (status = 404, description = "User not found"),
+    ),
+    tag = "Auth"
+)]
+pub async fn get_user(
+    State(state): State<AppState>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+) -> Result<ApiResponse<User>, AppError> {
+    let user = state.auth_service.get_user_by_id(id).await?;
+    Ok(ApiResponse::success(user))
+}
+
 /// Refreshes the access token using a refresh token
 #[utoipa::path(
     post,
