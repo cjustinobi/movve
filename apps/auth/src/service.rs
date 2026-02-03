@@ -12,7 +12,6 @@ use crate::{
     model::{AuthResponse, Claims, LoginRequest, RegisterRequest, User, UserInfo},
     repository::UserRepository,
 };
-use utils::generate_numeric_code;
 
 pub struct AuthService {
     repo: UserRepository,
@@ -25,6 +24,7 @@ impl AuthService {
     }
 
     pub async fn register(&self, req: RegisterRequest) -> Result<AuthResponse, AppError> {
+        utils::validate_email(&req.email)?;
         if self
             .repo
             .find_by_email(&req.email)
@@ -59,6 +59,7 @@ impl AuthService {
     }
 
     pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, AppError> {
+        utils::validate_email(&req.email)?;
         let user = self
             .repo
             .find_by_email(&req.email)
@@ -118,7 +119,7 @@ impl AuthService {
         };
 
         // 2️⃣ Create 4-digit password reset code
-        let code = generate_numeric_code(4);
+        let code = utils::generate_numeric_code(4);
         match self.repo.create_password_reset(user.id, &code).await {
             Ok(token) => {
                 info!(user_id = %user.id, token = %token, "Password reset code created successfully");
@@ -231,7 +232,7 @@ impl AuthService {
             return Err(AppError::BadRequest("Email already verified".to_string()));
         }
 
-        let code = generate_numeric_code(4);
+        let code = utils::generate_numeric_code(4);
         let expires_at = Utc::now() + chrono::Duration::minutes(15);
 
         self.repo

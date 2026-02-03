@@ -187,6 +187,7 @@ pub async fn resend_verification(
     State(state): State<AppState>,
     Json(req): Json<ResendVerificationRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
+    utils::validate_email(&req.email)?;
     let code = state
         .auth_service
         .resend_verification_code(&req.email)
@@ -231,6 +232,7 @@ pub async fn forgot_password(
     State(state): State<AppState>,
     Json(req): Json<ForgotPasswordRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
+    utils::validate_email(&req.email)?;
     let token = state.auth_service.forgot_password(&req.email).await?;
 
     // Get user details for email
