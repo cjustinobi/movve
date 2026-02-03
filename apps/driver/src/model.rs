@@ -74,13 +74,15 @@ pub enum UserRole {
 pub struct Driver {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub phone: String,
     pub license_number: String,
     pub vehicle_type: VehicleType,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,
     pub vehicle_model: String,
     pub vehicle_year: i32,
+    pub driver_license_image: String,
+    pub vehicle_image: String,
+    pub vehicle_insurance_image: Option<String>,
     pub status: DriverStatus,
     #[schema(value_type = Option<String>)]
     pub rating: Option<BigDecimal>,
@@ -97,8 +99,10 @@ pub struct Driver {
 #[diesel(table_name = drivers)]
 pub struct NewDriver {
     pub user_id: Uuid,
-    pub phone: String,
     pub license_number: String,
+    pub driver_license_image: String,
+    pub vehicle_image: String,
+    pub vehicle_insurance_image: Option<String>,
     pub vehicle_type: VehicleType,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,

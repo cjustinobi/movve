@@ -7,6 +7,7 @@ pub struct AppConfig {
     pub jwt: JwtConfig,
     pub services: ServicesConfig,
     pub mail: MailConfig,
+    pub cloudinary: CloudinaryConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -27,6 +28,13 @@ pub struct MailConfig {
     pub api_key: String,
     pub from_email: String,
     pub frontend_url: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CloudinaryConfig {
+    pub cloudinary_cloud_name: String,
+    pub cloudinary_api_key: String,
+    pub cloudinary_api_secret: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -99,6 +107,14 @@ impl AppConfig {
                     .context("MAIL_FROM_EMAIL must be set in environment")?,
                 frontend_url: std::env::var("FRONTEND_URL")
                     .unwrap_or_else(|_| "http://localhost:3000".to_string()),
+            },
+            cloudinary: CloudinaryConfig {
+                cloudinary_cloud_name: std::env::var("CLOUDINARY_CLOUD_NAME")
+                    .context("CLOUDINARY_CLOUD_NAME must be set in environment")?,
+                cloudinary_api_key: std::env::var("CLOUDINARY_API_KEY")
+                    .context("CLOUDINARY_API_KEY must be set in environment")?,
+                cloudinary_api_secret: std::env::var("CLOUDINARY_API_SECRET")
+                    .context("CLOUDINARY_API_SECRET must be set in environment")?,
             },
         };
 

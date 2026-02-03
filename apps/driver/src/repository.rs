@@ -12,7 +12,6 @@ use crate::schema::drivers::dsl::*;
 pub struct NewDriverDb<'a> {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub phone: &'a str,
     pub license_number: &'a str,
     pub vehicle_type: VehicleType,
     pub vehicle_colour: VehicleColour,
@@ -38,7 +37,6 @@ impl DriverRepository {
         let driver_db = NewDriverDb {
             id: Uuid::new_v4(),
             user_id: new_driver.user_id,
-            phone: &new_driver.phone,
             license_number: &new_driver.license_number,
             vehicle_type: new_driver.vehicle_type,
             vehicle_colour: new_driver.vehicle_colour,

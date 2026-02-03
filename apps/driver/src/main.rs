@@ -11,7 +11,7 @@ use common::AppConfig;
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use dotenvy::dotenv;
-use services::{AuthServiceClient, MailService};
+use services::{AuthServiceClient, CloudinaryService, MailService};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -23,6 +23,7 @@ pub struct AppState {
     pub driver_service: Arc<DriverService>,
     pub mail_service: Arc<MailService>,
     pub auth_service: Arc<AuthServiceClient>,
+    pub cloudinary_service: Arc<CloudinaryService>,
 }
 
 #[tokio::main]
@@ -59,11 +60,14 @@ async fn main() -> Result<(), anyhow::Error> {
         config.mail.api_key.clone(),
         config.mail.from_email.clone(),
     ));
+
+    let cloudinary_service = Arc::new(CloudinaryService::new(&config));
     // Shared app state
     let state = AppState {
         driver_service: service,
         mail_service,
         auth_service,
+        cloudinary_service,
     };
 
     // Use the routes module

@@ -56,6 +56,18 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/driver/verify", post(handlers::create_driver))
         .route("/api/driver/location", put(handlers::update_location))
         .route("/api/driver/location/ws", get(handlers::update_location_ws))
+        .route(
+            "/api/driver/upload/license",
+            post(handlers::upload_driver_license),
+        )
+        .route(
+            "/api/driver/upload/vehicle-image",
+            post(handlers::upload_vehicle_image),
+        )
+        .route(
+            "/api/driver/upload/insurance",
+            post(handlers::upload_vehicle_insurance),
+        )
         // Add more protected routes here as needed
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();

@@ -5,7 +5,7 @@ use crate::{
 use axum::{
     Json,
     extract::{
-        Extension, Path, Query, State,
+        Extension, Multipart, Path, Query, State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
     http::StatusCode,
@@ -184,4 +184,83 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
 
 pub async fn health_check() -> Json<serde_json::Value> {
     Json(json!({"status": "Driver service is healthy"}))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/driver/upload/license",
+    responses(
+        (status = 200, description = "License uploaded", body = ApiResponse<String>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn upload_driver_license(
+    State(state): State<AppState>,
+    multipart: Multipart,
+) -> Result<ApiResponse<String>, AppError> {
+    let url = process_upload(state, multipart).await?;
+    Ok(ApiResponse::success_with_message(
+        "License uploaded successfully",
+        url,
+    ))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/driver/upload/vehicle-image",
+    responses(
+        (status = 200, description = "Vehicle image uploaded", body = ApiResponse<String>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn upload_vehicle_image(
+    State(state): State<AppState>,
+    multipart: Multipart,
+) -> Result<ApiResponse<String>, AppError> {
+    let url = process_upload(state, multipart).await?;
+    Ok(ApiResponse::success_with_message(
+        "Vehicle image uploaded successfully",
+        url,
+    ))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/driver/upload/insurance",
+    responses(
+        (status = 200, description = "Insurance uploaded", body = ApiResponse<String>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn upload_vehicle_insurance(
+    State(state): State<AppState>,
+    multipart: Multipart,
+) -> Result<ApiResponse<String>, AppError> {
+    let url = process_upload(state, multipart).await?;
+    Ok(ApiResponse::success_with_message(
+        "Insurance uploaded successfully",
+        url,
+    ))
+}
+
+async fn process_upload(state: AppState, mut multipart: Multipart) -> Result<String, AppError> {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| AppError::BadRequest(e.to_string()))?
+    {
+        let name = field.name().unwrap_or_default().to_string();
+        if name == "file" {
+            let data = field
+                .bytes()
+                .await
+                .map_err(|e| AppError::BadRequest(e.to_string()))?;
+            let url = state.cloudinary_service.upload_image(data.to_vec()).await?;
+            return Ok(url);
+        }
+    }
+    Err(AppError::BadRequest("Missing file field".to_string()))
 }

@@ -27,8 +27,10 @@ diesel::table! {
     drivers (id) {
         id -> Uuid,
         user_id -> Uuid,
-        phone -> Varchar,
         license_number -> Varchar,
+        driver_license_image -> Varchar,
+        vehicle_image -> Varchar,
+        vehicle_insurance_image -> Nullable<Varchar>,
         vehicle_type -> VehicleType,
         vehicle_colour -> VehicleColour,
         vehicle_plate -> Varchar,

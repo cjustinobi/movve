@@ -6,6 +6,9 @@ use utoipa::OpenApi;
         crate::handlers::create_driver,
         crate::handlers::get_driver,
         crate::handlers::list_drivers,
+        crate::handlers::upload_driver_license,
+        crate::handlers::upload_vehicle_image,
+        crate::handlers::upload_vehicle_insurance,
     ),
     components(schemas(
         crate::model::Driver,

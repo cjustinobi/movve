@@ -13,6 +13,7 @@ pub enum AppError {
     NotFound(String),
     InternalError(String),
     Conflict(String),
+    ExternalService(String),
 }
 
 impl fmt::Display for AppError {
@@ -23,6 +24,7 @@ impl fmt::Display for AppError {
             AppError::NotFound(msg) => write!(f, "Not Found: {}", msg),
             AppError::Conflict(msg) => write!(f, "Conflict: {}", msg),
             AppError::InternalError(msg) => write!(f, "Internal Error: {}", msg),
+            AppError::ExternalService(msg) => write!(f, "External Service Error: {}", msg),
         }
     }
 }
@@ -35,6 +37,7 @@ impl IntoResponse for AppError {
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
             AppError::Conflict(msg) => (StatusCode::CONFLICT, msg),
             AppError::InternalError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            AppError::ExternalService(msg) => (StatusCode::BAD_GATEWAY, msg),
         };
 
         (status, Json(json!({ "error": message }))).into_response()
