@@ -1,8 +1,6 @@
 use crate::handlers::*;
 use crate::model::*;
-use utoipa::{
-    OpenApi,
-};
+use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -16,6 +14,10 @@ use utoipa::{
         rate_driver,
         get_driver_location,
         get_ride_status,
+        accept_ride,
+        driver_cancel_ride,
+        send_message,
+        get_messages,
     ),
     components(
         schemas(
@@ -26,6 +28,9 @@ use utoipa::{
             PayRideRequest,
             RateDriverRequest,
             DriverOption,
+            SendMessageRequest,
+            MessageResponse,
+            Location,
         )
     ),
     tags(
@@ -33,4 +38,3 @@ use utoipa::{
     ),
 )]
 pub struct RiderApiDoc;
-

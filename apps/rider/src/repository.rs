@@ -1,10 +1,10 @@
+use crate::model::{Conversation, Message, NewMessage, NewRide, Ride};
+use crate::schema::{conversations, messages, rides};
+use chrono::Utc;
+use common::AppError;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use uuid::Uuid;
-use common::AppError;
-use crate::model::{Ride, NewRide};
-use crate::schema::rides;
-use chrono::Utc;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -21,16 +21,17 @@ impl RiderRepository {
     /// Create a new ride - uses NewRide for insert, returns Ride
     pub async fn create_ride(&self, new_ride: NewRide) -> Result<Ride, AppError> {
         let pool = self.pool.clone();
-        
+
         tokio::task::spawn_blocking(move || {
-            let mut conn = pool.get()
+            let mut conn = pool
+                .get()
                 .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
-            
+
             let result = diesel::insert_into(rides::table)
                 .values(&new_ride)
                 .get_result::<Ride>(&mut conn)
                 .map_err(|e| AppError::BadRequest(format!("Failed to create ride: {}", e)))?;
-                
+
             Ok(result)
         })
         .await
@@ -40,18 +41,19 @@ impl RiderRepository {
     /// Get a single ride by ID
     pub async fn get_ride(&self, ride_id: Uuid) -> Result<Option<Ride>, AppError> {
         let pool = self.pool.clone();
-        
+
         tokio::task::spawn_blocking(move || {
-            let mut conn = pool.get()
+            let mut conn = pool
+                .get()
                 .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
-            
+
             let result = rides::table
                 .find(ride_id)
                 .select(Ride::as_select())
                 .first(&mut conn)
                 .optional()
                 .map_err(|e| AppError::BadRequest(format!("Failed to fetch ride: {}", e)))?;
-                
+
             Ok(result)
         })
         .await
@@ -61,18 +63,19 @@ impl RiderRepository {
     /// Get all rides for a specific rider
     pub async fn get_rides_by_rider(&self, rider_id_val: Uuid) -> Result<Vec<Ride>, AppError> {
         let pool = self.pool.clone();
-        
+
         tokio::task::spawn_blocking(move || {
-            let mut conn = pool.get()
+            let mut conn = pool
+                .get()
                 .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
-            
+
             let result = rides::table
                 .filter(rides::rider_id.eq(rider_id_val))
                 .order(rides::created_at.desc())
                 .select(Ride::as_select())
                 .load(&mut conn)
                 .map_err(|e| AppError::BadRequest(format!("Failed to fetch rides: {}", e)))?;
-                
+
             Ok(result)
         })
         .await
@@ -80,13 +83,18 @@ impl RiderRepository {
     }
 
     /// Update ride status
-    pub async fn update_ride_status(&self, ride_id: Uuid, status_val: String) -> Result<Ride, AppError> {
+    pub async fn update_ride_status(
+        &self,
+        ride_id: Uuid,
+        status_val: String,
+    ) -> Result<Ride, AppError> {
         let pool = self.pool.clone();
-        
+
         tokio::task::spawn_blocking(move || {
-            let mut conn = pool.get()
+            let mut conn = pool
+                .get()
                 .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
-            
+
             let result = diesel::update(rides::table.find(ride_id))
                 .set((
                     rides::status.eq(status_val),
@@ -94,7 +102,7 @@ impl RiderRepository {
                 ))
                 .get_result::<Ride>(&mut conn)
                 .map_err(|e| AppError::BadRequest(format!("Failed to update ride: {}", e)))?;
-                
+
             Ok(result)
         })
         .await
@@ -107,7 +115,12 @@ impl RiderRepository {
     }
 
     /// Update ride rating (for future implementation)
-    pub async fn update_ride_rating(&self, ride_id: Uuid, rating_value: f64, comment: Option<String>) -> Result<(), AppError> {
+    pub async fn update_ride_rating(
+        &self,
+        ride_id: Uuid,
+        rating_value: f64,
+        comment: Option<String>,
+    ) -> Result<(), AppError> {
         // TODO: Add rating and comment fields to the rides table schema
         // For now, just log the rating
         tracing::info!(
@@ -116,7 +129,126 @@ impl RiderRepository {
             rating_value,
             comment
         );
-        
+
         Ok(())
+    }
+
+    /// Assign driver to ride and update status to accepted
+    pub async fn assign_driver_to_ride(
+        &self,
+        ride_id: Uuid,
+        driver_id_val: Uuid,
+    ) -> Result<Ride, AppError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool
+                .get()
+                .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
+
+            let result = diesel::update(rides::table.find(ride_id))
+                .set((
+                    rides::driver_id.eq(Some(driver_id_val)),
+                    rides::status.eq("accepted".to_string()),
+                    rides::updated_at.eq(Utc::now()),
+                ))
+                .get_result::<Ride>(&mut conn)
+                .map_err(|e| {
+                    AppError::BadRequest(format!("Failed to assign driver to ride: {}", e))
+                })?;
+
+            Ok(result)
+        })
+        .await
+        .map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
+
+    /// Get or create a conversation for a context
+    pub async fn get_or_create_conversation(
+        &self,
+        context_type_val: String,
+        context_id_val: Uuid,
+    ) -> Result<Conversation, AppError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool
+                .get()
+                .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
+
+            // Try to find existing
+            let existing = conversations::table
+                .filter(conversations::context_type.eq(&context_type_val))
+                .filter(conversations::context_id.eq(context_id_val))
+                .first::<Conversation>(&mut conn)
+                .optional()
+                .map_err(|e| {
+                    AppError::InternalError(format!("Failed to search conversation: {}", e))
+                })?;
+
+            if let Some(conv) = existing {
+                return Ok(conv);
+            }
+
+            // Create new
+            let new_conv = Conversation {
+                id: Uuid::new_v4(),
+                context_type: context_type_val,
+                context_id: context_id_val,
+                created_at: Utc::now(),
+            };
+
+            let result = diesel::insert_into(conversations::table)
+                .values(&new_conv)
+                .get_result::<Conversation>(&mut conn)
+                .map_err(|e| {
+                    AppError::InternalError(format!("Failed to create conversation: {}", e))
+                })?;
+
+            Ok(result)
+        })
+        .await
+        .map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
+
+    /// Create a new message
+    pub async fn create_message(&self, new_msg: NewMessage) -> Result<Message, AppError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool
+                .get()
+                .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
+
+            let result = diesel::insert_into(messages::table)
+                .values(&new_msg)
+                .get_result::<Message>(&mut conn)
+                .map_err(|e| AppError::InternalError(format!("Failed to save message: {}", e)))?;
+
+            Ok(result)
+        })
+        .await
+        .map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
+
+    /// Get messages for a conversation
+    pub async fn get_messages(&self, conversation_id_val: Uuid) -> Result<Vec<Message>, AppError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool
+                .get()
+                .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
+
+            let result = messages::table
+                .filter(messages::conversation_id.eq(conversation_id_val))
+                .order(messages::created_at.asc())
+                .load::<Message>(&mut conn)
+                .map_err(|e| AppError::InternalError(format!("Failed to fetch messages: {}", e)))?;
+
+            Ok(result)
+        })
+        .await
+        .map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 }

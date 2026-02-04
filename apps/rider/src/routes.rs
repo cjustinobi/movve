@@ -1,11 +1,15 @@
+use crate::{AppState, docs, handlers, model::Claims};
 use axum::{
-    Router, middleware,
+    Router,
+    extract::Request,
+    http::StatusCode,
+    middleware,
+    middleware::Next,
+    response::Response,
     routing::{get, post},
-    extract::Request, http::StatusCode, middleware::Next, response::Response, 
 };
 use jsonwebtoken::{DecodingKey, Validation, decode};
 use utoipa::OpenApi;
-use crate::{AppState, docs, model::Claims, handlers};
 
 async fn jwt_auth_middleware(
     secret: String,
@@ -40,13 +44,32 @@ pub fn create_routes(state: AppState) -> Router {
 
     let protected_routes = Router::new()
         .route("/api/rider/preview", post(handlers::estimate_ride))
-        .route("/api/rider/rides", post(handlers::create_ride).get(handlers::get_rides))
+        .route(
+            "/api/rider/rides",
+            post(handlers::create_ride).get(handlers::get_rides),
+        )
         .route("/api/rider/{id}", get(handlers::get_ride))
         .route("/api/rider/{id}/cancel", post(handlers::cancel_ride))
         .route("/api/rider/{id}/pay", post(handlers::pay_ride))
         .route("/api/rider/{id}/rate", post(handlers::rate_driver))
-        .route("/api/rider/{id}/driver-location", get(handlers::get_driver_location))
+        .route(
+            "/api/rider/{id}/driver-location",
+            get(handlers::get_driver_location),
+        )
         .route("/api/rider/{id}/status", get(handlers::get_ride_status))
+        // Ride Actions (Driver)
+        .route("/api/rider/rides/{id}/accept", post(handlers::accept_ride))
+        .route(
+            "/api/rider/rides/{id}/driver-cancel",
+            post(handlers::driver_cancel_ride),
+        )
+        // Chat
+        .route("/api/rider/chat/messages", post(handlers::send_message))
+        .route(
+            "/api/rider/chat/conversations/{context_type}/{context_id}/messages",
+            get(handlers::get_messages),
+        )
+        .route("/api/rider/chat/ws", get(handlers::chat_ws))
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
             async move { jwt_auth_middleware(secret, req, next).await }

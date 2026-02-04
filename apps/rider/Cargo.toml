@@ -21,6 +21,7 @@ utoipa-swagger-ui = { workspace = true }
 diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono", "serde_json"] }
 rand = "0.8"
 bigdecimal = "0.4"
+futures-util = "0.3"
 
 # Reference local workspace crates
 common = { path = "../../libs/common" }

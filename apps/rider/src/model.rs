@@ -168,6 +168,83 @@ impl NewRide {
     }
 }
 
+// ============================================================================
+// CHAT MODELS
+// ============================================================================
+
+/// Conversation model
+#[derive(Debug, Clone, Queryable, Selectable, Insertable, Serialize, Deserialize, ToSchema)]
+#[diesel(table_name = crate::schema::conversations)]
+pub struct Conversation {
+    pub id: Uuid,
+    pub context_type: String,
+    pub context_id: Uuid,
+    pub created_at: DateTime<Utc>,
+}
+
+/// Message model
+#[derive(Debug, Clone, Queryable, Selectable, Insertable, Serialize, Deserialize, ToSchema)]
+#[diesel(table_name = crate::schema::messages)]
+pub struct Message {
+    pub id: Uuid,
+    pub conversation_id: Uuid,
+    pub sender_id: Uuid,
+    pub sender_role: String,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
+}
+
+/// NewMessage for insertion
+#[derive(Debug, Clone, Insertable)]
+#[diesel(table_name = crate::schema::messages)]
+pub struct NewMessage {
+    pub id: Uuid,
+    pub conversation_id: Uuid,
+    pub sender_id: Uuid,
+    pub sender_role: String,
+    pub content: String,
+}
+
+/// Request to send a message
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct SendMessageRequest {
+    pub context_type: String, // "ride"
+    pub context_id: Uuid,     // ride_id
+    pub content: String,
+}
+
+/// Response for a message
+#[derive(Debug, Serialize, ToSchema, Clone)]
+pub struct MessageResponse {
+    pub id: Uuid,
+    pub conversation_id: Uuid,
+    pub sender_id: Uuid,
+    pub sender_role: String,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<Message> for MessageResponse {
+    fn from(m: Message) -> Self {
+        Self {
+            id: m.id,
+            conversation_id: m.conversation_id,
+            sender_id: m.sender_id,
+            sender_role: m.sender_role,
+            content: m.content,
+            created_at: m.created_at,
+        }
+    }
+}
+
+/// WebSocket Message structure
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum WsMessage {
+    ChatMessage(MessageResponse),
+    // Add other WS message types here
+}
+
 /// Response for ride operations
 #[derive(Debug, Serialize, ToSchema)]
 pub struct RideResponse {
@@ -204,6 +281,8 @@ impl From<Ride> for RideResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     pub sub: String, // User ID
-    pub exp: usize,  // Expiration time
-    pub iat: usize,  // Issued at
+    pub email: String,
+    pub role: String,
+    pub exp: usize, // Expiration time
+    pub iat: usize, // Issued at
 }

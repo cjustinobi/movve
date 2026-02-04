@@ -68,7 +68,14 @@ pub fn create_routes(state: AppState) -> Router {
             "/api/driver/upload/insurance",
             post(handlers::upload_vehicle_insurance),
         )
-        // Add more protected routes here as needed
+        .route("/api/driver/rides/{id}/accept", post(handlers::accept_ride))
+        .route("/api/driver/rides/{id}/cancel", post(handlers::cancel_ride))
+        .route("/api/driver/chat/messages", post(handlers::send_message))
+        .route(
+            "/api/driver/chat/conversations/{context_type}/{context_id}/messages",
+            get(handlers::get_messages),
+        )
+        .route("/api/driver/chat/ws", get(handlers::chat_ws))
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
             async move { jwt_auth_middleware(secret, req, next).await }

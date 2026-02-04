@@ -1,15 +1,15 @@
+use crate::distance_service::DistanceService;
+use crate::driver_client::DriverClient;
+use crate::model::{
+    CreateRideRequest, DriverOption, Location, NewRide, PayRideRequest, RateDriverRequest,
+    RideEstimateRequest, RideEstimateResponse, RideResponse,
+};
+use crate::repository::RiderRepository;
+use common::{AppError, JwtConfig};
 use std::sync::Arc;
 use tracing::info;
 use utils::generate_numeric_code;
 use uuid::Uuid;
-use common::{AppError, JwtConfig};
-use crate::model::{
-    CreateRideRequest, DriverOption, NewRide, RideEstimateRequest, RideEstimateResponse, RideResponse,
-    PayRideRequest, RateDriverRequest, Location,
-};
-use crate::repository::RiderRepository;
-use crate::driver_client::DriverClient;
-use crate::distance_service::DistanceService;
 
 #[derive(Clone)]
 pub struct RiderService {
@@ -35,8 +35,10 @@ impl RiderService {
     }
 
     /// Estimate ride with real driver availability and distance calculation
-    pub async fn estimate_ride(&self, req: RideEstimateRequest) -> Result<RideEstimateResponse, AppError> {
-
+    pub async fn estimate_ride(
+        &self,
+        req: RideEstimateRequest,
+    ) -> Result<RideEstimateResponse, AppError> {
         let (distance, duration) = self
             .distance_service
             .calculate_distance_and_duration(
@@ -86,7 +88,10 @@ impl RiderService {
                 DriverOption {
                     driver_id: driver.id,
                     name: format!("Driver {}", driver.id),
-                    vehicle: format!("{} {} ({})", driver.vehicle_model, driver.vehicle_year, driver.vehicle_colour),
+                    vehicle: format!(
+                        "{} {} ({})",
+                        driver.vehicle_model, driver.vehicle_year, driver.vehicle_colour
+                    ),
                     vehicle_type: driver.vehicle_type.clone(),
                     rating,
                     price: estimated_fare * price_multiplier,
@@ -95,8 +100,16 @@ impl RiderService {
                     total_rides: driver.total_rides.unwrap_or(0),
                     current_location: Location {
                         address: "Current Location".to_string(),
-                        latitude: driver.current_latitude.as_ref().map(|lat| *lat).unwrap_or(0.0),
-                        longitude: driver.current_longitude.as_ref().map(|lon| *lon).unwrap_or(0.0),
+                        latitude: driver
+                            .current_latitude
+                            .as_ref()
+                            .map(|lat| *lat)
+                            .unwrap_or(0.0),
+                        longitude: driver
+                            .current_longitude
+                            .as_ref()
+                            .map(|lon| *lon)
+                            .unwrap_or(0.0),
                     },
                 }
             })
@@ -126,7 +139,11 @@ impl RiderService {
     }
 
     /// Create ride with driver verification
-    pub async fn create_ride(&self, rider_id: Uuid, req: CreateRideRequest) -> Result<RideResponse, AppError> {
+    pub async fn create_ride(
+        &self,
+        rider_id: Uuid,
+        req: CreateRideRequest,
+    ) -> Result<RideResponse, AppError> {
         // Verify driver exists and is available
         let driver = self
             .driver_client
@@ -136,7 +153,9 @@ impl RiderService {
 
         // Verify driver has location
         if driver.current_latitude.is_none() || driver.current_longitude.is_none() {
-            return Err(AppError::BadRequest("Driver location not available".to_string()));
+            return Err(AppError::BadRequest(
+                "Driver location not available".to_string(),
+            ));
         }
 
         // Verify vehicle type matches
@@ -175,7 +194,7 @@ impl RiderService {
 
         // Insert and get back the Ride
         let created_ride = self.repository.create_ride(new_ride).await?;
-        
+
         Ok(created_ride.into())
     }
 
@@ -194,7 +213,11 @@ impl RiderService {
         Ok(rides.into_iter().map(|r| r.into()).collect())
     }
 
-    pub async fn cancel_ride(&self, ride_id: Uuid, rider_id: Uuid) -> Result<RideResponse, AppError> {
+    pub async fn cancel_ride(
+        &self,
+        ride_id: Uuid,
+        rider_id: Uuid,
+    ) -> Result<RideResponse, AppError> {
         let ride = self
             .repository
             .get_ride(ride_id)
@@ -217,7 +240,78 @@ impl RiderService {
             .repository
             .update_ride_status(ride_id, "cancelled".to_string())
             .await?;
-        
+
+        Ok(updated_ride.into())
+    }
+
+    /// Driver accepts a ride request
+    pub async fn accept_ride(
+        &self,
+        ride_id: Uuid,
+        driver_id: Uuid,
+    ) -> Result<RideResponse, AppError> {
+        let ride = self
+            .repository
+            .get_ride(ride_id)
+            .await?
+            .ok_or(AppError::NotFound("Ride not found".to_string()))?;
+
+        if ride.status != "requested" {
+            return Err(AppError::BadRequest(
+                "Can only accept rides in 'requested' status".to_string(),
+            ));
+        }
+
+        // Verify driver matches the requested driver
+        if let Some(req_driver_id) = ride.driver_id {
+            if req_driver_id != driver_id {
+                return Err(AppError::Unauthorized(
+                    "This ride is not assigned to you".to_string(),
+                ));
+            }
+        } else {
+            return Err(AppError::BadRequest(
+                "Ride has no driver assigned".to_string(),
+            ));
+        }
+
+        let updated_ride = self
+            .repository
+            .assign_driver_to_ride(ride_id, driver_id)
+            .await?;
+
+        Ok(updated_ride.into())
+    }
+
+    /// Driver cancels an accepted ride
+    pub async fn driver_cancel_ride(
+        &self,
+        ride_id: Uuid,
+        driver_id: Uuid,
+    ) -> Result<RideResponse, AppError> {
+        let ride = self
+            .repository
+            .get_ride(ride_id)
+            .await?
+            .ok_or(AppError::NotFound("Ride not found".to_string()))?;
+
+        if ride.driver_id != Some(driver_id) {
+            return Err(AppError::Unauthorized(
+                "Not authorized to cancel this ride".to_string(),
+            ));
+        }
+
+        if ride.status != "accepted" {
+            return Err(AppError::BadRequest(
+                "Can only cancel rides in 'accepted' status".to_string(),
+            ));
+        }
+
+        let updated_ride = self
+            .repository
+            .update_ride_status(ride_id, "cancelled".to_string())
+            .await?;
+
         Ok(updated_ride.into())
     }
 
@@ -275,16 +369,24 @@ impl RiderService {
 
         // Validate rating
         if req.rating < 1.0 || req.rating > 5.0 {
-            return Err(AppError::BadRequest("Rating must be between 1 and 5".to_string()));
+            return Err(AppError::BadRequest(
+                "Rating must be between 1 and 5".to_string(),
+            ));
         }
 
-        self.repository.update_ride_rating(ride_id, req.rating, req.comment).await?;
+        self.repository
+            .update_ride_rating(ride_id, req.rating, req.comment)
+            .await?;
 
         Ok(())
     }
 
     /// Get current driver location for an active ride
-    pub async fn get_driver_location(&self, ride_id: Uuid, rider_id: Uuid) -> Result<Location, AppError> {
+    pub async fn get_driver_location(
+        &self,
+        ride_id: Uuid,
+        rider_id: Uuid,
+    ) -> Result<Location, AppError> {
         let ride = self
             .repository
             .get_ride(ride_id)
@@ -314,4 +416,3 @@ impl RiderService {
         })
     }
 }
-
