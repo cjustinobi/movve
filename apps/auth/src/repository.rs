@@ -27,11 +27,13 @@ pub struct NewUser<'a> {
 pub struct UserDb {
     pub id: Uuid,
     pub email: String,
+    pub phone: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
     pub email_verified: bool,
+    pub avatar: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -41,15 +43,30 @@ impl From<UserDb> for User {
         User {
             id: user_db.id,
             email: user_db.email,
+            phone: user_db.phone,
             first_name: user_db.first_name,
             last_name: user_db.last_name,
             password_hash: user_db.password_hash,
             role: user_db.role,
+            avatar: user_db.avatar,
             email_verified: user_db.email_verified,
             created_at: user_db.created_at,
             updated_at: user_db.updated_at,
         }
     }
+}
+
+#[derive(AsChangeset, Default)]
+#[diesel(table_name = users)]
+pub struct UserUpdate {
+    pub first_name: Option<Option<String>>,
+    pub last_name: Option<Option<String>>,
+    pub phone: Option<Option<String>>,
+    pub gender: Option<Option<crate::model::Gender>>,
+    pub nok_name: Option<Option<String>>,
+    pub nok_phone: Option<Option<String>>,
+    pub dob: Option<Option<chrono::NaiveDate>>,
+    pub avatar: Option<Option<String>>,
 }
 
 #[derive(Queryable, Insertable, Associations, Identifiable, Debug)]
@@ -476,6 +493,24 @@ impl UserRepository {
         .await??;
 
         Ok(())
+    }
+
+    pub async fn update_user(&self, user_id: Uuid, update: UserUpdate) -> Result<User, DbError> {
+        let pool = self.pool.clone();
+
+        let user = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+
+            let user_db: UserDb = diesel::update(users::table.filter(users::id.eq(user_id)))
+                .set(&update)
+                .returning(UserDb::as_returning())
+                .get_result(&mut conn)?;
+
+            Ok::<User, DbError>(user_db.into())
+        })
+        .await??;
+
+        Ok(user)
     }
 }
 

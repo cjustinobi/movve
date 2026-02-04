@@ -59,9 +59,11 @@ diesel::table! {
         last_name -> Nullable<Varchar>,
         #[max_length = 100]
         email -> Varchar,
+
         #[max_length = 100]
         phone -> Nullable<Varchar>,
         gender -> Nullable<Gender>,
+        avatar -> Nullable<Varchar>,
         #[max_length = 100]
         nok_name -> Nullable<Varchar>,
         #[max_length = 100]

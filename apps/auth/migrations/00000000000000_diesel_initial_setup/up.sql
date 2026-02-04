@@ -8,6 +8,7 @@ CREATE TABLE users (
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(100) UNIQUE,
     gender gender,
+    avatar VARCHAR(255),
     nok_name VARCHAR(100),
     nok_phone VARCHAR(100),
     dob DATE,

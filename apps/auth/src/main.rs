@@ -1,17 +1,17 @@
-mod handlers;
-mod repository;
-mod service;
-mod model;
 mod docs;
-mod schema;
+mod handlers;
+mod model;
+mod repository;
 mod routes;
+mod schema;
+mod service;
 
 use common::AppConfig;
-use diesel::r2d2::{self, ConnectionManager};
 use diesel::PgConnection;
+use diesel::r2d2::{self, ConnectionManager};
 use repository::UserRepository;
 use service::AuthService;
-use services::MailService;
+use services::{CloudinaryService, MailService};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -19,19 +19,19 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 pub struct AppState {
     pub auth_service: Arc<AuthService>,
     pub mail_service: Arc<MailService>,
+    pub cloudinary_service: Arc<CloudinaryService>,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     dotenvy::dotenv().ok();
-    
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .init();
 
     let config = AppConfig::load()?;
-    let database_url = std::env::var("AUTH_DATABASE_URL")
-        .expect("AUTH_DATABASE_URL must be set");
+    let database_url = std::env::var("AUTH_DATABASE_URL").expect("AUTH_DATABASE_URL must be set");
 
     // Create Diesel connection pool
     let manager = ConnectionManager::<PgConnection>::new(database_url);
@@ -48,15 +48,21 @@ async fn main() -> Result<(), anyhow::Error> {
         config.mail.from_email.clone(),
     ));
 
-    let app_state = AppState { 
+    let cloudinary_service = Arc::new(CloudinaryService::new(&config));
+
+    let app_state = AppState {
         auth_service,
-        mail_service
-     };
+        mail_service,
+        cloudinary_service,
+    };
 
     // Use the routes module
     let app = routes::create_routes(app_state);
 
-    let addr = format!("{}:{}", config.services.auth_service_host, config.services.auth_service_port);
+    let addr = format!(
+        "{}:{}",
+        config.services.auth_service_host, config.services.auth_service_port
+    );
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!("🔐 Auth service listening on: {} (localhost only)", addr);
 

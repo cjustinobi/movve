@@ -12,10 +12,12 @@ use uuid::Uuid;
 pub struct User {
     pub id: Uuid,
     pub email: String,
+    pub phone: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
+    pub avatar: Option<String>,
     pub email_verified: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -41,7 +43,9 @@ pub struct EmailVerificationToken {
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow)]
+#[derive(
+    Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow, PartialEq,
+)]
 #[diesel(sql_type = crate::schema::sql_types::UserRole)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
@@ -78,6 +82,36 @@ impl FromSql<crate::schema::sql_types::UserRole, Pg> for UserRole {
     }
 }
 
+#[derive(
+    Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow, PartialEq,
+)]
+#[diesel(sql_type = crate::schema::sql_types::Gender)]
+#[serde(rename_all = "lowercase")]
+pub enum Gender {
+    Male,
+    Female,
+}
+
+impl ToSql<crate::schema::sql_types::Gender, Pg> for Gender {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
+        match *self {
+            Gender::Male => out.write_all(b"male")?,
+            Gender::Female => out.write_all(b"female")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+
+impl FromSql<crate::schema::sql_types::Gender, Pg> for Gender {
+    fn from_sql(bytes: PgValue) -> deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"male" => Ok(Gender::Male),
+            b"female" => Ok(Gender::Female),
+            _ => Err("Unrecognized enum variant".into()),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RegisterRequest {
     pub email: String,
@@ -108,6 +142,7 @@ pub struct UserInfo {
     pub id: Uuid,
     pub email: String,
     pub role: UserRole,
+    pub avatar: Option<String>,
     pub email_verified: bool,
 }
 
@@ -160,4 +195,16 @@ pub struct VerifyEmailRequest {
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct LogoutRequest {
     pub refresh_token: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct UpdateProfileRequest {
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub phone: Option<String>,
+    pub gender: Option<Gender>,
+    pub nok_name: Option<String>,
+    pub nok_phone: Option<String>,
+    pub dob: Option<chrono::NaiveDate>,
+    pub avatar: Option<String>,
 }

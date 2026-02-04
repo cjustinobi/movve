@@ -15,6 +15,8 @@ use utoipa::{
         crate::handlers::resend_verification,
         crate::handlers::update_password,
         crate::handlers::refresh_token,
+        crate::handlers::upload_avatar,
+        crate::handlers::update_profile,
         crate::handlers::me,
         crate::handlers::logout
     ),

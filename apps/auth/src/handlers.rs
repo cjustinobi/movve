@@ -1,4 +1,8 @@
-use axum::{Extension, Json, extract::State, http::StatusCode};
+use axum::{
+    Extension, Json,
+    extract::{Multipart, State},
+    http::StatusCode,
+};
 use common::{ApiResponse, AppError, EmptyData};
 use tracing::{info, info_span};
 use uuid::Uuid;
@@ -8,7 +12,8 @@ use crate::{
     model::{
         AuthResponse, Claims, ForgotPasswordRequest, LoginRequest, LogoutRequest,
         RefreshTokenRequest, RegisterRequest, RegisterResponse, ResendVerificationRequest,
-        ResetPasswordRequest, UpdatePasswordRequest, User, VerifyEmailRequest,
+        ResetPasswordRequest, UpdatePasswordRequest, UpdateProfileRequest, User,
+        VerifyEmailRequest,
     },
 };
 
@@ -369,4 +374,95 @@ pub async fn refresh_token(
         "Token refreshed successfully",
         response,
     ))
+}
+
+/// Updates the current user's profile
+#[utoipa::path(
+    patch,
+    path = "/api/auth/profile",
+    request_body = UpdateProfileRequest,
+    responses(
+        (status = 200, description = "Profile updated successfully", body = ApiResponse<User>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Auth",
+    security(("bearerAuth" = []))
+)]
+pub async fn update_profile(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<UpdateProfileRequest>,
+) -> Result<ApiResponse<User>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let user = state.auth_service.update_profile(user_id, req).await?;
+    Ok(ApiResponse::success_with_message(
+        "Profile updated successfully",
+        user,
+    ))
+}
+
+/// Uploads an avatar image
+#[utoipa::path(
+    post,
+    path = "/api/auth/upload/avatar",
+    responses(
+        (status = 200, description = "Avatar uploaded successfully", body = ApiResponse<String>),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = "Auth",
+    security(("bearerAuth" = []))
+)]
+pub async fn upload_avatar(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    multipart: Multipart,
+) -> Result<ApiResponse<String>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+
+    let url = process_upload(state.clone(), multipart).await?;
+
+    // Update user's avatar in DB
+    state
+        .auth_service
+        .update_profile(
+            user_id,
+            UpdateProfileRequest {
+                first_name: None,
+                last_name: None,
+                phone: None,
+                gender: None,
+                nok_name: None,
+                nok_phone: None,
+                dob: None,
+                avatar: Some(url.clone()),
+            },
+        )
+        .await?;
+
+    Ok(ApiResponse::success_with_message(
+        "Avatar uploaded successfully",
+        url,
+    ))
+}
+
+async fn process_upload(state: AppState, mut multipart: Multipart) -> Result<String, AppError> {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| AppError::BadRequest(e.to_string()))?
+    {
+        let name = field.name().unwrap_or_default().to_string();
+        if name == "file" {
+            let data = field
+                .bytes()
+                .await
+                .map_err(|e| AppError::BadRequest(e.to_string()))?;
+            let url = state.cloudinary_service.upload_image(data.to_vec()).await?;
+            return Ok(url);
+        }
+    }
+    Err(AppError::BadRequest("Missing file field".to_string()))
 }

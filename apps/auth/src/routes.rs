@@ -62,6 +62,11 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/auth/verify", get(handlers::verify_token))
         .route("/api/auth/verify-email", post(handlers::verify_email))
         .route("/api/auth/update-password", post(handlers::update_password))
+        .route(
+            "/api/auth/profile",
+            axum::routing::patch(handlers::update_profile),
+        )
+        .route("/api/auth/upload/avatar", post(handlers::upload_avatar))
         .route("/api/auth/me", get(handlers::me))
         // Add more protected routes here as needed
         .route_layer(middleware::from_fn(move |req, next| {

@@ -9,8 +9,10 @@ use tracing::{error, info, instrument};
 use uuid::Uuid;
 
 use crate::{
-    model::{AuthResponse, Claims, LoginRequest, RegisterRequest, User, UserInfo},
-    repository::UserRepository,
+    model::{
+        AuthResponse, Claims, LoginRequest, RegisterRequest, UpdateProfileRequest, User, UserInfo,
+    },
+    repository::{UserRepository, UserUpdate},
 };
 
 pub struct AuthService {
@@ -53,6 +55,7 @@ impl AuthService {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                avatar: user.avatar,
                 email_verified: user.email_verified,
             },
         })
@@ -79,6 +82,7 @@ impl AuthService {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                avatar: user.avatar,
                 email_verified: user.email_verified,
             },
         })
@@ -189,6 +193,7 @@ impl AuthService {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                avatar: user.avatar,
                 email_verified: user.email_verified,
             },
         })
@@ -279,6 +284,28 @@ impl AuthService {
             .map_err(|e| AppError::InternalError(e.to_string()))?;
 
         Ok(())
+    }
+
+    pub async fn update_profile(
+        &self,
+        user_id: Uuid,
+        req: UpdateProfileRequest,
+    ) -> Result<User, AppError> {
+        let update = UserUpdate {
+            first_name: req.first_name.map(Some),
+            last_name: req.last_name.map(Some),
+            phone: req.phone.map(Some),
+            gender: req.gender.map(Some),
+            nok_name: req.nok_name.map(Some),
+            nok_phone: req.nok_phone.map(Some),
+            dob: req.dob.map(Some),
+            avatar: req.avatar.map(Some),
+        };
+
+        self.repo
+            .update_user(user_id, update)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
     }
 
     // ---------- Verify Reset Token ----------
