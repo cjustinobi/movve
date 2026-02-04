@@ -1,0 +1,96 @@
+name: Deploy Rider Service - Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+    paths:
+      - 'apps/rider/**'
+      - 'libs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/deploy-rider-staging.yml'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust environment
+        run: |
+          if [ ! -f "$HOME/.cargo/env" ]; then
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+          fi
+          source $HOME/.cargo/env
+          rustc --version
+          cargo --version
+
+      - name: Build rider-service in release mode
+        run: |
+          source $HOME/.cargo/env
+          cargo build --release --bin rider
+
+      - name: Stop rider service
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-rider || true
+
+      - name: Copy binary and migrations to VPS
+        run: |
+          # Create directories on VPS
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/rider
+          
+          # Copy binary
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/rider /opt/movve/bin/rider-service
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/rider-service
+          
+          # Copy migrations and env
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S rm -rf /opt/movve/rider/migrations
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/rider/migrations /opt/movve/rider/migrations
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp /opt/movve/.env /opt/movve/rider/.env
+
+      - name: Run Diesel migrations on VPS
+        run: |
+          source /opt/movve/.env
+          export RIDER_DATABASE_URL=$RIDER_DATABASE_URL
+          
+          # Install Diesel CLI temporarily (only if not installed)
+          if ! command -v diesel &> /dev/null; then
+            source $HOME/.cargo/env
+            cargo install diesel_cli --no-default-features --features postgres
+          fi
+          
+          diesel migration run --migration-dir /opt/movve/rider/migrations --database-url $RIDER_DATABASE_URL
+
+      - name: Start rider service
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-rider
+
+      - name: Wait for rider service to be healthy
+        run: |
+          for i in {1..10}; do
+            if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl is-active movve-rider --quiet; then
+              if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S ss -tlnp | grep -q ":8002"; then
+                echo "✅ Rider service is healthy"
+                break
+              fi
+            fi
+            echo "⏳ Waiting... attempt $i/10"
+            sleep 3
+          done
+
+      - name: Restart dependent services
+        run: |
+          echo "🔄 Restarting gateway and tunnel..."
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart movve-gateway
+          sleep 3
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart cloudflared-movve
+          echo "✅ All services restarted"
+
+      - name: Verify full stack health
+        run: |
+          sleep 5
+          echo "Checking all services..."
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-rider --no-pager
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status cloudflared-movve --no-pager
