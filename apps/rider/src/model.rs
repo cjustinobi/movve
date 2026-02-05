@@ -36,17 +36,38 @@ impl FromSql<Jsonb, Pg> for Location {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum VehicleType {
+    Sedan,
+    Suv,
+    Van,
+    Motorcycle,
+}
+
+impl std::fmt::Display for VehicleType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            VehicleType::Sedan => "sedan",
+            VehicleType::Suv => "suv",
+            VehicleType::Van => "van",
+            VehicleType::Motorcycle => "motorcycle",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 /// Request to estimate ride cost
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RideEstimateRequest {
     pub pickup: Location,
     pub destination: Location,
     #[serde(default = "default_vehicle_type")]
-    pub vehicle_type: String, // "economy", "comfort", "premium"
+    pub vehicle_type: VehicleType,
 }
 
-fn default_vehicle_type() -> String {
-    "economy".to_string()
+fn default_vehicle_type() -> VehicleType {
+    VehicleType::Sedan
 }
 
 /// Available driver option with real data
@@ -64,6 +85,14 @@ pub struct DriverOption {
     pub current_location: Location,
 }
 
+/// Detailed estimate for a vehicle type
+#[derive(Debug, Serialize, ToSchema)]
+pub struct VehicleTypeEstimate {
+    pub vehicle_type: String,
+    pub base_price: f64,
+    pub description: String,
+}
+
 /// Response for ride estimation
 #[derive(Debug, Serialize, ToSchema)]
 pub struct RideEstimateResponse {
@@ -72,6 +101,7 @@ pub struct RideEstimateResponse {
     pub distance: f64, // in meters
     pub duration: f64, // in seconds
     pub surge_multiplier: f64,
+    pub vehicle_types: Vec<VehicleTypeEstimate>,
 }
 
 /// Request to create a ride
@@ -81,7 +111,7 @@ pub struct CreateRideRequest {
     pub pickup: Location,
     pub destination: Location,
     pub fare: f64,
-    pub vehicle_type: String,
+    pub vehicle_type: VehicleType,
 }
 
 /// Request to pay for a ride

@@ -92,7 +92,7 @@ impl RiderService {
                         "{} {} ({})",
                         driver.vehicle_model, driver.vehicle_year, driver.vehicle_colour
                     ),
-                    vehicle_type: driver.vehicle_type.clone(),
+                    vehicle_type: driver.vehicle_type.to_string(),
                     rating,
                     price: estimated_fare * price_multiplier,
                     eta,
@@ -129,12 +129,15 @@ impl RiderService {
             }
         });
 
+        let vehicle_types = self.distance_service.get_vehicle_types(distance, duration);
+
         Ok(RideEstimateResponse {
             drivers: driver_options,
             estimated_fare,
             distance,
             duration,
             surge_multiplier,
+            vehicle_types,
         })
     }
 

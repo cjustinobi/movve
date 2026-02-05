@@ -1,7 +1,7 @@
 pub struct EmailTemplates;
 
 impl EmailTemplates {
-    pub fn welcome_email(user_name: &str) -> (String, String, String) {
+    pub fn welcome_email(user_name: &str, verification_code: &str) -> (String, String, String) {
         let subject = "Welcome to Movve!".to_string();
         let html = format!(
             r#"
@@ -10,14 +10,17 @@ impl EmailTemplates {
             <body style="font-family: Arial, sans-serif;">
                 <h1>Welcome to Movve, {}!</h1>
                 <p>Thank you for joining us. Get started by exploring our services.</p>
+                <p>Please use the following code to verify your email address:</p>
+                <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">{}</p>
+                <p>This code will expire in 15 minutes.</p>
             </body>
             </html>
             "#,
-            user_name
+            user_name, verification_code
         );
         let text = format!(
-            "Welcome to Movve, {}!\n\nThank you for joining us.",
-            user_name
+            "Welcome to Movve, {}!\n\nThank you for joining us. Please use the following code to verify your email address:\n\n{}\n\nThis code will expire in 15 minutes.",
+            user_name, verification_code
         );
         (subject, html, text)
     }

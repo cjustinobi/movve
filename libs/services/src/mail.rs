@@ -99,8 +99,13 @@ impl MailService {
         }
     }
 
-    pub async fn send_welcome_email(&self, to_email: &str, user_name: &str) -> Result<()> {
-        let (subject, html, text) = EmailTemplates::welcome_email(user_name);
+    pub async fn send_welcome_email(
+        &self,
+        to_email: &str,
+        user_name: &str,
+        verification_code: &str,
+    ) -> Result<()> {
+        let (subject, html, text) = EmailTemplates::welcome_email(user_name, verification_code);
         self.send_notification(to_email, &subject, &html, Some(&text))
             .await
     }

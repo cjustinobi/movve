@@ -1,3 +1,4 @@
+use crate::model::VehicleType;
 use chrono::{DateTime, Utc};
 use common::AppError;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -17,15 +18,13 @@ where
     let value: Option<StringOrNumber> = Option::deserialize(deserializer)?;
 
     match value {
-        Some(StringOrNumber::String(s)) => s
-            .parse::<f64>()
-            .map(Some)
-            .map_err(serde::de::Error::custom),
+        Some(StringOrNumber::String(s)) => {
+            s.parse::<f64>().map(Some).map_err(serde::de::Error::custom)
+        }
         Some(StringOrNumber::Number(n)) => Ok(Some(n)),
         None => Ok(None),
     }
 }
-
 
 // Custom deserializer for rating that handles both string and number
 fn deserialize_rating<'de, D>(deserializer: D) -> Result<Option<f64>, D::Error>
@@ -40,12 +39,10 @@ where
     }
 
     let value: Option<StringOrNumber> = Option::deserialize(deserializer)?;
-    
+
     match value {
         Some(StringOrNumber::String(s)) => {
-            s.parse::<f64>()
-                .map(Some)
-                .map_err(serde::de::Error::custom)
+            s.parse::<f64>().map(Some).map_err(serde::de::Error::custom)
         }
         Some(StringOrNumber::Number(n)) => Ok(Some(n)),
         None => Ok(None),
@@ -65,12 +62,10 @@ where
     }
 
     let value: Option<StringOrNumber> = Option::deserialize(deserializer)?;
-    
+
     match value {
         Some(StringOrNumber::String(s)) => {
-            s.parse::<i32>()
-                .map(Some)
-                .map_err(serde::de::Error::custom)
+            s.parse::<i32>().map(Some).map_err(serde::de::Error::custom)
         }
         Some(StringOrNumber::Number(n)) => Ok(Some(n)),
         None => Ok(None),
@@ -83,7 +78,7 @@ pub struct Driver {
     pub user_id: Uuid,
     pub phone: String,
     pub license_number: String,
-    pub vehicle_type: String,
+    pub vehicle_type: VehicleType,
     pub vehicle_colour: String,
     pub vehicle_plate: String,
     pub vehicle_model: String,
@@ -146,10 +141,13 @@ impl DriverClient {
         if response.status() == 404 {
             return Ok(None);
         }
-        
+
         if !response.status().is_success() {
             let status = response.status();
-            let body = response.text().await.unwrap_or_else(|_| "Unable to read response body".to_string());
+            let body = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unable to read response body".to_string());
             return Err(AppError::InternalError(format!(
                 "Driver service returned error status {}: {}",
                 status, body
@@ -157,14 +155,20 @@ impl DriverClient {
         }
 
         tracing::info!("Fetched driver with status: {}", response.status());
-        let response_text = response.text().await
+        let response_text = response
+            .text()
+            .await
             .map_err(|e| AppError::InternalError(format!("Failed to read response text: {}", e)))?;
-        
+
         tracing::debug!("Driver response body: {}", response_text);
-        
-        let driver_response: DriverApiResponse = serde_json::from_str(&response_text)
-            .map_err(|e| {
-                tracing::error!("Failed to parse driver response. Error: {}, Response: {}", e, response_text);
+
+        let driver_response: DriverApiResponse =
+            serde_json::from_str(&response_text).map_err(|e| {
+                tracing::error!(
+                    "Failed to parse driver response. Error: {}, Response: {}",
+                    e,
+                    response_text
+                );
                 AppError::InternalError(format!("Failed to parse driver response: {}", e))
             })?;
 
@@ -187,21 +191,30 @@ impl DriverClient {
 
         if !response.status().is_success() {
             let status = response.status();
-            let body = response.text().await.unwrap_or_else(|_| "Unable to read response body".to_string());
+            let body = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unable to read response body".to_string());
             return Err(AppError::InternalError(format!(
                 "Driver service returned error status {}: {}",
                 status, body
             )));
         }
 
-        let response_text = response.text().await
+        let response_text = response
+            .text()
+            .await
             .map_err(|e| AppError::InternalError(format!("Failed to read response text: {}", e)))?;
-        
+
         tracing::debug!("Available drivers response: {}", response_text);
-        
-        let drivers_response: DriversListResponse = serde_json::from_str(&response_text)
-            .map_err(|e| {
-                tracing::error!("Failed to parse drivers response. Error: {}, Response: {}", e, response_text);
+
+        let drivers_response: DriversListResponse =
+            serde_json::from_str(&response_text).map_err(|e| {
+                tracing::error!(
+                    "Failed to parse drivers response. Error: {}, Response: {}",
+                    e,
+                    response_text
+                );
                 AppError::InternalError(format!("Failed to parse drivers response: {}", e))
             })?;
 

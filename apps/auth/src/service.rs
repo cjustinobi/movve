@@ -26,7 +26,7 @@ impl AuthService {
         Self { repo, jwt_config }
     }
 
-    pub async fn register(&self, req: RegisterRequest) -> Result<AuthResponse, AppError> {
+    pub async fn register(&self, req: RegisterRequest) -> Result<(AuthResponse, String), AppError> {
         utils::validate_email(&req.email)?;
         if self
             .repo
@@ -46,20 +46,31 @@ impl AuthService {
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))?;
 
+        // Create verification code
+        let code = utils::generate_numeric_code(4);
+        let expires_at = Utc::now() + chrono::Duration::minutes(15);
+        self.repo
+            .create_verification_code(user.id, &code, expires_at.naive_utc())
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
         let token = self.generate_token(&user)?;
         let refresh_token = self.generate_refresh_token(&user).await?;
 
-        Ok(AuthResponse {
-            token,
-            refresh_token,
-            user: UserInfo {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                avatar: user.avatar,
-                email_verified: user.email_verified,
+        Ok((
+            AuthResponse {
+                token,
+                refresh_token,
+                user: UserInfo {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role,
+                    avatar: user.avatar,
+                    email_verified: user.email_verified,
+                },
             },
-        })
+            code,
+        ))
     }
 
     pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, AppError> {

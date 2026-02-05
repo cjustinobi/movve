@@ -77,12 +77,12 @@ pub async fn register(
     State(state): State<AppState>,
     Json(req): Json<RegisterRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
-    let response = state.auth_service.register(req).await?;
+    let (response, code) = state.auth_service.register(req).await?;
     // send email
     let user_name = response.user.email.split('@').next().unwrap_or("User");
     state
         .mail_service
-        .send_welcome_email(&response.user.email, user_name)
+        .send_welcome_email(&response.user.email, user_name, &code)
         .await
         .map_err(|e| AppError::InternalError(e.to_string()))?;
     Ok(ApiResponse::success_with_message(

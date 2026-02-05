@@ -1,6 +1,7 @@
-use std::f64::consts::PI;
-use serde::{Deserialize, Serialize};
+use crate::model::{VehicleType, VehicleTypeEstimate};
 use common::AppError;
+use serde::{Deserialize, Serialize};
+use std::f64::consts::PI;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DistanceMatrixResponse {
@@ -48,13 +49,7 @@ impl DistanceService {
 
     /// Calculate distance between two points using Haversine formula (fallback)
     /// Returns distance in meters
-    pub fn calculate_haversine_distance(
-        &self,
-        lat1: f64,
-        lon1: f64,
-        lat2: f64,
-        lon2: f64,
-    ) -> f64 {
+    pub fn calculate_haversine_distance(&self, lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
         let r = 6371000.0; // Earth's radius in meters
 
         let lat1_rad = lat1 * PI / 180.0;
@@ -80,7 +75,10 @@ impl DistanceService {
     ) -> Result<(f64, f64), AppError> {
         // Try Google Maps API first if available
         if let Some(api_key) = &self.google_api_key {
-            match self.google_distance_matrix(from_lat, from_lon, to_lat, to_lon, api_key).await {
+            match self
+                .google_distance_matrix(from_lat, from_lon, to_lat, to_lon, api_key)
+                .await
+            {
                 Ok((distance, duration)) => return Ok((distance, duration)),
                 Err(e) => {
                     tracing::warn!("Google Maps API failed, falling back to Haversine: {}", e);
@@ -108,36 +106,42 @@ impl DistanceService {
             from_lat, from_lon, to_lat, to_lon, api_key
         );
 
-        let response = self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| AppError::InternalError(format!("Google Maps API request failed: {}", e)))?;
+        let response = self.http_client.get(&url).send().await.map_err(|e| {
+            AppError::InternalError(format!("Google Maps API request failed: {}", e))
+        })?;
 
-        let data: DistanceMatrixResponse = response
-            .json()
-            .await
-            .map_err(|e| AppError::InternalError(format!("Failed to parse Google Maps response: {}", e)))?;
+        let data: DistanceMatrixResponse = response.json().await.map_err(|e| {
+            AppError::InternalError(format!("Failed to parse Google Maps response: {}", e))
+        })?;
 
         if data.status != "OK" {
-            return Err(AppError::InternalError(format!("Google Maps API error: {}", data.status)));
+            return Err(AppError::InternalError(format!(
+                "Google Maps API error: {}",
+                data.status
+            )));
         }
 
-        let element = data.rows.first()
+        let element = data
+            .rows
+            .first()
             .and_then(|row| row.elements.first())
             .ok_or_else(|| AppError::InternalError("No distance data returned".to_string()))?;
 
         if element.status != "OK" {
-            return Err(AppError::InternalError(format!("Distance calculation failed: {}", element.status)));
+            return Err(AppError::InternalError(format!(
+                "Distance calculation failed: {}",
+                element.status
+            )));
         }
 
-        let distance = element.distance
+        let distance = element
+            .distance
             .as_ref()
             .ok_or_else(|| AppError::InternalError("Distance not available".to_string()))?
             .value as f64;
 
-        let duration = element.duration
+        let duration = element
+            .duration
             .as_ref()
             .ok_or_else(|| AppError::InternalError("Duration not available".to_string()))?
             .value as f64;
@@ -161,13 +165,13 @@ impl DistanceService {
         &self,
         distance_meters: f64,
         duration_seconds: f64,
-        vehicle_type: &str,
+        vehicle_type: &VehicleType,
     ) -> f64 {
         let (base_fare, per_km_rate, per_minute_rate) = match vehicle_type {
-            "economy" => (50.0, 10.0, 2.0),
-            "comfort" => (75.0, 15.0, 3.0),
-            "premium" => (100.0, 20.0, 5.0),
-            _ => (50.0, 10.0, 2.0), // Default to economy
+            VehicleType::Motorcycle => (30.0, 5.0, 1.0),
+            VehicleType::Sedan => (50.0, 10.0, 2.0),
+            VehicleType::Suv => (75.0, 15.0, 3.0),
+            VehicleType::Van => (100.0, 20.0, 5.0),
         };
 
         let distance_km = distance_meters / 1000.0;
@@ -193,6 +197,53 @@ impl DistanceService {
         let minutes = hours * 60.0;
         minutes.ceil() as i32
     }
+
+    /// Get available vehicle types with their respective base prices and descriptions
+    pub fn get_vehicle_types(
+        &self,
+        distance_meters: f64,
+        duration_seconds: f64,
+    ) -> Vec<VehicleTypeEstimate> {
+        vec![
+            VehicleTypeEstimate {
+                vehicle_type: "motorcycle".to_string(),
+                base_price: self.calculate_fare(
+                    distance_meters,
+                    duration_seconds,
+                    &VehicleType::Motorcycle,
+                ),
+                description: "Fast and nimble rides for solo travelers".to_string(),
+            },
+            VehicleTypeEstimate {
+                vehicle_type: "sedan".to_string(),
+                base_price: self.calculate_fare(
+                    distance_meters,
+                    duration_seconds,
+                    &VehicleType::Sedan,
+                ),
+                description: "Affordable, everyday rides for up to 4 people".to_string(),
+            },
+            VehicleTypeEstimate {
+                vehicle_type: "suv".to_string(),
+                base_price: self.calculate_fare(
+                    distance_meters,
+                    duration_seconds,
+                    &VehicleType::Suv,
+                ),
+                description: "Spacious vehicles with more legroom or luggage space".to_string(),
+            },
+            VehicleTypeEstimate {
+                vehicle_type: "van".to_string(),
+                base_price: self.calculate_fare(
+                    distance_meters,
+                    duration_seconds,
+                    &VehicleType::Van,
+                ),
+                description: "Large vehicles for groups of up to 6 people or extra luggage"
+                    .to_string(),
+            },
+        ]
+    }
 }
 
 #[cfg(test)]
@@ -202,13 +253,13 @@ mod tests {
     #[test]
     fn test_haversine_distance() {
         let service = DistanceService::new(None);
-        
+
         // Distance between two points in Lagos (approximately 20-25km)
         let distance = service.calculate_haversine_distance(
-            6.5244, 3.3792,  // Victoria Island
-            6.4698, 3.5852,  // Lekki
+            6.5244, 3.3792, // Victoria Island
+            6.4698, 3.5852, // Lekki
         );
-        
+
         // Should be roughly 20-25km
         assert!(distance > 20000.0 && distance < 30000.0);
     }
@@ -218,7 +269,7 @@ mod tests {
         let service = DistanceService::new(None);
         let distance = 5000.0; // 5km
         let duration = service.estimate_duration_from_distance(distance);
-        
+
         // At 30km/h, 5km should take about 600 seconds (10 minutes)
         assert!(duration > 500.0 && duration < 700.0);
     }
@@ -227,10 +278,10 @@ mod tests {
     fn test_fare_calculation() {
         let service = DistanceService::new(None);
         let distance = 5000.0; // 5km
-        let duration = 600.0;  // 10 minutes
-        
-        let fare = service.calculate_fare(distance, duration, "economy");
-        
+        let duration = 600.0; // 10 minutes
+
+        let fare = service.calculate_fare(distance, duration, &VehicleType::Sedan);
+
         // Base (50) + distance (5 * 10 = 50) + time (10 * 2 = 20) = 120
         assert!((fare - 120.0).abs() < 1.0);
     }
@@ -240,7 +291,7 @@ mod tests {
         let service = DistanceService::new(None);
         let distance = 5000.0; // 5km
         let eta = service.calculate_eta(distance);
-        
+
         // At 30km/h, 5km should take about 10 minutes
         assert_eq!(eta, 10);
     }
