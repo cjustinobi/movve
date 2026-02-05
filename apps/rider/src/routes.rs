@@ -81,5 +81,9 @@ pub fn create_routes(state: AppState) -> Router {
             "/openapi.json",
             get(|| async { axum::Json(docs::RiderApiDoc::openapi()) }),
         )
+        .merge(
+            utoipa_swagger_ui::SwaggerUi::new("/api/rider/docs")
+                .url("/api/rider/openapi.json", docs::RiderApiDoc::openapi()),
+        )
         .with_state(state)
 }

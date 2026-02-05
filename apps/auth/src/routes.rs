@@ -83,6 +83,10 @@ pub fn create_routes(state: AppState) -> Router {
             "/openapi.json",
             get(|| async { axum::Json(docs::AuthApiDoc::openapi()) }),
         )
+        .merge(
+            utoipa_swagger_ui::SwaggerUi::new("/api/auth/docs")
+                .url("/api/auth/openapi.json", docs::AuthApiDoc::openapi()),
+        )
         .with_state(state)
 }
 

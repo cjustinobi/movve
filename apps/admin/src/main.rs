@@ -8,6 +8,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tracing::info;
 
+mod docs;
 mod handlers;
 mod model;
 mod routes;
