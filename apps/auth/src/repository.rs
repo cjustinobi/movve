@@ -33,6 +33,7 @@ pub struct UserDb {
     pub password_hash: String,
     pub role: UserRole,
     pub email_verified: bool,
+    pub profile_completed: bool,
     pub avatar: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -50,6 +51,7 @@ impl From<UserDb> for User {
             role: user_db.role,
             avatar: user_db.avatar,
             email_verified: user_db.email_verified,
+            profile_completed: user_db.profile_completed,
             created_at: user_db.created_at,
             updated_at: user_db.updated_at,
         }
@@ -67,6 +69,7 @@ pub struct UserUpdate {
     pub nok_phone: Option<Option<String>>,
     pub dob: Option<Option<chrono::NaiveDate>>,
     pub avatar: Option<Option<String>>,
+    pub profile_completed: Option<bool>,
 }
 
 #[derive(Queryable, Insertable, Associations, Identifiable, Debug)]

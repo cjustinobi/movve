@@ -49,7 +49,11 @@ pub fn create_routes(state: AppState) -> Router {
             "/api/driver/drivers",
             get(handlers::list_drivers).post(handlers::create_driver),
         )
-        .route("/api/driver/drivers/{id}", get(handlers::get_driver));
+        .route("/api/driver/drivers/{id}", get(handlers::get_driver))
+        .route(
+            "/api/driver/vehicle-types",
+            get(handlers::get_vehicle_types),
+        );
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()

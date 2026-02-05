@@ -13,10 +13,19 @@ use axum::{
 use common::{ApiResponse, AppError};
 use futures_util::SinkExt;
 use serde::Deserialize;
+use serde::Serialize;
 use serde_json::json;
 use tracing::info;
 use utoipa::ToSchema;
 use uuid::Uuid;
+
+#[derive(Serialize, ToSchema)]
+pub struct VehicleTypeInfo {
+    pub r#type: crate::model::VehicleType,
+    pub name: String,
+    pub description: String,
+    pub base_price: f64,
+}
 
 #[derive(Deserialize)]
 pub struct ListDriversQuery {
@@ -244,6 +253,44 @@ pub async fn upload_vehicle_insurance(
         "Insurance uploaded successfully",
         url,
     ))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/driver/vehicle-types",
+    responses(
+        (status = 200, description = "List vehicle types", body = ApiResponse<Vec<VehicleTypeInfo>>),
+    ),
+    tag = "Driver"
+)]
+pub async fn get_vehicle_types() -> Json<ApiResponse<Vec<VehicleTypeInfo>>> {
+    let types = vec![
+        VehicleTypeInfo {
+            r#type: crate::model::VehicleType::Sedan,
+            name: "Sedan".to_string(),
+            description: "Comfortable car for up to 4 passengers".to_string(),
+            base_price: 500.0,
+        },
+        VehicleTypeInfo {
+            r#type: crate::model::VehicleType::Suv,
+            name: "SUV".to_string(),
+            description: "Spacious vehicle for larger groups or luggage".to_string(),
+            base_price: 800.0,
+        },
+        VehicleTypeInfo {
+            r#type: crate::model::VehicleType::Van,
+            name: "Van".to_string(),
+            description: "Big van for moving people or goods".to_string(),
+            base_price: 1200.0,
+        },
+        VehicleTypeInfo {
+            r#type: crate::model::VehicleType::Motorcycle,
+            name: "Motorcycle".to_string(),
+            description: "Fast and affordable ride for one passenger".to_string(),
+            base_price: 300.0,
+        },
+    ];
+    Json(ApiResponse::success(types))
 }
 
 async fn process_upload(state: AppState, mut multipart: Multipart) -> Result<String, AppError> {

@@ -13,11 +13,15 @@ pub struct NewDriverDb<'a> {
     pub id: Uuid,
     pub user_id: Uuid,
     pub license_number: &'a str,
+    pub driver_license_image: &'a str,
+    pub vehicle_image: &'a str,
+    pub insurance_image: Option<&'a str>,
     pub vehicle_type: VehicleType,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: &'a str,
     pub vehicle_model: &'a str,
     pub vehicle_year: i32,
+    pub vehicle_verification_completed: bool,
     pub status: DriverStatus,
 }
 
@@ -38,11 +42,15 @@ impl DriverRepository {
             id: Uuid::new_v4(),
             user_id: new_driver.user_id,
             license_number: &new_driver.license_number,
+            driver_license_image: &new_driver.driver_license_image,
+            vehicle_image: &new_driver.vehicle_image,
+            insurance_image: new_driver.insurance_image.as_deref(),
             vehicle_type: new_driver.vehicle_type,
             vehicle_colour: new_driver.vehicle_colour,
             vehicle_plate: &new_driver.vehicle_plate,
             vehicle_model: &new_driver.vehicle_model,
             vehicle_year: new_driver.vehicle_year,
+            vehicle_verification_completed: true,
             status: new_driver.status,
         };
 

@@ -2,7 +2,7 @@ use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
 use diesel::deserialize::FromSqlRow;
 use diesel::expression::AsExpression;
-use diesel::{Identifiable, Insertable, Queryable, Selectable};
+use diesel::{Identifiable, Queryable, Selectable};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -58,36 +58,24 @@ pub enum VehicleColour {
     Yellow,
 }
 
-#[derive(Debug, Serialize, Deserialize, Copy, Clone, ToSchema, AsExpression, FromSqlRow)]
-#[diesel(sql_type = crate::schema::sql_types::UserRole)]
-#[serde(rename_all = "lowercase")]
-pub enum UserRole {
-    Admin,
-    Driver,
-    Vendor,
-    Dispatcher,
-    User,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, Identifiable, ToSchema)]
 #[diesel(table_name = drivers)]
 pub struct Driver {
     pub id: Uuid,
     pub user_id: Uuid,
     pub license_number: String,
+    pub driver_license_image: String,
+    pub insurance_number: Option<String>,
+    pub insurance_image: Option<String>,
+    pub vehicle_image: String,
     pub vehicle_type: VehicleType,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,
     pub vehicle_model: String,
     pub vehicle_year: i32,
-    pub driver_license_image: String,
-    pub vehicle_image: String,
-    pub insurance_image: Option<String>,
-    pub vehicle_verification_completed: bool,
-    pub driver_license_verified: bool,
-    pub insurance_verified: bool,
-    pub vehicle_image_verified: bool,
     pub status: DriverStatus,
+    pub verified: bool,
+    pub suspended: bool,
     #[schema(value_type = Option<String>)]
     pub rating: Option<BigDecimal>,
     pub total_rides: Option<i32>,
@@ -97,29 +85,8 @@ pub struct Driver {
     pub current_longitude: Option<BigDecimal>,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Insertable, ToSchema)]
-#[diesel(table_name = drivers)]
-pub struct NewDriver {
-    pub user_id: Uuid,
-    pub license_number: String,
-    pub driver_license_image: String,
-    pub vehicle_image: String,
-    pub insurance_image: Option<String>,
-    pub vehicle_type: VehicleType,
-    pub vehicle_colour: VehicleColour,
-    pub vehicle_plate: String,
-    pub vehicle_model: String,
-    pub vehicle_year: i32,
-    pub status: DriverStatus,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
-pub struct Claims {
-    pub sub: String, // user id
-    pub email: String,
-    pub role: UserRole,
-    pub exp: i64,
-    pub iat: i64,
+    pub vehicle_verification_completed: bool,
+    pub driver_license_verified: bool,
+    pub insurance_verified: bool,
+    pub vehicle_image_verified: bool,
 }

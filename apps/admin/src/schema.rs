@@ -12,10 +12,6 @@ pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "vehicle_type"))]
     pub struct VehicleType;
-
-    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "user_role"))]
-    pub struct UserRole;
 }
 
 diesel::table! {

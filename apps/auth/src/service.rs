@@ -318,6 +318,7 @@ impl AuthService {
             nok_phone: req.nok_phone.map(Some),
             dob: req.dob.map(Some),
             avatar: req.avatar.map(Some),
+            profile_completed: Some(true),
         };
 
         self.repo

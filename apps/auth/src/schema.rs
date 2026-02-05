@@ -59,10 +59,10 @@ diesel::table! {
         last_name -> Nullable<Varchar>,
         #[max_length = 100]
         email -> Varchar,
-
         #[max_length = 100]
         phone -> Nullable<Varchar>,
         gender -> Nullable<Gender>,
+        #[max_length = 255]
         avatar -> Nullable<Varchar>,
         #[max_length = 100]
         nok_name -> Nullable<Varchar>,
@@ -75,6 +75,7 @@ diesel::table! {
         email_verified -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        profile_completed -> Bool,
     }
 }
 

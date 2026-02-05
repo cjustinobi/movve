@@ -19,6 +19,7 @@ pub struct User {
     pub role: UserRole,
     pub avatar: Option<String>,
     pub email_verified: bool,
+    pub profile_completed: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

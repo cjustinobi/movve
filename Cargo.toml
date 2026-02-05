@@ -5,6 +5,7 @@ members = [
     "apps/driver",
     "apps/gateway",
     "apps/rider",
+    "apps/admin",
     "libs/common",
     "libs/utils",
 ]
