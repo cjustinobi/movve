@@ -24,6 +24,7 @@ use driver_client::DriverClient;
 use repository::RiderRepository;
 use service::RiderService;
 
+#[derive(Clone)]
 pub struct AppState {
     pub rider_service: Arc<RiderService>,
     pub chat_service: Arc<ChatService>,

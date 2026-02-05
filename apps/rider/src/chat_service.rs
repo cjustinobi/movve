@@ -1,7 +1,6 @@
 use crate::model::{MessageResponse, NewMessage, SendMessageRequest, WsMessage};
 use crate::repository::RiderRepository;
 use common::AppError;
-use std::sync::Arc;
 use tokio::sync::broadcast;
 use uuid::Uuid;
 

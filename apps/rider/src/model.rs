@@ -214,7 +214,7 @@ pub struct SendMessageRequest {
 }
 
 /// Response for a message
-#[derive(Debug, Serialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct MessageResponse {
     pub id: Uuid,
     pub conversation_id: Uuid,

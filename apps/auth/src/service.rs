@@ -6,6 +6,7 @@ use chrono::Utc;
 use common::{AppError, JwtConfig};
 use jsonwebtoken::{EncodingKey, Header, encode};
 use tracing::{error, info, instrument};
+use utils::validate_phone_length;
 use uuid::Uuid;
 
 use crate::{
@@ -291,6 +292,12 @@ impl AuthService {
         user_id: Uuid,
         req: UpdateProfileRequest,
     ) -> Result<User, AppError> {
+        if let Some(ref phone) = req.phone {
+            validate_phone_length(phone, 10, 15)?;
+        }
+        if let Some(ref nok_phone) = req.nok_phone {
+            validate_phone_length(nok_phone, 10, 15)?;
+        }
         let update = UserUpdate {
             first_name: req.first_name.map(Some),
             last_name: req.last_name.map(Some),
