@@ -1,0 +1,96 @@
+name: Deploy Admin Service - Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+    paths:
+      - 'apps/admin/**'
+      - 'libs/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/deploy-admin-staging.yml'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust environment
+        run: |
+          if [ ! -f "$HOME/.cargo/env" ]; then
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+          fi
+          source $HOME/.cargo/env
+          rustc --version
+          cargo --version
+
+      - name: Build admin-service in release mode
+        run: |
+          source $HOME/.cargo/env
+          cargo build --release --bin admin
+
+      - name: Stop admin service
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl stop movve-admin || true
+
+      - name: Copy binary and migrations to VPS
+        run: |
+          # Create directories on VPS
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/bin
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S mkdir -p /opt/movve/admin
+          
+          # Copy binary
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp target/release/admin /opt/movve/bin/admin-service
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/admin-service
+          
+          # Copy migrations and env
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S rm -rf /opt/movve/admin/migrations
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/admin/migrations /opt/movve/admin/migrations
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp /opt/movve/.env /opt/movve/admin/.env
+
+      - name: Run Diesel migrations on VPS
+        run: |
+          source /opt/movve/.env
+          export ADMIN_DATABASE_URL=$ADMIN_DATABASE_URL
+          
+          # Install Diesel CLI temporarily (only if not installed)
+          if ! command -v diesel &> /dev/null; then
+            source $HOME/.cargo/env
+            cargo install diesel_cli --no-default-features --features postgres
+          fi
+          
+          diesel migration run --migration-dir /opt/movve/admin/migrations --database-url $ADMIN_DATABASE_URL
+
+      - name: Start admin service
+        run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-admin
+
+      - name: Wait for admin service to be healthy
+        run: |
+          for i in {1..10}; do
+            if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl is-active movve-admin --quiet; then
+              if echo "${{ secrets.VPS_PASSWORD }}" | sudo -S ss -tlnp | grep -q ":8004"; then
+                echo "✅ Admin service is healthy"
+                break
+              fi
+            fi
+            echo "⏳ Waiting... attempt $i/10"
+            sleep 3
+          done
+
+      - name: Restart dependent services
+        run: |
+          echo "🔄 Restarting gateway and tunnel..."
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart movve-gateway
+          sleep 3
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl restart cloudflared-movve
+          echo "✅ All services restarted"
+
+      - name: Verify full stack health
+        run: |
+          sleep 5
+          echo "Checking all services..."
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-admin --no-pager
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status movve-gateway --no-pager
+          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl status cloudflared-movve --no-pager
