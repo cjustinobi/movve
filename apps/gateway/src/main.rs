@@ -57,6 +57,7 @@ async fn main() -> Result<(), anyhow::Error> {
             .route("/api/driver/{*path}", any(proxy::proxy_by_prefix))
             .route("/api/rider/{*path}", any(proxy::proxy_by_prefix))
             .route("/api/trip/{*path}", any(proxy::proxy_by_prefix))
+            .route("/api/admin/{*path}", any(proxy::proxy_by_prefix))
     }
 
     let app = Router::new()

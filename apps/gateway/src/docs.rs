@@ -25,14 +25,16 @@ pub async fn get_merged_openapi(
     let auth_url = format!("{}/openapi.json", state.config.services.auth_service_url);
     let driver_url = format!("{}/openapi.json", state.config.services.driver_service_url);
     let rider_url = format!("{}/openapi.json", state.config.services.rider_service_url);
+    let admin_url = format!("{}/openapi.json", state.config.services.admin_service_url);
 
     // Fetch specs from services
     let auth_spec = fetch_spec(&state.http_client, &auth_url).await;
     let driver_spec = fetch_spec(&state.http_client, &driver_url).await;
     let rider_spec = fetch_spec(&state.http_client, &rider_url).await;
+    let admin_spec = fetch_spec(&state.http_client, &admin_url).await;
 
     // Merge the specs
-    let merged = merge_openapi_specs(auth_spec, driver_spec, rider_spec);
+    let merged = merge_openapi_specs(auth_spec, driver_spec, rider_spec, admin_spec);
 
     Json(merged)
 }
@@ -47,7 +49,7 @@ async fn fetch_spec(client: &reqwest::Client, url: &str) -> Option<Value> {
     }
 }
 
-fn merge_openapi_specs(auth_spec: Option<Value>, driver_spec: Option<Value>, rider_spec: Option<Value>) -> Value {
+fn merge_openapi_specs(auth_spec: Option<Value>, driver_spec: Option<Value>, rider_spec: Option<Value>, admin_spec: Option<Value>) -> Value {
     let mut merged = json!({
         "openapi": "3.0.0",
         "info": {
@@ -88,6 +90,11 @@ fn merge_openapi_specs(auth_spec: Option<Value>, driver_spec: Option<Value>, rid
     // Merge rider service spec
     if let Some(spec) = rider_spec {
         merge_spec_into(&mut merged, spec, "Rider Service");
+    }
+
+    // Merge admin service spec
+    if let Some(spec) = admin_spec {
+        merge_spec_into(&mut merged, spec, "Admin Service");
     }
 
     merged

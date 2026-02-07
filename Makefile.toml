@@ -11,10 +11,13 @@ APP_PORT = 8000
 AUTH_PORT = 8001
 DRIVER_PORT = 8002
 RIDER_PORT = 8003
+ADMIN_PORT = 8004
 
 AUTH_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
 DRIVER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_driver"
 RIDER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_rider"
+ADMIN_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_admin"
+
 RUST_LOG = "info"
 
 # ==============================================================================
@@ -24,7 +27,7 @@ RUST_LOG = "info"
 [tasks.dev]
 category = "dev"
 description = "Run all services in development mode"
-dependencies = ["dev-auth", "dev-gateway", "dev-driver", "dev-rider"]
+dependencies = ["dev-auth", "dev-gateway", "dev-driver", "dev-rider", "dev-admin"]
 
 [tasks.dev-auth]
 category = "dev"
@@ -58,6 +61,14 @@ command = "cargo"
 args = ["run", "--bin", "rider"]
 watch = { watch = ["apps/rider/src", "libs/common/src", "libs/utils/src", "libs/services/src"] }
 
+[tasks.dev-admin]
+category = "dev"
+description = "Run admin service in development"
+cwd = "apps/admin"
+command = "cargo"
+args = ["run", "--bin", "admin"]
+watch = { watch = ["apps/admin/src", "libs/common/src", "libs/utils/src", "libs/services/src"] }
+
 # ==============================================================================
 # DIESEL
 # ==============================================================================
@@ -65,12 +76,12 @@ watch = { watch = ["apps/rider/src", "libs/common/src", "libs/utils/src", "libs/
 [tasks.setup]
 category = "diesel"
 description = "Initial setup for Movve application"
-dependencies = ["diesel-auth-setup", "diesel-driver-setup", "diesel-rider-setup"]
+dependencies = ["diesel-auth-setup", "diesel-driver-setup", "diesel-rider-setup", "diesel-admin-setup"]
 
 [tasks.db-reset]
 category = "diesel"
 description = "Drop and recreate all DBs"
-dependencies = ["diesel-auth-reset", "diesel-driver-reset", "diesel-rider-reset"]
+dependencies = ["diesel-auth-reset", "diesel-driver-reset", "diesel-rider-reset", "diesel-admin-reset"]
 
 [tasks.diesel-auth-setup]
 category = "diesel"
@@ -167,6 +178,42 @@ cd apps/rider
 diesel print-schema --database-url "${RIDER_DATABASE_URL}" > src/schema.rs
 '''
 
+[tasks.diesel-admin-setup]
+category = "diesel"
+description = "Setup and migrate Admin DB"
+script = [
+  "echo '🚀 Setting up Admin database...'",
+  "diesel setup --database-url ${ADMIN_DATABASE_URL} --migration-dir apps/admin/migrations"
+]
+
+[tasks.diesel-admin-migrate]
+category = "diesel"
+description = "Run pending Admin migrations"
+script = [
+  "diesel migration run --database-url ${ADMIN_DATABASE_URL} --migration-dir apps/admin/migrations"
+]
+
+[tasks.diesel-admin-revert]
+category = "diesel"
+description = "Revert last Admin migration"
+script = [
+  "diesel migration revert --database-url ${ADMIN_DATABASE_URL} --migration-dir apps/admin/migrations"
+]
+
+[tasks.diesel-admin-reset]
+category = "diesel"
+description = "Reset Admin DB"
+script = [
+  "diesel database reset --database-url ${ADMIN_DATABASE_URL} --migration-dir apps/admin/migrations"
+]
+
+[tasks.diesel-admin-schema]
+category = "diesel"
+script = '''
+cd apps/admin
+diesel print-schema --database-url "${ADMIN_DATABASE_URL}" > src/schema.rs
+'''
+
 # ==============================================================================
 # DB
 # ==============================================================================
@@ -180,20 +227,6 @@ script = [
   "pg_isready -d ${RIDER_DATABASE_URL}"
 ]
 
-[tasks.db-shell]
-category = "db"
-description = "Connect to database shell"
-script = ''' ... '''
-
-[tasks.db-query]
-category = "db"
-description = "Execute a SQL query"
-script = ''' ... '''
-
-[tasks.db-query-file]
-category = "db"
-description = "Execute SQL from file"
-script = ''' ... '''
 
 [tasks.seed-auth]
 category = "db"
@@ -201,64 +234,6 @@ description = "Seed Auth database"
 command = "cargo"
 args = ["run", "--bin", "seed"]
 
-[tasks.db-backup]
-category = "db"
-description = "Backup database"
-script = ''' ... '''
-
-[tasks.db-restore]
-category = "db"
-description = "Restore database"
-script = ''' ... '''
-
-[tasks.supabase-link]
-category = "db"
-description = "Link Supabase project"
-script = ''' ... '''
-
-[tasks.supabase-status]
-category = "db"
-description = "Supabase project status"
-script = ''' ... '''
-
-# ==============================================================================
-# DOCKER
-# ==============================================================================
-
-[tasks.docker-build]
-category = "docker"
-description = "Build all Docker images"
-dependencies = ["docker-build-auth", "docker-build-gateway", "docker-build-driver"]
-
-[tasks.docker-build-auth]
-category = "docker"
-description = "Build auth Docker image"
-script = ''' ... '''
-
-[tasks.docker-build-gateway]
-category = "docker"
-description = "Build gateway Docker image"
-script = ''' ... '''
-
-[tasks.docker-build-driver]
-category = "docker"
-description = "Build driver Docker image"
-script = ''' ... '''
-
-[tasks.docker-up]
-category = "docker"
-description = "Start docker-compose"
-script = ''' ... '''
-
-[tasks.docker-down]
-category = "docker"
-description = "Stop docker-compose"
-script = ''' ... '''
-
-[tasks.docker-logs]
-category = "docker"
-description = "View docker logs"
-script = ''' ... '''
 
 # ==============================================================================
 # TEST
@@ -416,6 +391,7 @@ tmux split-window -h -t $SESSION
 tmux split-window -v -t $SESSION:0.0
 tmux split-window -h -t $SESSION:0.1
 tmux split-window -v -t $SESSION:0.2
+tmux split-window -v -t $SESSION:0.3
 
 tmux select-layout -t $SESSION tiled
 
@@ -423,7 +399,8 @@ tmux send-keys -t $SESSION:0.0 'cd apps/auth && cargo watch -w src  -w ../../lib
 tmux send-keys -t $SESSION:0.1 'cd apps/gateway && cargo watch -w src  -w ../../libs/services/src -w ../../libs/common/src -w ../../libs/utils/src -x "run --bin gateway"' C-m
 tmux send-keys -t $SESSION:0.2 'cd apps/driver && cargo watch -w src  -w ../../libs/services/src -w ../../libs/common/src -w ../../libs/utils/src -x "run --bin driver"' C-m
 tmux send-keys -t $SESSION:0.3 'cd apps/rider && cargo watch -w src  -w ../../libs/services/src -w ../../libs/common/src -w ../../libs/utils/src -x "run --bin rider"' C-m
-tmux send-keys -t $SESSION:0.4 'echo "🚀 All services started. Press Ctrl+B then D to detach."' C-m
+tmux send-keys -t $SESSION:0.4 'cd apps/admin && cargo watch -w src  -w ../../libs/services/src -w ../../libs/common/src -w ../../libs/utils/src -x "run --bin admin"' C-m
+tmux send-keys -t $SESSION:0.5 'echo "🚀 All services started. Press Ctrl+B then D to detach."' C-m
 
 tmux attach -t $SESSION
 '''
@@ -441,7 +418,7 @@ tmux kill-session -t movve 2>/dev/null && echo "✓ Tmux session killed" || echo
 echo ""
 echo "Freeing ports..."
 
-PORTS="${APP_PORT} ${AUTH_PORT} ${DRIVER_PORT} ${RIDER_PORT}"
+PORTS="${APP_PORT} ${AUTH_PORT} ${DRIVER_PORT} ${RIDER_PORT} ${ADMIN_PORT}"
 
 for port in $PORTS; do
     pid=$(lsof -ti:$port 2>/dev/null)
@@ -529,7 +506,6 @@ print_group "🚀 Dev" "^dev(-|$)"
 print_group "🗄️  Database" "^db-"
 print_group "🌱 Seed" "^seed(-|$)"
 print_group "🐘 Diesel" "^diesel-"
-print_group "🐳 Docker" "^docker-"
 print_group "🧪 Tests" "^test(-|$)"
 print_group "👀 Watch" "^watch-"
 
