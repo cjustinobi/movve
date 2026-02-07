@@ -18,7 +18,7 @@ use futures_util::{SinkExt, StreamExt};
 use tracing::info;
 use uuid::Uuid;
 
-/// Ride Estimate
+/// Gets available drivers and Ride Estimate
 #[utoipa::path(
     post,
     path = "/api/rider/preview",

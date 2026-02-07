@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::{model::Driver, schema::drivers::dsl::*, AppState};
 
+/// Approve Driver License Image
 #[utoipa::path(
     put,
     path = "/api/admin/drivers/{id}/approve-license",
@@ -43,6 +44,7 @@ pub async fn approve_driver_license_image(
     ))
 }
 
+/// Approve Insurance Image
 #[utoipa::path(
     put,
     path = "/api/admin/drivers/{id}/approve-insurance",
@@ -76,6 +78,7 @@ pub async fn approve_insurance_image(
     ))
 }
 
+/// Approve Vehicle Image
 #[utoipa::path(
     put,
     path = "/api/admin/drivers/{id}/approve-vehicle-image",
