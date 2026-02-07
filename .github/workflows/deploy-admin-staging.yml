@@ -46,22 +46,22 @@ jobs:
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S chmod +x /opt/movve/bin/admin-service
           
           # Copy migrations and env
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S rm -rf /opt/movve/admin/migrations
-          echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/admin/migrations /opt/movve/admin/migrations
+          # echo "${{ secrets.VPS_PASSWORD }}" | sudo -S rm -rf /opt/movve/admin/migrations
+          # echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp -r apps/admin/migrations /opt/movve/admin/migrations
           echo "${{ secrets.VPS_PASSWORD }}" | sudo -S cp /opt/movve/.env /opt/movve/admin/.env
 
       - name: Run Diesel migrations on VPS
         run: |
           source /opt/movve/.env
-          export ADMIN_DATABASE_URL=$ADMIN_DATABASE_URL
+          # export ADMIN_DATABASE_URL=$ADMIN_DATABASE_URL
           
           # Install Diesel CLI temporarily (only if not installed)
-          if ! command -v diesel &> /dev/null; then
-            source $HOME/.cargo/env
-            cargo install diesel_cli --no-default-features --features postgres
-          fi
+          # if ! command -v diesel &> /dev/null; then
+          #   source $HOME/.cargo/env
+          #   cargo install diesel_cli --no-default-features --features postgres
+          # fi
           
-          diesel migration run --migration-dir /opt/movve/admin/migrations --database-url $ADMIN_DATABASE_URL
+          # diesel migration run --migration-dir /opt/movve/admin/migrations --database-url $ADMIN_DATABASE_URL
 
       - name: Start admin service
         run: echo "${{ secrets.VPS_PASSWORD }}" | sudo -S systemctl start movve-admin

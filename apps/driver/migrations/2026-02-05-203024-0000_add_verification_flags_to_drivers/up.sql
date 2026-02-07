@@ -1,5 +1,0 @@
-ALTER TABLE drivers
-ADD COLUMN vehicle_verification_completed BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN driver_license_verified BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN insurance_verified BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN vehicle_image_verified BOOLEAN NOT NULL DEFAULT FALSE;
