@@ -3,10 +3,7 @@ use diesel::pg::PgConnection;
 use diesel::r2d2::{self, ConnectionManager};
 use dotenvy::dotenv;
 use std::env;
-use std::net::SocketAddr;
-use std::sync::Arc;
-use tokio::net::TcpListener;
-use tracing::info;
+use common::AppConfig;
 
 mod docs;
 mod handlers;
@@ -23,7 +20,8 @@ pub struct AppState {
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let config = AppConfig::load()?;
+    let database_url = env::var("ADMIN_DATABASE_URL").expect("ADMIN_DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool = r2d2::Pool::builder()
         .build(manager)
@@ -33,12 +31,13 @@ async fn main() -> anyhow::Result<()> {
 
     let app = routes::create_routes(state);
 
-    let host = env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8004".to_string());
-    let addr: SocketAddr = format!("{}:{}", host, port).parse()?;
+    let addr = format!(
+        "{}:{}",
+        config.services.admin_service_host, config.services.admin_service_port
+    );
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    info!("Admin service listening on {}", addr);
-    let listener = TcpListener::bind(addr).await?;
+    tracing::info!("Admin service listening on {}", addr);
     serve(listener, app).await?;
 
     Ok(())
