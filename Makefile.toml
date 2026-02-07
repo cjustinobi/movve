@@ -13,10 +13,10 @@ DRIVER_PORT = 8002
 RIDER_PORT = 8003
 ADMIN_PORT = 8004
 
-AUTH_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_auth"
-DRIVER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_driver"
-RIDER_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_rider"
-ADMIN_DATABASE_URL = "postgres://justin:postgres@localhost:5432/movve_admin"
+AUTH_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_auth"
+DRIVER_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_driver"
+RIDER_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_rider"
+ADMIN_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_admin"
 
 RUST_LOG = "info"
 

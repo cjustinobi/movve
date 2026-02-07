@@ -1,4 +1,4 @@
-use crate::model::{VehicleType, VehicleTypeEstimate};
+use crate::model::VehicleType;
 use common::AppError;
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
@@ -196,63 +196,6 @@ impl DistanceService {
         let hours = distance_km / avg_speed_kmh;
         let minutes = hours * 60.0;
         minutes.ceil() as i32
-    }
-
-    /// Get available vehicle types with their respective base prices and descriptions
-    pub fn get_vehicle_types(
-        &self,
-        distance_meters: f64,
-        duration_seconds: f64,
-    ) -> Vec<VehicleTypeEstimate> {
-        // Check for google api key
-        // ... (preserving existing code context if needed, but here I am replacing the method body mostly)
-        vec![
-            VehicleTypeEstimate {
-                vehicle_type: "motorcycle".to_string(),
-                title: "Movve Moto".to_string(),
-                tagline: "Fast & Affordable".to_string(),
-                base_price: self.calculate_fare(
-                    distance_meters,
-                    duration_seconds,
-                    &VehicleType::Motorcycle,
-                ),
-                description: "Fast and nimble rides for solo travelers".to_string(),
-            },
-            VehicleTypeEstimate {
-                vehicle_type: "sedan".to_string(),
-                title: "Movve Go".to_string(),
-                tagline: "Comfortable & Reliable".to_string(),
-                base_price: self.calculate_fare(
-                    distance_meters,
-                    duration_seconds,
-                    &VehicleType::Sedan,
-                ),
-                description: "Affordable, everyday rides for up to 4 people".to_string(),
-            },
-            VehicleTypeEstimate {
-                vehicle_type: "suv".to_string(),
-                title: "Movve XL".to_string(),
-                tagline: "Spacious & Premium".to_string(),
-                base_price: self.calculate_fare(
-                    distance_meters,
-                    duration_seconds,
-                    &VehicleType::Suv,
-                ),
-                description: "Spacious vehicles with more legroom or luggage space".to_string(),
-            },
-            VehicleTypeEstimate {
-                vehicle_type: "van".to_string(),
-                title: "Movve Van".to_string(),
-                tagline: "Extra Space for Everyone".to_string(),
-                base_price: self.calculate_fare(
-                    distance_meters,
-                    duration_seconds,
-                    &VehicleType::Van,
-                ),
-                description: "Large vehicles for groups of up to 6 people or extra luggage"
-                    .to_string(),
-            },
-        ]
     }
 }
 

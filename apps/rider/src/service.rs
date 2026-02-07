@@ -2,7 +2,7 @@ use crate::distance_service::DistanceService;
 use crate::driver_client::DriverClient;
 use crate::model::{
     CreateRideRequest, DriverOption, Location, NewRide, PayRideRequest, RateDriverRequest,
-    RideEstimateRequest, RideEstimateResponse, RideResponse,
+    RideEstimateRequest, RideEstimateResponse, RideResponse, VehicleType,
 };
 use crate::repository::RiderRepository;
 use common::{AppError, JwtConfig};
@@ -84,6 +84,29 @@ impl RiderService {
 
                 let eta = self.distance_service.calculate_eta(distance_from_pickup);
 
+                let (title, tagline, description) = match driver.vehicle_type {
+                    VehicleType::Sedan => (
+                        "Movve Go",
+                        "Comfortable & Reliable",
+                        "Affordable, everyday rides for up to 4 people",
+                    ),
+                    VehicleType::Suv => (
+                        "Movve XL",
+                        "Spacious & Premium",
+                        "Spacious vehicles with more legroom or luggage space",
+                    ),
+                    VehicleType::Van => (
+                        "Movve Van",
+                        "Extra Space for Everyone",
+                        "Large vehicles for groups of up to 6 people or extra luggage",
+                    ),
+                    VehicleType::Motorcycle => (
+                        "Movve Moto",
+                        "Fast & Affordable",
+                        "Fast and nimble rides for solo travelers",
+                    ),
+                };
+
                 DriverOption {
                     driver_id: driver.id,
                     name: format!("Driver {}", driver.id),
@@ -92,6 +115,9 @@ impl RiderService {
                         driver.vehicle_model, driver.vehicle_year, driver.vehicle_colour
                     ),
                     vehicle_type: driver.vehicle_type.to_string(),
+                    title: title.to_string(),
+                    tagline: tagline.to_string(),
+                    description: description.to_string(),
                     rating,
                     price: estimated_fare * price_multiplier,
                     eta,
@@ -128,15 +154,12 @@ impl RiderService {
             }
         });
 
-        let vehicle_types = self.distance_service.get_vehicle_types(distance, duration);
-
         Ok(RideEstimateResponse {
             drivers: driver_options,
             estimated_fare,
             distance,
             duration,
             surge_multiplier,
-            vehicle_types,
         })
     }
 

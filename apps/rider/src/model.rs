@@ -77,6 +77,12 @@ pub struct DriverOption {
     pub name: String,
     pub vehicle: String,
     pub vehicle_type: String,
+    /// Vehicle type title (e.g., "Movve Go")
+    pub title: String,
+    /// Vehicle type tagline (e.g., "Comfortable & Reliable")
+    pub tagline: String,
+    /// Vehicle type description
+    pub description: String,
     pub rating: f64,
     pub price: f64,
     pub eta: i32,                  // Estimated time of arrival in minutes
@@ -111,16 +117,6 @@ pub enum RideStatus {
     Cancelled,
 }
 
-/// Detailed estimate for a vehicle type
-#[derive(Debug, Serialize, ToSchema)]
-pub struct VehicleTypeEstimate {
-    pub vehicle_type: String,
-    pub title: String,
-    pub tagline: String,
-    pub base_price: f64,
-    pub description: String,
-}
-
 /// Response for ride estimation
 #[derive(Debug, Serialize, ToSchema)]
 pub struct RideEstimateResponse {
@@ -129,7 +125,6 @@ pub struct RideEstimateResponse {
     pub distance: f64, // in meters
     pub duration: f64, // in seconds
     pub surge_multiplier: f64,
-    pub vehicle_types: Vec<VehicleTypeEstimate>,
 }
 
 /// Request to create a ride
