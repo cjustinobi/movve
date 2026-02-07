@@ -8,106 +8,126 @@ use diesel::prelude::*;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{model::Driver, schema::drivers::dsl::*, AppState};
+use crate::{AppState, model::Driver, schema::drivers::dsl::*};
 
-/// Approve Driver License Image
+#[derive(serde::Deserialize, utoipa::ToSchema)]
+pub struct UpdateVerificationRequest {
+    pub verified: bool,
+}
+
+/// Update Driver License Verification Status
 #[utoipa::path(
     put,
-    path = "/api/admin/drivers/{id}/approve-license",
+    path = "/api/admin/drivers/{id}/update-license",
+    request_body = UpdateVerificationRequest,
     params(
         ("id" = Uuid, Path, description = "Driver unique identifier")
     ),
     responses(
-        (status = 200, description = "Driver license valid outcome", body = ApiResponse<EmptyData>),
+        (status = 200, description = "Driver license status updated", body = ApiResponse<EmptyData>),
         (status = 404, description = "Driver not found")
     ),
     tag = "Admin"
 )]
-pub async fn approve_driver_license_image(
+pub async fn update_driver_license_verification(
     State(state): State<AppState>,
     Path(driver_id): Path<Uuid>,
+    Json(req): Json<UpdateVerificationRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
-    
     let mut conn = state
         .pool
         .get()
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     diesel::update(drivers.filter(id.eq(driver_id)))
-        .set(driver_license_verified.eq(true))
+        .set(driver_license_verified.eq(req.verified))
         .execute(&mut conn)
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
-        "Driver license image approved",
+        if req.verified {
+            "Driver license approved"
+        } else {
+            "Driver license rejected"
+        },
     ))
 }
 
-/// Approve Insurance Image
+/// Update Insurance Verification Status
 #[utoipa::path(
     put,
-    path = "/api/admin/drivers/{id}/approve-insurance",
+    path = "/api/admin/drivers/{id}/update-insurance",
+    request_body = UpdateVerificationRequest,
     params(
         ("id" = Uuid, Path, description = "Driver unique identifier")
     ),
     responses(
-        (status = 200, description = "Insurance valid outcome", body = ApiResponse<EmptyData>),
+        (status = 200, description = "Insurance status updated", body = ApiResponse<EmptyData>),
         (status = 404, description = "Driver not found")
     ),
     tag = "Admin"
 )]
-pub async fn approve_insurance_image(
+pub async fn update_insurance_verification(
     State(state): State<AppState>,
     Path(driver_id): Path<Uuid>,
+    Json(req): Json<UpdateVerificationRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
-
     let mut conn = state
         .pool
         .get()
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     diesel::update(drivers.filter(id.eq(driver_id)))
-        .set(insurance_verified.eq(true))
+        .set(insurance_verified.eq(req.verified))
         .execute(&mut conn)
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
-        "Insurance image approved",
+        if req.verified {
+            "Insurance approved"
+        } else {
+            "Insurance rejected"
+        },
     ))
 }
 
-/// Approve Vehicle Image
+/// Update Vehicle Verification Status
 #[utoipa::path(
     put,
-    path = "/api/admin/drivers/{id}/approve-vehicle-image",
+    path = "/api/admin/drivers/{id}/update-vehicle-insurance",
+    request_body = UpdateVerificationRequest,
     params(
         ("id" = Uuid, Path, description = "Driver unique identifier")
     ),
     responses(
-        (status = 200, description = "Vehicle image valid outcome", body = ApiResponse<EmptyData>),
+        (status = 200, description = "Vehicle verification status updated", body = ApiResponse<EmptyData>),
         (status = 404, description = "Driver not found")
     ),
     tag = "Admin"
 )]
-pub async fn approve_vehicle_image(
+pub async fn update_vehicle_verification(
     State(state): State<AppState>,
     Path(driver_id): Path<Uuid>,
+    Json(req): Json<UpdateVerificationRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
-
     let mut conn = state
         .pool
         .get()
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     diesel::update(drivers.filter(id.eq(driver_id)))
-        .set(vehicle_image_verified.eq(true))
+        .set(vehicle_image_verified.eq(req.verified))
         .execute(&mut conn)
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
-        "Vehicle image approved",
+        if req.verified {
+            "Vehicle verification updated"
+        } else {
+            "Vehicle verification rejected"
+        },
     ))
 }

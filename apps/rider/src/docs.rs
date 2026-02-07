@@ -16,6 +16,8 @@ use utoipa::OpenApi;
         get_ride_status,
         accept_ride,
         driver_cancel_ride,
+        start_ride,
+        end_ride,
         send_message,
         get_messages,
     ),
@@ -23,6 +25,7 @@ use utoipa::OpenApi;
         schemas(
             RideResponse,
             CreateRideRequest,
+            CancelRideRequest,
             RideEstimateRequest,
             RideEstimateResponse,
             PayRideRequest,

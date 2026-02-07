@@ -1984,6 +1984,7 @@ dependencies = [
  "chrono",
  "common",
  "diesel",
+ "diesel-derive-enum",
  "dotenvy",
  "futures-util",
  "jsonwebtoken",

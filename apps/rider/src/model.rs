@@ -85,10 +85,38 @@ pub struct DriverOption {
     pub current_location: Location,
 }
 
+#[derive(
+    diesel_derive_enum::DbEnum, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema,
+)]
+#[ExistingTypePath = "crate::schema::sql_types::RideStatus"]
+#[serde(rename_all = "snake_case")]
+pub enum RideStatus {
+    #[db_rename = "requested"]
+    Requested,
+    #[db_rename = "accepted"]
+    Accepted,
+    #[db_rename = "arrived"]
+    Arrived,
+    #[db_rename = "in_progress"]
+    InProgress,
+    #[db_rename = "stopped"]
+    Stopped,
+    #[db_rename = "pit_stop"]
+    PitStop,
+    #[db_rename = "completed"]
+    Completed,
+    #[db_rename = "paid"]
+    Paid,
+    #[db_rename = "cancelled"]
+    Cancelled,
+}
+
 /// Detailed estimate for a vehicle type
 #[derive(Debug, Serialize, ToSchema)]
 pub struct VehicleTypeEstimate {
     pub vehicle_type: String,
+    pub title: String,
+    pub tagline: String,
     pub base_price: f64,
     pub description: String,
 }
@@ -112,6 +140,12 @@ pub struct CreateRideRequest {
     pub destination: Location,
     pub fare: f64,
     pub vehicle_type: VehicleType,
+}
+
+/// Request to cancel a ride
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CancelRideRequest {
+    pub reason: String,
 }
 
 /// Request to pay for a ride
@@ -142,11 +176,13 @@ pub struct Ride {
     pub driver_id: Option<Uuid>,
     pub pickup: Location,
     pub destination: Location,
-    pub status: String,
+    pub status: RideStatus,
     pub fare: f64,
     pub distance: f64,
     pub duration: f64,
     pub otp: Option<String>,
+    pub cancellation_reason: Option<String>,
+    pub cancelled_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -160,7 +196,7 @@ pub struct NewRide {
     pub driver_id: Option<Uuid>,
     pub pickup: Location,
     pub destination: Location,
-    pub status: String,
+    pub status: RideStatus,
     pub fare: f64,
     pub distance: f64,
     pub duration: f64,
@@ -187,7 +223,7 @@ impl NewRide {
             driver_id: Some(driver_id),
             pickup,
             destination,
-            status: "requested".to_string(),
+            status: RideStatus::Requested,
             fare,
             distance,
             duration,
@@ -283,7 +319,7 @@ pub struct RideResponse {
     pub pickup: Location,
     pub destination: Location,
     pub fare: f64,
-    pub status: String,
+    pub status: RideStatus,
     pub distance: f64,
     pub duration: f64,
     pub otp: Option<String>,

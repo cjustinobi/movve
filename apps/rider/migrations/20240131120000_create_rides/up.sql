@@ -1,14 +1,18 @@
+CREATE TYPE ride_status AS ENUM ('requested', 'accepted', 'arrived', 'in_progress', 'stopped', 'pit_stop', 'completed', 'paid', 'cancelled');
+
 CREATE TABLE rides (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rider_id UUID NOT NULL,
     driver_id UUID,
     pickup JSONB NOT NULL,
     destination JSONB NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'requested',
+    status ride_status NOT NULL DEFAULT 'requested',
     fare DOUBLE PRECISION NOT NULL,
     distance DOUBLE PRECISION NOT NULL DEFAULT 0.0,  -- Distance in meters
     duration DOUBLE PRECISION NOT NULL DEFAULT 0.0,  -- Duration in seconds
     otp VARCHAR(10),
+    cancellation_reason VARCHAR(255),
+    cancelled_by VARCHAR(50),  -- 'driver' or 'rider'
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

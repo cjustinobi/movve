@@ -204,9 +204,13 @@ impl DistanceService {
         distance_meters: f64,
         duration_seconds: f64,
     ) -> Vec<VehicleTypeEstimate> {
+        // Check for google api key
+        // ... (preserving existing code context if needed, but here I am replacing the method body mostly)
         vec![
             VehicleTypeEstimate {
                 vehicle_type: "motorcycle".to_string(),
+                title: "Movve Moto".to_string(),
+                tagline: "Fast & Affordable".to_string(),
                 base_price: self.calculate_fare(
                     distance_meters,
                     duration_seconds,
@@ -216,6 +220,8 @@ impl DistanceService {
             },
             VehicleTypeEstimate {
                 vehicle_type: "sedan".to_string(),
+                title: "Movve Go".to_string(),
+                tagline: "Comfortable & Reliable".to_string(),
                 base_price: self.calculate_fare(
                     distance_meters,
                     duration_seconds,
@@ -225,6 +231,8 @@ impl DistanceService {
             },
             VehicleTypeEstimate {
                 vehicle_type: "suv".to_string(),
+                title: "Movve XL".to_string(),
+                tagline: "Spacious & Premium".to_string(),
                 base_price: self.calculate_fare(
                     distance_meters,
                     duration_seconds,
@@ -234,6 +242,8 @@ impl DistanceService {
             },
             VehicleTypeEstimate {
                 vehicle_type: "van".to_string(),
+                title: "Movve Van".to_string(),
+                tagline: "Extra Space for Everyone".to_string(),
                 base_price: self.calculate_fare(
                     distance_meters,
                     duration_seconds,

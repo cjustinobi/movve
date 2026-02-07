@@ -4,9 +4,9 @@ use utoipa::OpenApi;
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        handlers::approve_driver_license_image,
-        handlers::approve_insurance_image,
-        handlers::approve_vehicle_image,
+        handlers::update_driver_license_verification,
+        handlers::update_insurance_verification,
+        handlers::update_vehicle_verification,
     ),
     components(
         schemas(common::ApiResponse<common::EmptyData>, common::EmptyData)

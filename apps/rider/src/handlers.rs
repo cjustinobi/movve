@@ -1,8 +1,9 @@
 use crate::{
     AppState,
     model::{
-        Claims, CreateRideRequest, Location, MessageResponse, PayRideRequest, RateDriverRequest,
-        RideEstimateRequest, RideEstimateResponse, RideResponse, SendMessageRequest, WsMessage,
+        CancelRideRequest, Claims, CreateRideRequest, Location, MessageResponse, PayRideRequest,
+        RateDriverRequest, RideEstimateRequest, RideEstimateResponse, RideResponse,
+        SendMessageRequest,
     },
 };
 use axum::{
@@ -122,6 +123,7 @@ pub async fn get_rides(
 #[utoipa::path(
     post,
     path = "/api/rider/{id}/cancel",
+    request_body = CancelRideRequest,
     responses(
         (status = 200, description = "Ride cancelled", body = ApiResponse<RideResponse>),
     ),
@@ -135,13 +137,70 @@ pub async fn cancel_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Json(req): Json<crate::model::CancelRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
-    let response = state.rider_service.cancel_ride(id, user_id).await?;
+    let response = state
+        .rider_service
+        .cancel_ride(id, user_id, req.reason, "rider")
+        .await?;
     Ok(ApiResponse::success_with_message(
         "Ride cancelled",
+        response,
+    ))
+}
+
+/// Start Ride (Driver)
+#[utoipa::path(
+    post,
+    path = "/api/rider/rides/{id}/start",
+    responses(
+        (status = 200, description = "Ride started", body = ApiResponse<RideResponse>),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn start_ride(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<RideResponse>, AppError> {
+    let driver_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
+
+    let response = state.rider_service.start_ride(id, driver_id).await?;
+    Ok(ApiResponse::success_with_message("Ride started", response))
+}
+
+/// End Ride (Driver)
+#[utoipa::path(
+    post,
+    path = "/api/rider/rides/{id}/end",
+    responses(
+        (status = 200, description = "Ride completed", body = ApiResponse<RideResponse>),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn end_ride(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<RideResponse>, AppError> {
+    let driver_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
+
+    let response = state.rider_service.end_ride(id, driver_id).await?;
+    Ok(ApiResponse::success_with_message(
+        "Ride completed",
         response,
     ))
 }
@@ -283,6 +342,7 @@ pub async fn accept_ride(
 #[utoipa::path(
     post,
     path = "/api/rider/rides/{id}/driver-cancel",
+    request_body = CancelRideRequest,
     responses(
         (status = 200, description = "Ride cancelled by driver", body = ApiResponse<RideResponse>),
     ),
@@ -296,13 +356,14 @@ pub async fn driver_cancel_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Json(req): Json<crate::model::CancelRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let driver_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
 
     let response = state
         .rider_service
-        .driver_cancel_ride(id, driver_id)
+        .driver_cancel_ride(id, driver_id, req.reason)
         .await?;
     Ok(ApiResponse::success_with_message(
         "Ride cancelled by driver",

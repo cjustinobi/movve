@@ -81,7 +81,7 @@ dependencies = ["diesel-auth-setup", "diesel-driver-setup", "diesel-rider-setup"
 [tasks.db-reset]
 category = "diesel"
 description = "Drop and recreate all DBs"
-dependencies = ["diesel-auth-reset", "diesel-driver-reset", "diesel-rider-reset", "diesel-admin-reset"]
+dependencies = ["diesel-driver-reset", "diesel-rider-reset", "diesel-admin-reset"]
 
 [tasks.diesel-auth-setup]
 category = "diesel"

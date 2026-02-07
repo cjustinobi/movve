@@ -7,7 +7,7 @@ use crate::model::{
 use crate::repository::RiderRepository;
 use common::{AppError, JwtConfig};
 use std::sync::Arc;
-use tracing::info;
+
 use utils::generate_numeric_code;
 use uuid::Uuid;
 
@@ -73,7 +73,6 @@ impl RiderService {
             .into_iter()
             .filter(|(driver, _)| driver.vehicle_type == req.vehicle_type)
             .map(|(driver, distance_from_pickup)| {
-                // Calculate price based on driver rating (premium for higher rated drivers)
                 let rating = driver.rating.as_ref().map(|r| *r).unwrap_or(0.0);
                 let price_multiplier = if rating >= 4.8 {
                     1.1
@@ -219,7 +218,9 @@ impl RiderService {
     pub async fn cancel_ride(
         &self,
         ride_id: Uuid,
-        rider_id: Uuid,
+        user_id: Uuid,
+        reason: String,
+        cancelled_by_role: &str,
     ) -> Result<RideResponse, AppError> {
         let ride = self
             .repository
@@ -227,24 +228,50 @@ impl RiderService {
             .await?
             .ok_or(AppError::NotFound("Ride not found".to_string()))?;
 
-        if ride.rider_id != rider_id {
+        // If rider, verify ownership
+        if cancelled_by_role == "rider" && ride.rider_id != user_id {
             return Err(AppError::Unauthorized(
                 "Not authorized to cancel this ride".to_string(),
             ));
         }
 
-        if ride.status != "requested" && ride.status != "accepted" {
-            return Err(AppError::BadRequest(
-                "Cannot cancel ride in current status".to_string(),
+        // If driver, verify assignment
+        if cancelled_by_role == "driver" && ride.driver_id != Some(user_id) {
+            return Err(AppError::Unauthorized(
+                "Not authorized to cancel this ride".to_string(),
             ));
+        }
+
+        use crate::model::RideStatus;
+
+        match ride.status {
+            RideStatus::Requested | RideStatus::Accepted | RideStatus::Arrived => {}
+            _ => {
+                return Err(AppError::BadRequest(
+                    "Cannot cancel ride in current status".to_string(),
+                ));
+            }
         }
 
         let updated_ride = self
             .repository
-            .update_ride_status(ride_id, "cancelled".to_string())
+            .cancel_ride(ride_id, reason, cancelled_by_role.to_string())
             .await?;
 
         Ok(updated_ride.into())
+    }
+
+    /// Convert string status to enum for check
+    fn is_active_status(status: &crate::model::RideStatus) -> bool {
+        matches!(
+            status,
+            crate::model::RideStatus::Requested
+                | crate::model::RideStatus::Accepted
+                | crate::model::RideStatus::Arrived
+                | crate::model::RideStatus::InProgress
+                | crate::model::RideStatus::PitStop
+                | crate::model::RideStatus::Stopped
+        )
     }
 
     /// Driver accepts a ride request
@@ -259,7 +286,7 @@ impl RiderService {
             .await?
             .ok_or(AppError::NotFound("Ride not found".to_string()))?;
 
-        if ride.status != "requested" {
+        if !matches!(ride.status, crate::model::RideStatus::Requested) {
             return Err(AppError::BadRequest(
                 "Can only accept rides in 'requested' status".to_string(),
             ));
@@ -280,7 +307,7 @@ impl RiderService {
 
         let updated_ride = self
             .repository
-            .assign_driver_to_ride(ride_id, driver_id)
+            .update_ride_status(ride_id, crate::model::RideStatus::Accepted)
             .await?;
 
         Ok(updated_ride.into())
@@ -288,6 +315,16 @@ impl RiderService {
 
     /// Driver cancels an accepted ride
     pub async fn driver_cancel_ride(
+        &self,
+        ride_id: Uuid,
+        driver_id: Uuid,
+        reason: String,
+    ) -> Result<RideResponse, AppError> {
+        self.cancel_ride(ride_id, driver_id, reason, "driver").await
+    }
+
+    /// Start a ride
+    pub async fn start_ride(
         &self,
         ride_id: Uuid,
         driver_id: Uuid,
@@ -299,23 +336,51 @@ impl RiderService {
             .ok_or(AppError::NotFound("Ride not found".to_string()))?;
 
         if ride.driver_id != Some(driver_id) {
-            return Err(AppError::Unauthorized(
-                "Not authorized to cancel this ride".to_string(),
-            ));
+            return Err(AppError::Unauthorized("Not authorized".to_string()));
         }
 
-        if ride.status != "accepted" {
+        if !matches!(
+            ride.status,
+            crate::model::RideStatus::Accepted | crate::model::RideStatus::Arrived
+        ) {
             return Err(AppError::BadRequest(
-                "Can only cancel rides in 'accepted' status".to_string(),
+                "Ride must be accepted or arrived to start".to_string(),
             ));
         }
 
-        let updated_ride = self
+        let updated = self
             .repository
-            .update_ride_status(ride_id, "cancelled".to_string())
+            .update_ride_status(ride_id, crate::model::RideStatus::InProgress)
             .await?;
+        Ok(updated.into())
+    }
 
-        Ok(updated_ride.into())
+    /// End a ride
+    pub async fn end_ride(&self, ride_id: Uuid, driver_id: Uuid) -> Result<RideResponse, AppError> {
+        let ride = self
+            .repository
+            .get_ride(ride_id)
+            .await?
+            .ok_or(AppError::NotFound("Ride not found".to_string()))?;
+
+        if ride.driver_id != Some(driver_id) {
+            return Err(AppError::Unauthorized("Not authorized".to_string()));
+        }
+
+        if !matches!(
+            ride.status,
+            crate::model::RideStatus::InProgress
+                | crate::model::RideStatus::Stopped
+                | crate::model::RideStatus::PitStop
+        ) {
+            return Err(AppError::BadRequest("Ride is not in progress".to_string()));
+        }
+
+        let updated = self
+            .repository
+            .update_ride_status(ride_id, crate::model::RideStatus::Completed)
+            .await?;
+        Ok(updated.into())
     }
 
     pub async fn pay_ride(
@@ -336,13 +401,16 @@ impl RiderService {
             ));
         }
 
-        if ride.status != "completed" {
+        if !matches!(ride.status, crate::model::RideStatus::Completed) {
             return Err(AppError::BadRequest(
                 "Can only pay for completed rides".to_string(),
             ));
         }
 
-        let updated_ride = self.repository.update_payment_status(ride_id).await?;
+        let updated_ride = self
+            .repository
+            .update_ride_status(ride_id, crate::model::RideStatus::Paid)
+            .await?;
         Ok(updated_ride.into())
     }
 
@@ -364,7 +432,10 @@ impl RiderService {
             ));
         }
 
-        if ride.status != "completed" && ride.status != "paid" {
+        if !matches!(
+            ride.status,
+            crate::model::RideStatus::Completed | crate::model::RideStatus::Paid
+        ) {
             return Err(AppError::BadRequest(
                 "Can only rate completed rides".to_string(),
             ));

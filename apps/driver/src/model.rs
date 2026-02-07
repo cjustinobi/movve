@@ -88,6 +88,7 @@ pub struct Driver {
     pub insurance_verified: bool,
     pub vehicle_image_verified: bool,
     pub status: DriverStatus,
+    pub vehicle_capacity: i32,
     #[schema(value_type = Option<String>)]
     pub rating: Option<BigDecimal>,
     pub total_rides: Option<i32>,
@@ -112,6 +113,7 @@ pub struct NewDriver {
     pub vehicle_plate: String,
     pub vehicle_model: String,
     pub vehicle_year: i32,
+    pub vehicle_capacity: i32,
     pub status: DriverStatus,
 }
 

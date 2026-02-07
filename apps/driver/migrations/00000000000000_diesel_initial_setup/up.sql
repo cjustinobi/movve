@@ -19,6 +19,7 @@ CREATE TABLE drivers (
     verified BOOLEAN NOT NULL DEFAULT FALSE,
     suspended BOOLEAN NOT NULL DEFAULT FALSE,
     vehicle_verification_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    vehicle_capacity INTEGER NOT NULL DEFAULT 4,
     driver_license_verified BOOLEAN NOT NULL DEFAULT FALSE,
     insurance_verified BOOLEAN NOT NULL DEFAULT FALSE,
     vehicle_image_verified BOOLEAN NOT NULL DEFAULT FALSE,

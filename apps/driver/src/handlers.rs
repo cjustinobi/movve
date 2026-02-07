@@ -56,6 +56,25 @@ pub async fn create_driver(
     Json(req): Json<NewDriver>,
 ) -> Result<ApiResponse<Driver>, AppError> {
     info!("Creating new driver: {:?}", req);
+
+    // Validate vehicle capacity
+    if req.vehicle_capacity < 2 {
+        return Err(AppError::BadRequest(
+            "Vehicle capacity must be at least 2".to_string(),
+        ));
+    }
+
+    match req.vehicle_type {
+        crate::model::VehicleType::Sedan => {
+            if req.vehicle_capacity > 5 {
+                return Err(AppError::BadRequest(
+                    "Sedan capacity cannot exceed 5".to_string(),
+                ));
+            }
+        }
+        _ => {}
+    }
+
     let response = state.driver_service.create_driver(req).await?;
     Ok(ApiResponse::success_with_message(
         "Driver created successfully",

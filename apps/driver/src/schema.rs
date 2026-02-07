@@ -57,5 +57,6 @@ diesel::table! {
         driver_license_verified -> Bool,
         insurance_verified -> Bool,
         vehicle_image_verified -> Bool,
+        vehicle_capacity -> Int4,
     }
 }
