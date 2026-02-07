@@ -35,7 +35,13 @@ pub async fn me(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
-    let user = state.auth_service.get_user_by_id(user_id).await?;
+    let mut user = state.auth_service.get_user_by_id(user_id).await?;
+
+    if matches!(user.role, crate::model::UserRole::Driver) {
+        if let Ok(Some(profile)) = state.driver_service.get_driver_by_user_id(user.id).await {
+            user.profile = Some(profile);
+        }
+    }
 
     Ok(ApiResponse::success(user))
 }
@@ -106,7 +112,17 @@ pub async fn login(
     State(state): State<AppState>,
     Json(req): Json<LoginRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
-    let response = state.auth_service.login(req).await?;
+    let mut response = state.auth_service.login(req).await?;
+
+    if matches!(response.user.role, crate::model::UserRole::Driver) {
+        if let Ok(Some(profile)) = state
+            .driver_service
+            .get_driver_by_user_id(response.user.id)
+            .await
+        {
+            response.user.profile = Some(profile);
+        }
+    }
     Ok(ApiResponse::success_with_message(
         "User logged in successfully",
         response,
@@ -366,10 +382,20 @@ pub async fn refresh_token(
     State(state): State<AppState>,
     Json(req): Json<RefreshTokenRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
-    let response = state
+    let mut response = state
         .auth_service
         .refresh_tokens(&req.refresh_token)
         .await?;
+
+    if matches!(response.user.role, crate::model::UserRole::Driver) {
+        if let Ok(Some(profile)) = state
+            .driver_service
+            .get_driver_by_user_id(response.user.id)
+            .await
+        {
+            response.user.profile = Some(profile);
+        }
+    }
     Ok(ApiResponse::success_with_message(
         "Token refreshed successfully",
         response,

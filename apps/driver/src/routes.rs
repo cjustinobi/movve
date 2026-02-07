@@ -51,6 +51,10 @@ pub fn create_routes(state: AppState) -> Router {
         )
         .route("/api/driver/drivers/{id}", get(handlers::get_driver))
         .route(
+            "/api/driver/drivers/by-user/{user_id}",
+            get(handlers::get_driver_by_user),
+        )
+        .route(
             "/api/driver/vehicle-types",
             get(handlers::get_vehicle_types),
         );

@@ -11,7 +11,7 @@ use diesel::PgConnection;
 use diesel::r2d2::{self, ConnectionManager};
 use repository::UserRepository;
 use service::AuthService;
-use services::{CloudinaryService, MailService};
+use services::{CloudinaryService, DriverServiceClient, MailService};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -20,6 +20,7 @@ pub struct AppState {
     pub auth_service: Arc<AuthService>,
     pub mail_service: Arc<MailService>,
     pub cloudinary_service: Arc<CloudinaryService>,
+    pub driver_service: Arc<DriverServiceClient>,
 }
 
 #[tokio::main]
@@ -49,11 +50,13 @@ async fn main() -> Result<(), anyhow::Error> {
     ));
 
     let cloudinary_service = Arc::new(CloudinaryService::new(&config));
+    let driver_service = Arc::new(DriverServiceClient::new(&config));
 
     let app_state = AppState {
         auth_service,
         mail_service,
         cloudinary_service,
+        driver_service,
     };
 
     // Use the routes module

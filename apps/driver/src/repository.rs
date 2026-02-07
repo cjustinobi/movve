@@ -77,6 +77,15 @@ impl DriverRepository {
             .first::<Driver>(&mut conn)
     }
 
+    pub fn find_by_user_id(&self, uid: Uuid) -> Result<Driver, Error> {
+        let mut conn = self.pool.get().expect("Failed to get DB connection");
+
+        drivers
+            .filter(user_id.eq(uid))
+            .select(Driver::as_select())
+            .first::<Driver>(&mut conn)
+    }
+
     pub async fn update_location(
         &self,
         driver_id: Uuid,

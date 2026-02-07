@@ -120,6 +120,30 @@ pub async fn get_driver(
 }
 
 #[utoipa::path(
+    get,
+    path = "/api/driver/drivers/by-user/{user_id}",
+    params(
+        ("user_id" = Uuid, Path, description = "User unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Driver retrieved successfully", body = ApiResponse<Driver>),
+        (status = 404, description = "Driver not found")
+    ),
+    tag = "Driver"
+)]
+pub async fn get_driver_by_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<Uuid>,
+) -> Result<ApiResponse<Driver>, AppError> {
+    let driver = state
+        .driver_service
+        .get_driver_by_user_id(user_id)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    Ok(ApiResponse::success(driver))
+}
+
+#[utoipa::path(
     put,
     path = "/api/driver/location",
     request_body = UpdateLocationRequest,

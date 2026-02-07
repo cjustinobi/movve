@@ -54,6 +54,7 @@ impl From<UserDb> for User {
             profile_completed: user_db.profile_completed,
             created_at: user_db.created_at,
             updated_at: user_db.updated_at,
+            profile: None,
         }
     }
 }

@@ -67,6 +67,7 @@ impl AuthService {
                     role: user.role,
                     avatar: user.avatar,
                     email_verified: user.email_verified,
+                    profile: user.profile.clone(),
                 },
             },
             code,
@@ -96,6 +97,7 @@ impl AuthService {
                 role: user.role,
                 avatar: user.avatar,
                 email_verified: user.email_verified,
+                profile: user.profile.clone(),
             },
         })
     }
@@ -207,6 +209,7 @@ impl AuthService {
                 role: user.role,
                 avatar: user.avatar,
                 email_verified: user.email_verified,
+                profile: user.profile.clone(),
             },
         })
     }

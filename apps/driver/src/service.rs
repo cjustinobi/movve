@@ -60,6 +60,10 @@ impl DriverService {
         self.repo.find_by_id(id).map_err(Into::into)
     }
 
+    pub fn get_driver_by_user_id(&self, user_id: Uuid) -> Result<Driver> {
+        self.repo.find_by_user_id(user_id).map_err(Into::into)
+    }
+
     pub async fn update_driver_location(
         &self,
         driver_id: Uuid,
