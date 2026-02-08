@@ -67,6 +67,7 @@ impl AuthService {
                     role: user.role,
                     avatar: user.avatar,
                     email_verified: user.email_verified,
+                    profile_completed: user.profile_completed,
                     profile: user.profile.clone(),
                 },
             },
@@ -97,6 +98,7 @@ impl AuthService {
                 role: user.role,
                 avatar: user.avatar,
                 email_verified: user.email_verified,
+                profile_completed: user.profile_completed,
                 profile: user.profile.clone(),
             },
         })
@@ -209,6 +211,7 @@ impl AuthService {
                 role: user.role,
                 avatar: user.avatar,
                 email_verified: user.email_verified,
+                profile_completed: user.profile_completed,
                 profile: user.profile.clone(),
             },
         })
@@ -263,11 +266,11 @@ impl AuthService {
         Ok(code)
     }
 
-    pub async fn verify_email(&self, user_id: Uuid, code: &str) -> Result<(), AppError> {
+    pub async fn verify_email(&self, email: &str, code: &str) -> Result<(), AppError> {
         // 1. Check if user is already verified
         let user = self
             .repo
-            .find_by_id(user_id)
+            .find_by_email(email)
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))?
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
@@ -279,7 +282,7 @@ impl AuthService {
         // 2. Find valid verification code
         let token = self
             .repo
-            .find_verification_code(user_id, code)
+            .find_verification_code(user.id, code)
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))?
             .ok_or_else(|| {
@@ -294,7 +297,7 @@ impl AuthService {
 
         // 4. Mark user as verified
         self.repo
-            .mark_user_as_verified(user_id)
+            .mark_user_as_verified(user.id)
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))?;
 

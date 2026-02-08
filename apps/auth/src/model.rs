@@ -146,6 +146,7 @@ pub struct UserInfo {
     pub role: UserRole,
     pub avatar: Option<String>,
     pub email_verified: bool,
+    pub profile_completed: bool,
     pub profile: Option<serde_json::Value>,
 }
 
@@ -193,6 +194,7 @@ pub struct ResendVerificationRequest {
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct VerifyEmailRequest {
     pub code: String,
+    pub email: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]

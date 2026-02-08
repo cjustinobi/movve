@@ -84,13 +84,23 @@ pub async fn register(
     Json(req): Json<RegisterRequest>,
 ) -> Result<ApiResponse<AuthResponse>, AppError> {
     let (response, code) = state.auth_service.register(req).await?;
-    // send email
-    let user_name = response.user.email.split('@').next().unwrap_or("User");
-    state
-        .mail_service
-        .send_welcome_email(&response.user.email, user_name, &code)
-        .await
-        .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    // Send welcome email asynchronously
+    let state_clone = state.clone();
+    let email = response.user.email.clone();
+    let user_name = email.split('@').next().unwrap_or("User").to_string();
+    let code_clone = code.clone();
+
+    tokio::spawn(async move {
+        if let Err(e) = state_clone
+            .mail_service
+            .send_welcome_email(&email, &user_name, &code_clone)
+            .await
+        {
+            tracing::error!("Failed to send welcome email to {}: {:?}", email, e);
+        }
+    });
+
     Ok(ApiResponse::success_with_message(
         "User registered successfully",
         response,
@@ -150,13 +160,19 @@ pub async fn verify_token(
         .auth_service
         .resend_verification_code(&claims.email)
         .await?;
-    let user_name = claims.email.split('@').next().unwrap_or("User");
+    let user_name = claims.email.split('@').next().unwrap_or("User").to_string();
+    let email = claims.email.clone();
 
-    state
-        .mail_service
-        .send_verification_code_email(&claims.email, user_name, &code)
-        .await
-        .map_err(|e| AppError::InternalError(e.to_string()))?;
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        if let Err(e) = state_clone
+            .mail_service
+            .send_verification_code_email(&email, &user_name, &code)
+            .await
+        {
+            tracing::error!("Failed to send verification email to {}: {:?}", email, e);
+        }
+    });
 
     Ok(ApiResponse::success_with_message(
         "Verification code has been sent to your email",
@@ -175,17 +191,17 @@ pub async fn verify_token(
         (status = 401, description = "Unauthorized"),
     ),
     tag = "Auth",
-    security(("bearerAuth" = []))
 )]
 pub async fn verify_email(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
     Json(req): Json<VerifyEmailRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
-    let user_id = Uuid::parse_str(&claims.sub)
-        .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
+    let user = state
+        .auth_service
+        .get_user_by_email(&req.email)
+        .await?;
 
-    state.auth_service.verify_email(user_id, &req.code).await?;
+    state.auth_service.verify_email(&user.email, &req.code).await?;
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
@@ -223,14 +239,20 @@ pub async fn resend_verification(
     );
 
     // Send verification email
-    match state
-        .mail_service
-        .send_verification_code_email(&req.email, &user_name, &code)
-        .await
-    {
-        Ok(_) => tracing::info!("Verification code sent to {}", req.email),
-        Err(e) => tracing::error!("Failed to send verification email: {:?}", e),
-    }
+    let state_clone = state.clone();
+    let email = req.email.clone();
+    let code_clone = code.clone();
+    tokio::spawn(async move {
+        if let Err(e) = state_clone
+            .mail_service
+            .send_verification_code_email(&email, &user_name, &code_clone)
+            .await
+        {
+            tracing::error!("Failed to send verification email to {}: {:?}", email, e);
+        } else {
+            tracing::info!("Verification code sent to {}", email);
+        }
+    });
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
@@ -265,17 +287,20 @@ pub async fn forgot_password(
     );
 
     // Send password reset email
-    match state
-        .mail_service
-        .send_password_reset_email(&req.email, &user_name, &token)
-        .await
-    {
-        Ok(_) => tracing::info!("Password reset email sent to {}", req.email),
-        Err(e) => {
-            tracing::error!("Failed to send password reset email: {:?}", e);
-            // TODO: queue for retry
+    let state_clone = state.clone();
+    let email = req.email.clone();
+    let token_clone = token.clone();
+    tokio::spawn(async move {
+        if let Err(e) = state_clone
+            .mail_service
+            .send_password_reset_email(&email, &user_name, &token_clone)
+            .await
+        {
+            tracing::error!("Failed to send password reset email to {}: {:?}", email, e);
+        } else {
+            tracing::info!("Password reset email sent to {}", email);
         }
-    }
+    });
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
