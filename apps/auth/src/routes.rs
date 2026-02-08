@@ -84,6 +84,7 @@ pub fn create_routes(state: AppState) -> Router {
             utoipa_swagger_ui::SwaggerUi::new("/api/auth/docs")
                 .url("/api/auth/openapi.json", docs::AuthApiDoc::openapi()),
         )
+        .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB limit
         .with_state(state)
 }
 

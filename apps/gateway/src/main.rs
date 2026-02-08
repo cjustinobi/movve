@@ -30,7 +30,9 @@ async fn main() -> Result<(), anyhow::Error> {
         .init();
 
     let config = Arc::new(AppConfig::load()?);
-    let http_client = reqwest::Client::new();
+    let http_client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(300))
+        .build()?;
 
     let app_state = AppState {
         config: config.clone(),
@@ -64,6 +66,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .merge(public_routes())
         .merge(api_routes())
         .merge(docs_routes())
+        .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB limit
         .with_state(app_state);
 
     let port = std::env::var("PORT")

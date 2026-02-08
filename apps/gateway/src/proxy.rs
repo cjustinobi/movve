@@ -48,13 +48,13 @@ async fn proxy_request(
     // Forward relevant headers
     for (key, value) in headers.iter() {
         let key_str = key.as_str();
-        if key_str != "host" && key_str != "content-length" {
+        if key_str != "host" && key_str != "content-length" && key_str != "transfer-encoding" {
             proxy_req = proxy_req.header(key, value);
         }
     }
 
     if !body_bytes.is_empty() {
-        proxy_req = proxy_req.body(body_bytes.to_vec());
+        proxy_req = proxy_req.body(body_bytes);
     }
 
     let response = proxy_req

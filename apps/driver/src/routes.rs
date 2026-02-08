@@ -107,5 +107,6 @@ pub fn create_routes(state: AppState) -> Router {
             utoipa_swagger_ui::SwaggerUi::new("/api/driver/docs")
                 .url("/api/driver/openapi.json", docs::DriverApiDoc::openapi()),
         )
+        .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB limit
         .with_state(state)
 }
