@@ -51,6 +51,7 @@ pub struct ServicesConfig {
     pub driver_service_port: u16,
     pub rider_service_port: u16,
     pub admin_service_port: u16,
+    pub redis_url: String,
 }
 
 impl AppConfig {
@@ -110,6 +111,8 @@ impl AppConfig {
                     .unwrap_or_else(|_| "8004".to_string())
                     .parse()
                     .context("Failed to parse ADMIN_SERVICE_PORT")?,
+                redis_url: std::env::var("REDIS_URL")
+                    .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
             },
             mail: MailConfig {
                 api_key: std::env::var("RESEND_API_KEY")

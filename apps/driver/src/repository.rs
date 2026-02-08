@@ -106,4 +106,14 @@ impl DriverRepository {
 
         Ok(())
     }
+
+    pub fn update_status(&self, driver_id: Uuid, new_status: DriverStatus) -> Result<(), Error> {
+        let mut conn = self.pool.get().expect("Failed to get DB connection");
+
+        diesel::update(drivers.filter(id.eq(driver_id)))
+            .set(status.eq(new_status))
+            .execute(&mut conn)?;
+
+        Ok(())
+    }
 }

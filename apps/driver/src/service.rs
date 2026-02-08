@@ -1,4 +1,4 @@
-use crate::model::{Driver, NewDriver};
+use crate::model::{Driver, DriverLocation, DriverStatus, NewDriver};
 use crate::repository::DriverRepository;
 use anyhow::Result;
 use common::{AppError, JwtConfig};
@@ -69,6 +69,7 @@ impl DriverService {
         driver_id: Uuid,
         latitude: f64,
         longitude: f64,
+        redis_conn_manager: redis::aio::ConnectionManager,
     ) -> Result<(), AppError> {
         info!(
             "Updating location for driver {}: lat={}, lon={}",
@@ -77,6 +78,68 @@ impl DriverService {
         self.repo
             .update_location(driver_id, latitude, longitude)
             .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        // Also update Redis for high-frequency access
+        let mut redis_conn = redis_conn_manager.clone();
+        let loc = DriverLocation {
+            latitude,
+            longitude,
+            updated_at: chrono::Utc::now(),
+        };
+        let loc_json =
+            serde_json::to_string(&loc).map_err(|e| AppError::InternalError(e.to_string()))?;
+        let key = format!("driver:location:{}", driver_id);
+
+        use redis::AsyncCommands;
+        let _: () = redis_conn
+            .set_ex(key, loc_json, 3600) // Cache for 1 hour
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        Ok(())
+    }
+
+    pub async fn update_driver_status(
+        &self,
+        driver_id: Uuid,
+        status: DriverStatus,
+    ) -> Result<(), AppError> {
+        info!("Updating status for driver {}: {:?}", driver_id, status);
+        self.repo
+            .update_status(driver_id, status)
             .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    pub async fn get_driver_location(
+        &self,
+        driver_id: Uuid,
+        mut redis_conn: redis::aio::ConnectionManager,
+    ) -> Result<DriverLocation, AppError> {
+        let key = format!("driver:location:{}", driver_id);
+        use redis::AsyncCommands;
+
+        // Try Redis first
+        if let Ok(Some(loc_json)) = redis_conn.get::<_, Option<String>>(&key).await {
+            if let Ok(loc) = serde_json::from_str::<DriverLocation>(&loc_json) {
+                return Ok(loc);
+            }
+        }
+
+        // Fallback to PostgreSQL
+        let driver = self
+            .repo
+            .find_by_id(driver_id)
+            .map_err(|e| AppError::NotFound(format!("Driver not found: {}", e)))?;
+
+        let lat = driver.current_latitude.clone().unwrap_or_default();
+        let lon = driver.current_longitude.clone().unwrap_or_default();
+
+        use bigdecimal::ToPrimitive;
+        Ok(DriverLocation {
+            latitude: lat.to_f64().unwrap_or_default(),
+            longitude: lon.to_f64().unwrap_or_default(),
+            updated_at: driver.updated_at.unwrap_or_else(chrono::Utc::now),
+        })
     }
 }

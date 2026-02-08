@@ -25,6 +25,7 @@ pub struct AppState {
     pub auth_service: Arc<AuthServiceClient>,
     pub cloudinary_service: Arc<CloudinaryService>,
     pub rider_service: Arc<RiderServiceClient>,
+    pub redis_conn: redis::aio::ConnectionManager,
 }
 
 #[tokio::main]
@@ -68,6 +69,10 @@ async fn main() -> Result<(), anyhow::Error> {
         config.services.rider_service_url.clone(),
     ));
 
+    // Initialize Redis connection manager
+    let redis_client = redis::Client::open(config.services.redis_url.clone())?;
+    let redis_conn = redis::aio::ConnectionManager::new(redis_client).await?;
+
     // Shared app state
     let state = AppState {
         driver_service: service,
@@ -75,6 +80,7 @@ async fn main() -> Result<(), anyhow::Error> {
         auth_service,
         cloudinary_service,
         rider_service,
+        redis_conn,
     };
 
     // Use the routes module

@@ -125,3 +125,15 @@ pub struct Claims {
     pub exp: i64,
     pub iat: i64,
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UpdateStatusRequest {
+    pub status: DriverStatus,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+pub struct DriverLocation {
+    pub latitude: f64,
+    pub longitude: f64,
+    pub updated_at: DateTime<Utc>,
+}

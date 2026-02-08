@@ -1,6 +1,6 @@
 use crate::{
     AppState,
-    model::{Driver, DriverStatus, NewDriver},
+    model::{Driver, DriverLocation, DriverStatus, NewDriver, UpdateStatusRequest},
 };
 use axum::{
     Json,
@@ -177,19 +177,85 @@ pub async fn update_location(
     Extension(claims): Extension<crate::model::Claims>,
     Json(req): Json<UpdateLocationRequest>,
 ) -> Result<ApiResponse<common::EmptyData>, AppError> {
-    let driver_id = Uuid::parse_str(&claims.sub)
+    let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
+
+    // Get driver by user_id
+    let driver = state
+        .driver_service
+        .get_driver_by_user_id(user_id)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     state
         .driver_service
-        .update_driver_location(driver_id, req.latitude, req.longitude)
-        .await
-        .map_err(|e| AppError::InternalError(e.to_string()))?;
+        .update_driver_location(
+            driver.id,
+            req.latitude,
+            req.longitude,
+            state.redis_conn.clone(),
+        )
+        .await?;
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
         "Location updated",
     ))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/driver/location/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Driver unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Recent location retrieved successfully", body = ApiResponse<crate::model::DriverLocation>),
+        (status = 404, description = "Driver location not found")
+    ),
+    tag = "Driver"
+)]
+pub async fn get_driver_location(
+    State(state): State<AppState>,
+    Path(driver_id): Path<Uuid>,
+) -> Result<ApiResponse<DriverLocation>, AppError> {
+    let location = state
+        .driver_service
+        .get_driver_location(driver_id, state.redis_conn.clone())
+        .await?;
+
+    Ok(ApiResponse::success(location))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/driver/status",
+    request_body = UpdateStatusRequest,
+    responses(
+        (status = 200, description = "Status updated", body = ApiResponse<common::EmptyData>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn update_status(
+    State(state): State<AppState>,
+    Extension(claims): Extension<crate::model::Claims>,
+    Json(req): Json<UpdateStatusRequest>,
+) -> Result<ApiResponse<common::EmptyData>, AppError> {
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
+
+    // Get driver by user_id
+    let driver = state
+        .driver_service
+        .get_driver_by_user_id(user_id)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    state
+        .driver_service
+        .update_driver_status(driver.id, req.status)
+        .await?;
+
+    Ok(ApiResponse::message_only(StatusCode::OK, "Status updated"))
 }
 
 pub async fn update_location_ws(
@@ -215,15 +281,22 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
         match msg {
             Message::Text(text) => {
                 if let Ok(req) = serde_json::from_str::<UpdateLocationRequest>(&text) {
-                    if let Err(e) = state
-                        .driver_service
-                        .update_driver_location(driver_id, req.latitude, req.longitude)
-                        .await
-                    {
-                        info!(
-                            "Failed to update location via WS for driver {}: {}",
-                            driver_id, e
-                        );
+                    if let Ok(driver) = state.driver_service.get_driver_by_user_id(driver_id) {
+                        if let Err(e) = state
+                            .driver_service
+                            .update_driver_location(
+                                driver.id,
+                                req.latitude,
+                                req.longitude,
+                                state.redis_conn.clone(),
+                            )
+                            .await
+                        {
+                            info!(
+                                "Failed to update location via WS for driver {}: {}",
+                                driver.id, e
+                            );
+                        }
                     }
                 }
             }

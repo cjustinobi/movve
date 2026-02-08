@@ -63,7 +63,12 @@ pub fn create_routes(state: AppState) -> Router {
     let protected_routes = Router::new()
         .route("/api/driver/verify", post(handlers::create_driver))
         .route("/api/driver/location", put(handlers::update_location))
+        .route(
+            "/api/driver/location/{id}",
+            get(handlers::get_driver_location),
+        )
         .route("/api/driver/location/ws", get(handlers::update_location_ws))
+        .route("/api/driver/status", put(handlers::update_status))
         .route(
             "/api/driver/upload/license",
             post(handlers::upload_driver_license),
