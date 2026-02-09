@@ -76,7 +76,7 @@ where
 pub struct Driver {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub phone: String,
+    pub phone: Option<String>,
     pub license_number: String,
     pub vehicle_type: VehicleType,
     pub vehicle_colour: String,
