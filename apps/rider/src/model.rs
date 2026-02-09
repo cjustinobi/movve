@@ -299,11 +299,15 @@ impl From<Message> for MessageResponse {
 }
 
 /// WebSocket Message structure
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum WsMessage {
     ChatMessage(MessageResponse),
-    // Add other WS message types here
+    RideStatusUpdate {
+        ride_id: Uuid,
+        status: RideStatus,
+        message: String,
+    },
 }
 
 /// Response for ride operations

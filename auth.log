@@ -1,0 +1,778 @@
+[cargo-make] INFO - cargo make 0.37.24
+[cargo-make] INFO - 
+[cargo-make] INFO - Build File: Makefile.toml
+[cargo-make] INFO - Task: dev-auth
+[cargo-make] INFO - Profile: development
+[cargo-make] INFO - Execute Command: "cargo" "watch" "-q" "-w" "apps/auth/src" "-w" "libs/common/src" "-w" "libs/utils/src" "-w" "libs/services/src" "-x" "make --disable-check-for-updates --no-on-error --loglevel=info --profile=development --allow-private --skip-init-end-tasks --makefile /Users/justin/Projects/movve_monorepo/Makefile.toml dev-auth"
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+warning: struct `RefreshToken` is never constructed
+  --> apps/auth/src/model.rs:29:12
+   |
+29 | pub struct RefreshToken {
+   |            ^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: struct `EmailVerificationToken` is never constructed
+  --> apps/auth/src/model.rs:39:12
+   |
+39 | pub struct EmailVerificationToken {
+   |            ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ResetPasswordResponse` is never constructed
+   --> apps/auth/src/model.rs:174:12
+    |
+174 | pub struct ResetPasswordResponse {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `PasswordResetRepository` is never constructed
+   --> apps/auth/src/repository.rs:522:12
+    |
+522 | pub struct PasswordResetRepository {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `create_reset_token`, `find_valid_token`, `mark_token_as_used`, and `delete_token` are never used
+   --> apps/auth/src/repository.rs:527:12
+    |
+526 | impl PasswordResetRepository {
+    | ---------------------------- associated items in this implementation
+527 |     pub fn new(pool: DbPool) -> Self {
+    |            ^^^
+...
+531 |     pub async fn create_reset_token(
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+559 |     pub async fn find_valid_token(&self, ...
+    |                  ^^^^^^^^^^^^^^^^
+...
+580 |     pub async fn mark_token_as_used(&self...
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+597 |     pub async fn delete_token(&self, rese...
+    |                  ^^^^^^^^^^^^
+
+warning: function `health_check` is never used
+  --> apps/auth/src/routes.rs:91:10
+   |
+91 | async fn health_check() -> &'static str {
+   |          ^^^^^^^^^^^^
+
+warning: `auth` (bin "auth") generated 6 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.51s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/auth`
+[2m2026-02-08T23:10:17.999930Z[0m [32m INFO[0m [2mauth[0m[2m:[0m 🔐 Auth service listening on: 127.0.0.1:8001 (localhost only)
+[2m2026-02-08T23:19:20.523570Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52382 accepted
+[2m2026-02-08T23:19:21.209796Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout waiting for idle connection: ("http", localhost:8002)
+[2m2026-02-08T23:19:21.209970Z[0m [34mDEBUG[0m [2mreqwest::connect[0m[2m:[0m starting new connection: http://localhost:8002/
+[2m2026-02-08T23:19:21.210055Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m Http::connect; scheme=Some("http"), host=Some("localhost"), port=Some(Port(8002))
+[2m2026-02-08T23:19:21.211061Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to 127.0.0.1:8002
+[2m2026-02-08T23:19:21.211588Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connected to 127.0.0.1:8002
+[2m2026-02-08T23:19:21.211865Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m http1 handshake complete, spawning background dispatcher task
+[2m2026-02-08T23:19:21.212004Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m waiting for connection to be ready
+[2m2026-02-08T23:19:21.212119Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m connection is ready
+[2m2026-02-08T23:19:21.212161Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout dropped for ("http", localhost:8002)
+[2m2026-02-08T23:19:21.246581Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m put; add idle connection for ("http", localhost:8002)
+[2m2026-02-08T23:19:21.246689Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m pooling idle connection for ("http", localhost:8002)
+[2m2026-02-08T23:19:21.246780Z[0m [35mTRACE[0m [2mreqwest::retry[0m[2m:[0m shouldn't retry!
+[2m2026-02-08T23:20:51.249296Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:20:51.250125Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval evicting expired for ("http", localhost:8002)
+[2m2026-02-08T23:22:21.252266Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:23:51.236617Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:25:21.238332Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:25:34.755092Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52508 accepted
+[2m2026-02-08T23:26:51.242606Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:28:21.245023Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:29:51.251229Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:31:21.254868Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:32:51.259100Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:34:21.261888Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:35:51.265415Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:37:21.267851Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:38:51.269955Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:40:21.251337Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:41:51.254899Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:43:21.258987Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:44:51.262572Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:46:21.264888Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:47:51.267775Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:49:21.270732Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:50:51.272387Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:52:21.280026Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:53:51.282133Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:55:21.317198Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:56:51.320029Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:58:21.322811Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:59:51.324985Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:01:21.328469Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling auth v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/auth)
+error[E0063]: missing fields `first_name`, `last_name` and `phone` in initializer of `UserInfo`
+  --> apps/auth/src/service.rs:64:23
+   |
+64 |                 user: UserInfo {
+   |                       ^^^^^^^^ missing `first_name`, `last_name` and `phone`
+
+error[E0063]: missing fields `first_name`, `last_name` and `phone` in initializer of `UserInfo`
+  --> apps/auth/src/service.rs:95:19
+   |
+95 |             user: UserInfo {
+   |                   ^^^^^^^^ missing `first_name`, `last_name` and `phone`
+
+error[E0063]: missing fields `first_name`, `last_name` and `phone` in initializer of `UserInfo`
+   --> apps/auth/src/service.rs:208:19
+    |
+208 |             user: UserInfo {
+    |                   ^^^^^^^^ missing `first_name`, `last_name` and `phone`
+
+For more information about this error, try `rustc --explain E0063`.
+error: could not compile `auth` (bin "auth") due to 3 previous errors
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on build directory
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling auth v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/auth)
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:68:29
+   |
+68 |                     avatar: user.avatar,
+   |                             ^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+68 |                     avatar: user.avatar.expect("REASON"),
+   |                                        +++++++++++++++++
+
+error[E0063]: missing fields `first_name`, `last_name` and `phone` in initializer of `UserInfo`
+  --> apps/auth/src/service.rs:64:23
+   |
+64 |                 user: UserInfo {
+   |                       ^^^^^^^^ missing `first_name`, `last_name` and `phone`
+
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:99:25
+   |
+99 |                 avatar: user.avatar,
+   |                         ^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+99 |                 avatar: user.avatar.expect("REASON"),
+   |                                    +++++++++++++++++
+
+error[E0063]: missing fields `first_name`, `last_name` and `phone` in initializer of `UserInfo`
+  --> apps/auth/src/service.rs:95:19
+   |
+95 |             user: UserInfo {
+   |                   ^^^^^^^^ missing `first_name`, `last_name` and `phone`
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:212:25
+    |
+212 |                 avatar: user.avatar,
+    |                         ^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+212 |                 avatar: user.avatar.expect("REASON"),
+    |                                    +++++++++++++++++
+
+error[E0063]: missing fields `first_name`, `last_name` and `phone` in initializer of `UserInfo`
+   --> apps/auth/src/service.rs:208:19
+    |
+208 |             user: UserInfo {
+    |                   ^^^^^^^^ missing `first_name`, `last_name` and `phone`
+
+Some errors have detailed explanations: E0063, E0308.
+For more information about an error, try `rustc --explain E0063`.
+error: could not compile `auth` (bin "auth") due to 6 previous errors
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on build directory
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling auth v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/auth)
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:67:28
+   |
+67 |                     phone: user.phone,
+   |                            ^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+67 |                     phone: user.phone.expect("REASON"),
+   |                                      +++++++++++++++++
+
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:68:33
+   |
+68 |                     first_name: user.first_name,
+   |                                 ^^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+68 |                     first_name: user.first_name.expect("REASON"),
+   |                                                +++++++++++++++++
+
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:69:32
+   |
+69 |                     last_name: user.last_name,
+   |                                ^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+69 |                     last_name: user.last_name.expect("REASON"),
+   |                                              +++++++++++++++++
+
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:71:29
+   |
+71 |                     avatar: user.avatar,
+   |                             ^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+71 |                     avatar: user.avatar.expect("REASON"),
+   |                                        +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:101:24
+    |
+101 |                 phone: user.phone,
+    |                        ^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+101 |                 phone: user.phone.expect("REASON"),
+    |                                  +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:102:29
+    |
+102 |                 first_name: user.first_name,
+    |                             ^^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+102 |                 first_name: user.first_name.expect("REASON"),
+    |                                            +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:103:28
+    |
+103 |                 last_name: user.last_name,
+    |                            ^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+103 |                 last_name: user.last_name.expect("REASON"),
+    |                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:105:25
+    |
+105 |                 avatar: user.avatar,
+    |                         ^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+105 |                 avatar: user.avatar.expect("REASON"),
+    |                                    +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:218:25
+    |
+218 |                 avatar: user.avatar,
+    |                         ^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+218 |                 avatar: user.avatar.expect("REASON"),
+    |                                    +++++++++++++++++
+
+error[E0063]: missing fields `first_name`, `last_name` and `phone` in initializer of `UserInfo`
+   --> apps/auth/src/service.rs:214:19
+    |
+214 |             user: UserInfo {
+    |                   ^^^^^^^^ missing `first_name`, `last_name` and `phone`
+
+Some errors have detailed explanations: E0063, E0308.
+For more information about an error, try `rustc --explain E0063`.
+error: could not compile `auth` (bin "auth") due to 10 previous errors
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling auth v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/auth)
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:67:28
+   |
+67 |                     phone: user.phone,
+   |                            ^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+67 |                     phone: user.phone.expect("REASON"),
+   |                                      +++++++++++++++++
+
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:68:33
+   |
+68 |                     first_name: user.first_name,
+   |                                 ^^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+68 |                     first_name: user.first_name.expect("REASON"),
+   |                                                +++++++++++++++++
+
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:69:32
+   |
+69 |                     last_name: user.last_name,
+   |                                ^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+69 |                     last_name: user.last_name.expect("REASON"),
+   |                                              +++++++++++++++++
+
+error[E0308]: mismatched types
+  --> apps/auth/src/service.rs:71:29
+   |
+71 |                     avatar: user.avatar,
+   |                             ^^^^^^^^^^^ expected `String`, found `Option<String>`
+   |
+   = note: expected struct `std::string::String`
+                found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+   |
+71 |                     avatar: user.avatar.expect("REASON"),
+   |                                        +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:101:24
+    |
+101 |                 phone: user.phone,
+    |                        ^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+101 |                 phone: user.phone.expect("REASON"),
+    |                                  +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:102:29
+    |
+102 |                 first_name: user.first_name,
+    |                             ^^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+102 |                 first_name: user.first_name.expect("REASON"),
+    |                                            +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:103:28
+    |
+103 |                 last_name: user.last_name,
+    |                            ^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+103 |                 last_name: user.last_name.expect("REASON"),
+    |                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:105:25
+    |
+105 |                 avatar: user.avatar,
+    |                         ^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+105 |                 avatar: user.avatar.expect("REASON"),
+    |                                    +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:217:24
+    |
+217 |                 phone: user.phone,
+    |                        ^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+217 |                 phone: user.phone.expect("REASON"),
+    |                                  +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:218:29
+    |
+218 |                 first_name: user.first_name,
+    |                             ^^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+218 |                 first_name: user.first_name.expect("REASON"),
+    |                                            +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:219:28
+    |
+219 |                 last_name: user.last_name,
+    |                            ^^^^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+219 |                 last_name: user.last_name.expect("REASON"),
+    |                                          +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> apps/auth/src/service.rs:221:25
+    |
+221 |                 avatar: user.avatar,
+    |                         ^^^^^^^^^^^ expected `String`, found `Option<String>`
+    |
+    = note: expected struct `std::string::String`
+                 found enum `std::option::Option<std::string::String>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<std::string::String>` value, panicking if the value is an `Option::None`
+    |
+221 |                 avatar: user.avatar.expect("REASON"),
+    |                                    +++++++++++++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `auth` (bin "auth") due to 12 previous errors
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+warning: struct `RefreshToken` is never constructed
+  --> apps/auth/src/model.rs:29:12
+   |
+29 | pub struct RefreshToken {
+   |            ^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: struct `EmailVerificationToken` is never constructed
+  --> apps/auth/src/model.rs:39:12
+   |
+39 | pub struct EmailVerificationToken {
+   |            ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ResetPasswordResponse` is never constructed
+   --> apps/auth/src/model.rs:177:12
+    |
+177 | pub struct ResetPasswordResponse {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `PasswordResetRepository` is never constructed
+   --> apps/auth/src/repository.rs:522:12
+    |
+522 | ...ct PasswordResetRepository {
+    |       ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `create_reset_token`, `find_valid_token`, `mark_token_as_used`, and `delete_token` are never used
+   --> apps/auth/src/repository.rs:527:12
+    |
+526 | impl PasswordResetRepository {
+    | ---------------------------- associated items in this implementation
+527 |     pub fn new(pool: DbPool) -> Self {
+    |            ^^^
+...
+531 |     pub async fn create_reset_token(
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+559 |     pub async fn find_valid_token(&sel...
+    |                  ^^^^^^^^^^^^^^^^
+...
+580 |     pub async fn mark_token_as_used(&s...
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+597 |     pub async fn delete_token(&self, r...
+    |                  ^^^^^^^^^^^^
+
+warning: function `health_check` is never used
+  --> apps/auth/src/routes.rs:91:10
+   |
+91 | async fn health_check() -> &'sta...
+   |          ^^^^^^^^^^^^
+
+warning: `auth` (bin "auth") generated 6 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 21.31s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/auth`
+Error: Address already in use (os error 48)
+Error while executing command, exit code: 1
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-auth
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "auth"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+warning: struct `RefreshToken` is never constructed
+  --> apps/auth/src/model.rs:29:12
+   |
+29 | pub struct RefreshToken {
+   |            ^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: struct `EmailVerificationToken` is never constructed
+  --> apps/auth/src/model.rs:39:12
+   |
+39 | pub struct EmailVerificationToken {
+   |            ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ResetPasswordResponse` is never constructed
+   --> apps/auth/src/model.rs:177:12
+    |
+177 | pub struct ResetPasswordResponse {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `PasswordResetRepository` is never constructed
+   --> apps/auth/src/repository.rs:522:12
+    |
+522 | ...ct PasswordResetRepository {
+    |       ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `create_reset_token`, `find_valid_token`, `mark_token_as_used`, and `delete_token` are never used
+   --> apps/auth/src/repository.rs:527:12
+    |
+526 | impl PasswordResetRepository {
+    | ---------------------------- associated items in this implementation
+527 |     pub fn new(pool: DbPool) -> Self {
+    |            ^^^
+...
+531 |     pub async fn create_reset_token(
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+559 |     pub async fn find_valid_token(&sel...
+    |                  ^^^^^^^^^^^^^^^^
+...
+580 |     pub async fn mark_token_as_used(&s...
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+597 |     pub async fn delete_token(&self, r...
+    |                  ^^^^^^^^^^^^
+
+warning: function `health_check` is never used
+  --> apps/auth/src/routes.rs:91:10
+   |
+91 | async fn health_check() -> &'sta...
+   |          ^^^^^^^^^^^^
+
+warning: `auth` (bin "auth") generated 6 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 22.36s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/auth`
+[2m2026-02-09T00:41:02.618249Z[0m [32m INFO[0m [2mauth[0m[2m:[0m 🔐 Auth service listening on: 127.0.0.1:8001 (localhost only)
+[2m2026-02-09T00:44:42.468400Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:53954 accepted
+[2m2026-02-09T00:44:45.251377Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout waiting for idle connection: ("http", localhost:8002)
+[2m2026-02-09T00:44:45.252023Z[0m [34mDEBUG[0m [2mreqwest::connect[0m[2m:[0m starting new connection: http://localhost:8002/
+[2m2026-02-09T00:44:45.252380Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m Http::connect; scheme=Some("http"), host=Some("localhost"), port=Some(Port(8002))
+[2m2026-02-09T00:44:45.253977Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to 127.0.0.1:8002
+[2m2026-02-09T00:44:45.254769Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connected to 127.0.0.1:8002
+[2m2026-02-09T00:44:45.255439Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m http1 handshake complete, spawning background dispatcher task
+[2m2026-02-09T00:44:45.256067Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m waiting for connection to be ready
+[2m2026-02-09T00:44:45.257199Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m connection is ready
+[2m2026-02-09T00:44:45.257847Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout dropped for ("http", localhost:8002)
+[2m2026-02-09T00:44:45.319596Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m put; add idle connection for ("http", localhost:8002)
+[2m2026-02-09T00:44:45.319751Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m pooling idle connection for ("http", localhost:8002)
+[2m2026-02-09T00:44:45.320239Z[0m [35mTRACE[0m [2mreqwest::retry[0m[2m:[0m shouldn't retry!
+[2m2026-02-09T00:46:15.331151Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:46:15.332457Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval evicting expired for ("http", localhost:8002)
+[2m2026-02-09T00:47:45.334813Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:49:15.336697Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:50:45.333668Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:52:15.335027Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:53:45.336061Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:55:15.338278Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:56:45.340809Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:58:15.344201Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:59:45.345916Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:01:15.348521Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:02:45.350471Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:04:15.353462Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:05:45.355080Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:07:15.359963Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:08:45.362688Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:10:15.364374Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:11:45.367881Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:13:15.370055Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:14:45.372193Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:16:15.374363Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:17:45.380383Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:19:15.382184Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:20:45.382774Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:22:15.384706Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:23:45.389094Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:25:15.390416Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:26:45.393546Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:28:15.395237Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:29:45.396391Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:31:15.397736Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:32:45.400453Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:34:15.405089Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:35:45.483283Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:37:15.485449Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:38:45.488244Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:40:15.491013Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:41:45.494288Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:43:15.498875Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:44:45.501143Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:46:15.503156Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:47:45.505691Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:49:15.508331Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:50:45.563354Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:52:15.566838Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T01:53:45.569566Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired

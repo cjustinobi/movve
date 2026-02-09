@@ -31,6 +31,11 @@ impl RiderServiceClient {
         self.post_proxy(token, &url, &()).await
     }
 
+    pub async fn mark_ride_arrived(&self, token: &str, ride_id: Uuid) -> Result<serde_json::Value> {
+        let url = format!("{}/api/rider/rides/{}/arrived", self.base_url, ride_id);
+        self.post_proxy(token, &url, &()).await
+    }
+
     pub async fn send_message(
         &self,
         token: &str,

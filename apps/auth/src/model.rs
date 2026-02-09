@@ -143,6 +143,9 @@ pub struct AuthResponse {
 pub struct UserInfo {
     pub id: Uuid,
     pub email: String,
+    pub phone: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     pub role: UserRole,
     pub avatar: Option<String>,
     pub email_verified: bool,

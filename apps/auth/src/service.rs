@@ -64,6 +64,9 @@ impl AuthService {
                 user: UserInfo {
                     id: user.id,
                     email: user.email,
+                    phone: user.phone,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
                     role: user.role,
                     avatar: user.avatar,
                     email_verified: user.email_verified,
@@ -95,6 +98,9 @@ impl AuthService {
             user: UserInfo {
                 id: user.id,
                 email: user.email,
+                phone: user.phone,
+                first_name: user.first_name,
+                last_name: user.last_name,
                 role: user.role,
                 avatar: user.avatar,
                 email_verified: user.email_verified,
@@ -208,6 +214,9 @@ impl AuthService {
             user: UserInfo {
                 id: user.id,
                 email: user.email,
+                phone: user.phone,
+                first_name: user.first_name,
+                last_name: user.last_name,
                 role: user.role,
                 avatar: user.avatar,
                 email_verified: user.email_verified,

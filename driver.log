@@ -1,0 +1,56 @@
+[cargo-make] INFO - cargo make 0.37.24
+[cargo-make] INFO - 
+[cargo-make] INFO - Build File: Makefile.toml
+[cargo-make] INFO - Task: dev-driver
+[cargo-make] INFO - Profile: development
+[cargo-make] INFO - Execute Command: "cargo" "watch" "-q" "-w" "apps/driver/src" "-w" "libs/common/src" "-w" "libs/utils/src" "-w" "libs/services/src" "-x" "make --disable-check-for-updates --no-on-error --loglevel=info --profile=development --allow-private --skip-init-end-tasks --makefile /Users/justin/Projects/movve_monorepo/Makefile.toml dev-driver"
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-driver
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "driver"
+    Blocking waiting for file lock on package cache
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.49s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/driver`
+[2m2026-02-08T23:18:28.716267Z[0m [32m INFO[0m [2mdriver[0m[2m:[0m 🚗 Driver service listening on 127.0.0.1:8002
+[2m2026-02-08T23:19:21.212700Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52383 accepted
+[2m2026-02-08T23:25:34.769255Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52509 accepted
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-driver
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "driver"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-driver
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "driver"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 26.32s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/driver`
+Error: Address already in use (os error 48)
+Error while executing command, exit code: 1

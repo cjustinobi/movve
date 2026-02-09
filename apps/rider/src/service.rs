@@ -406,6 +406,39 @@ impl RiderService {
         Ok(updated.into())
     }
 
+    /// Driver marks arrival at pickup location
+    pub async fn mark_ride_arrived(
+        &self,
+        ride_id: Uuid,
+        driver_id: Uuid,
+    ) -> Result<(RideResponse, Uuid), AppError> {
+        let ride = self
+            .repository
+            .get_ride(ride_id)
+            .await?
+            .ok_or(AppError::NotFound("Ride not found".to_string()))?;
+
+        // Verify driver is assigned to this ride
+        if ride.driver_id != Some(driver_id) {
+            return Err(AppError::Unauthorized("Not authorized".to_string()));
+        }
+
+        // Only allow transition from "accepted" status
+        if !matches!(ride.status, crate::model::RideStatus::Accepted) {
+            return Err(AppError::BadRequest(
+                "Can only mark arrival from 'accepted' status".to_string(),
+            ));
+        }
+
+        let updated = self
+            .repository
+            .update_ride_status(ride_id, crate::model::RideStatus::Arrived)
+            .await?;
+
+        // Return both the response and the rider_id for notification
+        Ok((updated.clone().into(), updated.rider_id))
+    }
+
     pub async fn pay_ride(
         &self,
         ride_id: Uuid,

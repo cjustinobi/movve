@@ -59,6 +59,10 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/rider/{id}/status", get(handlers::get_ride_status))
         // Ride Actions (Driver)
         .route("/api/rider/rides/{id}/accept", post(handlers::accept_ride))
+        .route(
+            "/api/rider/rides/{id}/arrived",
+            post(handlers::mark_ride_arrived),
+        )
         .route("/api/rider/rides/{id}/start", post(handlers::start_ride))
         .route("/api/rider/rides/{id}/end", post(handlers::end_ride))
         .route(

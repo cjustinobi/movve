@@ -1,0 +1,172 @@
+[cargo-make] INFO - cargo make 0.37.24
+[cargo-make] INFO - 
+[cargo-make] INFO - Build File: Makefile.toml
+[cargo-make] INFO - Task: dev-gateway
+[cargo-make] INFO - Profile: development
+[cargo-make] INFO - Execute Command: "cargo" "watch" "-q" "-w" "apps/gateway/src" "-w" "libs/common/src" "-w" "libs/utils/src" "-w" "libs/services/src" "-x" "make --disable-check-for-updates --no-on-error --loglevel=info --profile=development --allow-private --skip-init-end-tasks --makefile /Users/justin/Projects/movve_monorepo/Makefile.toml dev-gateway"
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-gateway
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "gateway"
+warning: struct `GatewayApiDoc` is never constructed
+  --> apps/gateway/src/docs.rs:19:12
+   |
+19 | pub struct GatewayApiDoc;
+   |            ^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `gateway` (bin "gateway") generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.45s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/gateway`
+[2m2026-02-08T23:10:16.206903Z[0m [32m INFO[0m [2mgateway[0m[2m:[0m 🚪 Gateway listening on 0.0.0.0:8000
+[2m2026-02-08T23:10:16.206980Z[0m [32m INFO[0m [2mgateway[0m[2m:[0m 📚 Swagger UI: http://0.0.0.0:8000/docs
+[2m2026-02-08T23:19:20.476062Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52381 accepted
+[2m2026-02-08T23:19:20.518680Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout waiting for idle connection: ("http", localhost:8001)
+[2m2026-02-08T23:19:20.518816Z[0m [34mDEBUG[0m [2mreqwest::connect[0m[2m:[0m starting new connection: http://localhost:8001/
+[2m2026-02-08T23:19:20.518906Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m Http::connect; scheme=Some("http"), host=Some("localhost"), port=Some(Port(8001))
+[2m2026-02-08T23:19:20.520005Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to 127.0.0.1:8001
+[2m2026-02-08T23:19:20.520205Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connected to 127.0.0.1:8001
+[2m2026-02-08T23:19:20.520313Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m http1 handshake complete, spawning background dispatcher task
+[2m2026-02-08T23:19:20.520360Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m waiting for connection to be ready
+[2m2026-02-08T23:19:20.520432Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m connection is ready
+[2m2026-02-08T23:19:20.520464Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout dropped for ("http", localhost:8001)
+[2m2026-02-08T23:19:21.248308Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m put; add idle connection for ("http", localhost:8001)
+[2m2026-02-08T23:19:21.248404Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m pooling idle connection for ("http", localhost:8001)
+[2m2026-02-08T23:19:21.248469Z[0m [35mTRACE[0m [2mreqwest::retry[0m[2m:[0m shouldn't retry!
+[2m2026-02-08T23:20:51.251456Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:20:51.251959Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval evicting expired for ("http", localhost:8001)
+[2m2026-02-08T23:22:21.254948Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:23:51.239735Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:25:21.242435Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:25:34.261700Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52499 accepted
+[2m2026-02-08T23:25:34.352398Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52501 accepted
+[2m2026-02-08T23:25:34.353150Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52504 accepted
+[2m2026-02-08T23:25:34.353446Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52506 accepted
+[2m2026-02-08T23:25:34.353586Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52507 accepted
+[2m2026-02-08T23:25:34.750455Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout waiting for idle connection: ("http", localhost:8001)
+[2m2026-02-08T23:25:34.750584Z[0m [34mDEBUG[0m [2mreqwest::connect[0m[2m:[0m starting new connection: http://localhost:8001/
+[2m2026-02-08T23:25:34.750675Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m Http::connect; scheme=Some("http"), host=Some("localhost"), port=Some(Port(8001))
+[2m2026-02-08T23:25:34.753971Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to 127.0.0.1:8001
+[2m2026-02-08T23:25:34.754296Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connected to 127.0.0.1:8001
+[2m2026-02-08T23:25:34.754421Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m http1 handshake complete, spawning background dispatcher task
+[2m2026-02-08T23:25:34.754484Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m waiting for connection to be ready
+[2m2026-02-08T23:25:34.754568Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m connection is ready
+[2m2026-02-08T23:25:34.754595Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout dropped for ("http", localhost:8001)
+[2m2026-02-08T23:25:34.764754Z[0m [35mTRACE[0m [2mreqwest::retry[0m[2m:[0m shouldn't retry!
+[2m2026-02-08T23:25:34.764939Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m put; add idle connection for ("http", localhost:8001)
+[2m2026-02-08T23:25:34.764967Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m pooling idle connection for ("http", localhost:8001)
+[2m2026-02-08T23:25:34.766069Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout waiting for idle connection: ("http", 127.0.0.1:8002)
+[2m2026-02-08T23:25:34.766139Z[0m [34mDEBUG[0m [2mreqwest::connect[0m[2m:[0m starting new connection: http://127.0.0.1:8002/
+[2m2026-02-08T23:25:34.766188Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m Http::connect; scheme=Some("http"), host=Some("127.0.0.1"), port=Some(Port(8002))
+[2m2026-02-08T23:25:34.766230Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to 127.0.0.1:8002
+[2m2026-02-08T23:25:34.766489Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connected to 127.0.0.1:8002
+[2m2026-02-08T23:25:34.766567Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m http1 handshake complete, spawning background dispatcher task
+[2m2026-02-08T23:25:34.766603Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m waiting for connection to be ready
+[2m2026-02-08T23:25:34.766651Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m connection is ready
+[2m2026-02-08T23:25:34.766674Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout dropped for ("http", 127.0.0.1:8002)
+[2m2026-02-08T23:25:34.779639Z[0m [35mTRACE[0m [2mreqwest::retry[0m[2m:[0m shouldn't retry!
+[2m2026-02-08T23:25:34.783997Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m put; add idle connection for ("http", 127.0.0.1:8002)
+[2m2026-02-08T23:25:34.786085Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m pooling idle connection for ("http", 127.0.0.1:8002)
+[2m2026-02-08T23:25:34.791135Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout waiting for idle connection: ("http", localhost:8003)
+[2m2026-02-08T23:25:34.791262Z[0m [34mDEBUG[0m [2mreqwest::connect[0m[2m:[0m starting new connection: http://localhost:8003/
+[2m2026-02-08T23:25:34.791372Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m Http::connect; scheme=Some("http"), host=Some("localhost"), port=Some(Port(8003))
+[2m2026-02-08T23:25:34.792270Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to 127.0.0.1:8003
+[2m2026-02-08T23:25:34.792508Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connected to 127.0.0.1:8003
+[2m2026-02-08T23:25:34.792856Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m http1 handshake complete, spawning background dispatcher task
+[2m2026-02-08T23:25:34.792916Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m waiting for connection to be ready
+[2m2026-02-08T23:25:34.792998Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::client[0m[2m:[0m connection is ready
+[2m2026-02-08T23:25:34.793050Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout dropped for ("http", localhost:8003)
+[2m2026-02-08T23:25:34.807912Z[0m [35mTRACE[0m [2mreqwest::retry[0m[2m:[0m shouldn't retry!
+[2m2026-02-08T23:25:34.808116Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m put; add idle connection for ("http", localhost:8003)
+[2m2026-02-08T23:25:34.808147Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m pooling idle connection for ("http", localhost:8003)
+[2m2026-02-08T23:25:34.809487Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout waiting for idle connection: ("http", localhost:8004)
+[2m2026-02-08T23:25:34.809547Z[0m [34mDEBUG[0m [2mreqwest::connect[0m[2m:[0m starting new connection: http://localhost:8004/
+[2m2026-02-08T23:25:34.809607Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m Http::connect; scheme=Some("http"), host=Some("localhost"), port=Some(Port(8004))
+[2m2026-02-08T23:25:34.810204Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to 127.0.0.1:8004
+[2m2026-02-08T23:25:34.810534Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connect error for 127.0.0.1:8004: ConnectError("tcp connect error", Os { code: 61, kind: ConnectionRefused, message: "Connection refused" })
+[2m2026-02-08T23:25:34.810598Z[0m [34mDEBUG[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connecting to [::1]:8004
+[2m2026-02-08T23:25:34.810778Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::connect::http[0m[2m:[0m connect error for [::1]:8004: ConnectError("tcp connect error", Os { code: 61, kind: ConnectionRefused, message: "Connection refused" })
+[2m2026-02-08T23:25:34.810846Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m checkout dropped for ("http", localhost:8004)
+[2m2026-02-08T23:25:34.810913Z[0m [35mTRACE[0m [2mreqwest::retry[0m[2m:[0m shouldn't retry!
+[2m2026-02-08T23:25:34.810947Z[0m [33m WARN[0m [2mgateway::docs[0m[2m:[0m Failed to fetch OpenAPI spec from http://localhost:8004/openapi.json: error sending request for url (http://localhost:8004/openapi.json)
+[2m2026-02-08T23:25:34.811442Z[0m [32m INFO[0m [2mgateway::docs[0m[2m:[0m Merged OpenAPI spec from Auth Service
+[2m2026-02-08T23:25:34.812258Z[0m [32m INFO[0m [2mgateway::docs[0m[2m:[0m Merged OpenAPI spec from Driver Service
+[2m2026-02-08T23:25:34.812886Z[0m [32m INFO[0m [2mgateway::docs[0m[2m:[0m Merged OpenAPI spec from Rider Service
+[2m2026-02-08T23:26:51.245192Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:28:21.247120Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:28:21.247516Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval evicting expired for ("http", localhost:8003)
+[2m2026-02-08T23:28:21.247864Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval evicting expired for ("http", localhost:8001)
+[2m2026-02-08T23:28:21.248136Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval evicting expired for ("http", 127.0.0.1:8002)
+[2m2026-02-08T23:29:51.253483Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:31:21.258404Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:32:51.261895Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:34:21.266106Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:35:51.268766Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:37:21.271587Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:38:51.273409Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:40:21.255165Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:41:51.258412Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:43:21.262407Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:44:51.266030Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:46:21.267543Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:47:51.270659Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:49:21.276042Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:50:51.279052Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:52:21.286444Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:53:51.289085Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:55:21.323016Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:56:51.326220Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:58:21.327949Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-08T23:59:51.329974Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:01:21.332617Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:02:51.350606Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:04:21.355412Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:05:51.359549Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:07:21.362799Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:08:51.365562Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:10:21.368641Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:11:51.341733Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:13:21.339555Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:14:51.342934Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:16:21.346036Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:17:51.348584Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:19:21.350874Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:20:51.353086Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:22:21.363070Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:23:51.366600Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:25:21.368684Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:26:51.371754Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:28:21.337736Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:29:51.338177Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:31:21.340311Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:32:51.343738Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:34:21.345284Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:35:51.347366Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:37:21.349337Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:38:51.350887Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[2m2026-02-09T00:40:21.353506Z[0m [35mTRACE[0m [2mhyper_util::client::legacy::pool[0m[2m:[0m idle interval checking for expired
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-gateway
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "gateway"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `GatewayApiDoc` is never constructed
+  --> apps/gateway/src/docs.rs:19:12
+   |
+19 | pub struct GatewayApiDoc;
+   |            ^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `gateway` (bin "gateway") generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 28.69s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/gateway`
+Error: Address already in use (os error 48)
+Error while executing command, exit code: 1

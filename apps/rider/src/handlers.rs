@@ -371,6 +371,46 @@ pub async fn driver_cancel_ride(
     ))
 }
 
+/// Mark Ride as Arrived (Driver)
+#[utoipa::path(
+    post,
+    path = "/api/rider/rides/{id}/arrived",
+    responses(
+        (status = 200, description = "Ride marked as arrived", body = ApiResponse<RideResponse>),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "Ride ID")
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn mark_ride_arrived(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<RideResponse>, AppError> {
+    let driver_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
+
+    let (response, rider_id) = state.rider_service.mark_ride_arrived(id, driver_id).await?;
+
+    // Send targeted notification to the rider
+    state
+        .notification_service
+        .broadcast_ride_status_to_user(
+            rider_id,
+            id,
+            crate::model::RideStatus::Arrived,
+            "Your driver has arrived at the pickup location".to_string(),
+        )
+        .await;
+
+    Ok(ApiResponse::success_with_message(
+        "Marked as arrived",
+        response,
+    ))
+}
+
 /// Send Message
 #[utoipa::path(
     post,
@@ -391,7 +431,7 @@ pub async fn send_message(
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
     let response = state
-        .chat_service
+        .notification_service
         .send_message(sender_id, claims.role, req)
         .await?;
     Ok(ApiResponse::success(response))
@@ -416,7 +456,7 @@ pub async fn get_messages(
     Path((context_type, context_id)): Path<(String, Uuid)>,
 ) -> Result<ApiResponse<Vec<MessageResponse>>, AppError> {
     let response = state
-        .chat_service
+        .notification_service
         .get_messages(context_type, context_id)
         .await?;
     Ok(ApiResponse::success(response))
@@ -426,13 +466,26 @@ pub async fn get_messages(
 pub async fn chat_ws(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
 ) -> impl axum::response::IntoResponse {
-    ws.on_upgrade(move |socket| handle_chat_socket(socket, state))
+    ws.on_upgrade(move |socket| handle_chat_socket(socket, state, claims))
 }
 
-async fn handle_chat_socket(socket: WebSocket, state: AppState) {
+async fn handle_chat_socket(mut socket: WebSocket, state: AppState, claims: Claims) {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            let _ = socket.close().await;
+            return;
+        }
+    };
+
     let (mut sender, mut _receiver) = socket.split();
-    let mut rx = state.chat_service.subscribe();
+
+    // Subscribe this specific user to receive notifications
+    let mut rx = state.notification_service.subscribe_user(user_id).await;
+
+    info!("User {} connected to WebSocket", user_id);
 
     tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
@@ -442,5 +495,9 @@ async fn handle_chat_socket(socket: WebSocket, state: AppState) {
                 }
             }
         }
+        info!("User {} disconnected from WebSocket", user_id);
     });
+
+    // Cleanup when user disconnects
+    state.notification_service.unsubscribe_user(user_id).await;
 }

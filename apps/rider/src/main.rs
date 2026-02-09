@@ -1,10 +1,10 @@
-mod chat_service;
 mod database;
 mod distance_service;
 mod docs;
 mod driver_client;
 mod handlers;
 mod model;
+mod notification_service;
 mod repository;
 mod routes;
 mod schema;
@@ -18,16 +18,16 @@ use services::MailService;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use chat_service::ChatService;
 use distance_service::DistanceService;
 use driver_client::DriverClient;
+use notification_service::NotificationService;
 use repository::RiderRepository;
 use service::RiderService;
 
 #[derive(Clone)]
 pub struct AppState {
     pub rider_service: Arc<RiderService>,
-    pub chat_service: Arc<ChatService>,
+    pub notification_service: Arc<NotificationService>,
     pub mail_service: Arc<MailService>,
 }
 
@@ -77,13 +77,13 @@ async fn main() -> Result<(), anyhow::Error> {
         config.mail.from_email.clone(),
     ));
 
-    // Initialize chat service
-    let chat_service = Arc::new(ChatService::new(repo.clone()));
+    // Initialize notification service
+    let notification_service = Arc::new(NotificationService::new(repo.clone()));
 
     // Shared app state
     let state = AppState {
         rider_service: service,
-        chat_service,
+        notification_service,
         mail_service,
     };
 

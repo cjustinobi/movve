@@ -1,0 +1,263 @@
+[cargo-make] INFO - cargo make 0.37.24
+[cargo-make] INFO - 
+[cargo-make] INFO - Build File: Makefile.toml
+[cargo-make] INFO - Task: dev-rider
+[cargo-make] INFO - Profile: development
+[cargo-make] INFO - Execute Command: "cargo" "watch" "-q" "-w" "apps/rider/src" "-w" "libs/common/src" "-w" "libs/utils/src" "-w" "libs/services/src" "-x" "make --disable-check-for-updates --no-on-error --loglevel=info --profile=development --allow-private --skip-init-end-tasks --makefile /Users/justin/Projects/movve_monorepo/Makefile.toml dev-rider"
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-rider
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "rider"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+warning: type alias `DbPool` is never used
+ --> apps/rider/src/database.rs:4:10
+  |
+4 | pub type DbPool = Pool<ConnectionMa...
+  |          ^^^^^^
+  |
+  = note: `#[warn(dead_code)]` on by default
+
+warning: associated function `is_active_status` is never used
+   --> apps/rider/src/service.rs:288:8
+    |
+ 22 | impl RiderService {
+    | ----------------- associated function in this implementation
+...
+288 |     fn is_active_status(status: &...
+    |        ^^^^^^^^^^^^^^^^
+
+warning: `rider` (bin "rider") generated 2 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.55s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/rider`
+[2m2026-02-08T23:10:17.355670Z[0m [32m INFO[0m [2mrider[0m[2m:[0m 🚗 Rider service listening on 127.0.0.1:8003
+[2m2026-02-08T23:10:17.355754Z[0m [32m INFO[0m [2mrider[0m[2m:[0m 📍 Distance calculation: Google Maps API
+[2m2026-02-08T23:25:34.794842Z[0m [35mTRACE[0m [2maxum::serve[0m[2m:[0m connection 127.0.0.1:52510 accepted
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-rider
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "rider"
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling rider v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/rider)
+error[E0609]: no field `chat_service` on type `AppState`
+   --> apps/rider/src/handlers.rs:394:10
+    |
+394 |         .chat_service
+    |          ^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+394 -         .chat_service
+394 +         .mail_service
+    |
+
+error[E0609]: no field `chat_service` on type `AppState`
+   --> apps/rider/src/handlers.rs:419:10
+    |
+419 |         .chat_service
+    |          ^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+419 -         .chat_service
+419 +         .mail_service
+    |
+
+error[E0609]: no field `chat_service` on type `AppState`
+   --> apps/rider/src/handlers.rs:435:24
+    |
+435 |     let mut rx = state.chat_service.subscribe();
+    |                        ^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+435 -     let mut rx = state.chat_service.subscribe();
+435 +     let mut rx = state.mail_service.subscribe();
+    |
+
+For more information about this error, try `rustc --explain E0609`.
+error: could not compile `rider` (bin "rider") due to 3 previous errors
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-rider
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "rider"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling rider v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/rider)
+error[E0596]: cannot borrow `socket` as mutable, as it is not declared as mutable
+   --> apps/rider/src/handlers.rs:438:21
+    |
+438 |             let _ = socket.close().await;
+    |                     ^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+434 | async fn handle_chat_socket(mut socket: WebSocket, state: AppState, claims: Claims) {
+    |                             +++
+
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-rider
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "rider"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling rider v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/rider)
+error[E0596]: cannot borrow `socket` as mutable, as it is not declared as mutable
+   --> apps/rider/src/handlers.rs:438:21
+    |
+438 |             let _ = socket.close().await;
+    |                     ^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+434 | async fn handle_chat_socket(mut socket: WebSocket, state: AppState, claims: Claims) {
+    |                             +++
+
+For more information about this error, try `rustc --explain E0596`.
+error: could not compile `rider` (bin "rider") due to 1 previous error
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-rider
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "rider"
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling rider v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/rider)
+error[E0596]: cannot borrow `socket` as mutable, as it is not declared as mutable
+   --> apps/rider/src/handlers.rs:478:21
+    |
+478 |             let _ = socket.close().await;
+    |                     ^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+474 | async fn handle_chat_socket(mut socket: WebSocket, state: AppState, claims: Claims) {
+    |                             +++
+
+For more information about this error, try `rustc --explain E0596`.
+error: could not compile `rider` (bin "rider") due to 1 previous error
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-rider
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "rider"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+   Compiling rider v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/rider)
+error[E0596]: cannot borrow `socket` as mutable, as it is not declared as mutable
+   --> apps/rider/src/handlers.rs:478:21
+    |
+478 |             let _ = socket.close().await;
+    |                     ^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+474 | async fn handle_chat_socket(mut socket: WebSocket, state: AppState, claims: Claims) {
+    |                             +++
+
+For more information about this error, try `rustc --explain E0596`.
+error: could not compile `rider` (bin "rider") due to 1 previous error
+Error while executing command, exit code: 101
+[cargo-make][1] INFO - 
+[cargo-make][1] INFO - Build File: /Users/justin/Projects/movve_monorepo/Makefile.toml
+[cargo-make][1] INFO - Task: dev-rider
+[cargo-make][1] INFO - Profile: development
+[cargo-make][1] INFO - Execute Command: "cargo" "run" "--bin" "rider"
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+warning: struct `ApiResponse` is never constructed
+  --> libs/services/src/auth.rs:13:8
+   |
+13 | struct ApiResponse<T> {
+   |        ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `services` (lib) generated 1 warning
+warning: type alias `DbPool` is never used
+ --> apps/rider/src/database.rs:4:10
+  |
+4 | pub type DbPool = Pool<ConnectionM...
+  |          ^^^^^^
+  |
+  = note: `#[warn(dead_code)]` on by default
+
+warning: associated function `is_active_status` is never used
+   --> apps/rider/src/service.rs:288:8
+    |
+ 22 | impl RiderService {
+    | ----------------- associated function in this implementation
+...
+288 |     fn is_active_status(status: ...
+    |        ^^^^^^^^^^^^^^^^
+
+warning: `rider` (bin "rider") generated 2 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 16.65s
+     Running `/Users/justin/Projects/movve_monorepo/target/debug/rider`
+Error: Address already in use (os error 48)
+Error while executing command, exit code: 1

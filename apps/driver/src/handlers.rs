@@ -458,6 +458,20 @@ pub async fn cancel_ride(
     Ok(ApiResponse::success(response))
 }
 
+pub async fn mark_ride_arrived(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let token = get_token(&headers)?;
+    let response = state
+        .rider_service
+        .mark_ride_arrived(token, id)
+        .await
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+    Ok(ApiResponse::success(response))
+}
+
 pub async fn send_message(
     State(state): State<AppState>,
     headers: HeaderMap,
