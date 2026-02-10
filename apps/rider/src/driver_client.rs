@@ -76,6 +76,7 @@ where
 pub struct Driver {
     pub id: Uuid,
     pub user_id: Uuid,
+    #[serde(default)]
     pub phone: Option<String>,
     pub license_number: String,
     pub vehicle_type: VehicleType,
@@ -84,17 +85,21 @@ pub struct Driver {
     pub vehicle_model: String,
     pub vehicle_year: i32,
     pub status: String,
+    #[serde(default)]
     pub verified: bool,
+    #[serde(default)]
     pub suspended: bool,
-    #[serde(deserialize_with = "deserialize_rating")]
+    #[serde(default, deserialize_with = "deserialize_rating")]
     pub rating: Option<f64>,
-    #[serde(deserialize_with = "deserialize_total_rides")]
+    #[serde(default, deserialize_with = "deserialize_total_rides")]
     pub total_rides: Option<i32>,
-    #[serde(deserialize_with = "deserialize_opt_f64")]
+    #[serde(default, deserialize_with = "deserialize_opt_f64")]
     pub current_latitude: Option<f64>,
-    #[serde(deserialize_with = "deserialize_opt_f64")]
+    #[serde(default, deserialize_with = "deserialize_opt_f64")]
     pub current_longitude: Option<f64>,
+    #[serde(default)]
     pub created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
     pub updated_at: Option<DateTime<Utc>>,
 }
 
