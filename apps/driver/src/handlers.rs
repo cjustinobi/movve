@@ -151,6 +151,9 @@ pub async fn get_driver_by_user(
     Ok(ApiResponse::success(driver))
 }
 
+/// Updates the driver's location
+///
+/// Updates the driver's location in the database and Redis cache.
 #[utoipa::path(
     put,
     path = "/api/driver/location",

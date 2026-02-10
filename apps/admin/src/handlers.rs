@@ -8,7 +8,7 @@ use diesel::prelude::*;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::{AppState, model::Driver, schema::drivers::dsl::*};
+use crate::{AppState, schema::drivers::dsl::*};
 
 #[derive(serde::Deserialize, utoipa::ToSchema)]
 pub struct UpdateVerificationRequest {
