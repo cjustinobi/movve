@@ -29,7 +29,7 @@ pub struct VehicleTypeInfo {
 
 #[derive(Deserialize)]
 pub struct ListDriversQuery {
-    pub available: Option<bool>,
+    pub status: Option<DriverStatus>,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -95,21 +95,10 @@ pub async fn list_drivers(
     State(state): State<AppState>,
     Query(query): Query<ListDriversQuery>,
 ) -> Result<ApiResponse<Vec<Driver>>, AppError> {
-    let mut drivers = state
+    let drivers = state
         .driver_service
-        .list_drivers()
+        .list_drivers(query.status)
         .map_err(|e| AppError::InternalError(e.to_string()))?;
-
-    // Filter by available if specified
-    if let Some(available) = query.available {
-        drivers.retain(|d| {
-            if available {
-                matches!(d.status, DriverStatus::Online)
-            } else {
-                !matches!(d.status, DriverStatus::Online)
-            }
-        });
-    }
 
     Ok(ApiResponse::success(drivers))
 }

@@ -52,8 +52,8 @@ impl DriverService {
         Ok(driver)
     }
 
-    pub fn list_drivers(&self) -> Result<Vec<Driver>> {
-        self.repo.find_all().map_err(Into::into)
+    pub fn list_drivers(&self, status: Option<DriverStatus>) -> Result<Vec<Driver>> {
+        self.repo.find_all(status).map_err(Into::into)
     }
 
     pub fn get_driver(&self, id: Uuid) -> Result<Driver> {

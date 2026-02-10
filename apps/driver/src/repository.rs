@@ -60,12 +60,16 @@ impl DriverRepository {
             .get_result::<Driver>(&mut conn)
     }
 
-    pub fn find_all(&self) -> Result<Vec<Driver>, Error> {
+    pub fn find_all(&self, status_filter: Option<DriverStatus>) -> Result<Vec<Driver>, Error> {
         let mut conn = self.pool.get().expect("Failed to get DB connection");
 
-        drivers
-            .select(Driver::as_select())
-            .load::<Driver>(&mut conn)
+        let mut query = drivers.into_boxed();
+
+        if let Some(s) = status_filter {
+            query = query.filter(status.eq(s));
+        }
+
+        query.select(Driver::as_select()).load::<Driver>(&mut conn)
     }
 
     pub fn find_by_id(&self, driver_id: Uuid) -> Result<Driver, Error> {

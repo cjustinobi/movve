@@ -178,7 +178,7 @@ impl DriverClient {
     /// Get all available drivers
     pub async fn get_available_drivers(&self) -> Result<Vec<Driver>, AppError> {
         let url = format!(
-            "{}/api/driver/drivers?available=true",
+            "{}/api/driver/drivers?status=online",
             self.driver_service_url
         );
 
