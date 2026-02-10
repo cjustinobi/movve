@@ -88,6 +88,8 @@ pub struct Driver {
     pub insurance_verified: bool,
     pub vehicle_image_verified: bool,
     pub status: DriverStatus,
+    pub verified: bool,
+    pub suspended: bool,
     pub vehicle_capacity: i32,
     #[schema(value_type = Option<String>)]
     pub rating: Option<BigDecimal>,

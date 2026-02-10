@@ -84,6 +84,8 @@ pub struct Driver {
     pub vehicle_model: String,
     pub vehicle_year: i32,
     pub status: String,
+    pub verified: bool,
+    pub suspended: bool,
     #[serde(deserialize_with = "deserialize_rating")]
     pub rating: Option<f64>,
     #[serde(deserialize_with = "deserialize_total_rides")]
@@ -201,6 +203,8 @@ impl DriverClient {
             )));
         }
 
+        // filter drivers that are verified and not suspended
+
         let response_text = response
             .text()
             .await
@@ -218,7 +222,14 @@ impl DriverClient {
                 AppError::InternalError(format!("Failed to parse drivers response: {}", e))
             })?;
 
-        Ok(drivers_response.data)
+        // Filter drivers that are verified and not suspended
+        let filtered_drivers = drivers_response
+            .data
+            .into_iter()
+            .filter(|d| d.verified && !d.suspended)
+            .collect();
+
+        Ok(filtered_drivers)
     }
 
     /// Get drivers within a certain radius of a location

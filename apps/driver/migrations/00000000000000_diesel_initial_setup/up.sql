@@ -4,7 +4,7 @@ CREATE TYPE vehicle_colour AS ENUM ('red', 'blue', 'green', 'gray', 'black', 'wh
 
 CREATE TABLE drivers (
     id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
+    user_id UUID NOT NULL UNIQUE,
     license_number VARCHAR(50) NOT NULL UNIQUE,
     driver_license_image VARCHAR(255) NOT NULL,
     insurance_number VARCHAR(50) UNIQUE,
