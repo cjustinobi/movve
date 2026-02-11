@@ -56,10 +56,6 @@ impl DriverService {
         self.repo.find_all(status).map_err(Into::into)
     }
 
-    pub fn get_driver(&self, id: Uuid) -> Result<Driver> {
-        self.repo.find_by_id(id).map_err(Into::into)
-    }
-
     pub fn get_driver_by_user_id(&self, user_id: Uuid) -> Result<Driver> {
         self.repo.find_by_user_id(user_id).map_err(Into::into)
     }

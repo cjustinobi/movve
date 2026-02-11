@@ -127,7 +127,7 @@ pub async fn get_driver(
 ) -> Result<ApiResponse<Driver>, AppError> {
     let driver = state
         .driver_service
-        .get_driver(driver_id)
+        .get_driver_by_user_id(driver_id)
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     Ok(ApiResponse::success(driver))
