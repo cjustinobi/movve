@@ -83,6 +83,8 @@ pub fn create_routes(state: AppState) -> Router {
         )
         .route("/api/driver/rides/{id}/accept", post(handlers::accept_ride))
         .route("/api/driver/rides/{id}/cancel", post(handlers::cancel_ride))
+        .route("/api/driver/rides/{id}/start", post(handlers::start_ride))
+        .route("/api/driver/rides/{id}/end", post(handlers::end_ride))
         .route(
             "/api/driver/rides/{id}/arrived",
             post(handlers::mark_ride_arrived),

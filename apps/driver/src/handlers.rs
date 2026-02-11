@@ -540,6 +540,58 @@ pub async fn mark_ride_arrived(
     Ok(ApiResponse::success(response))
 }
 
+/// Starts a ride
+#[utoipa::path(
+    post,
+    path = "/api/driver/rides/{id}/start",
+    params(
+        ("id" = Uuid, Path, description = "Ride unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Ride started", body = ApiResponse<serde_json::Value>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn start_ride(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let token = get_token(&headers)?;
+    let response = state.rider_service
+        .start_ride(token, id)
+        .await
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+    Ok(ApiResponse::success(response))
+}
+
+/// end ride
+#[utoipa::path(
+    post,
+    path = "/api/driver/rides/{id}/end",
+    params(
+        ("id" = Uuid, Path, description = "Ride unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Ride ended", body = ApiResponse<serde_json::Value>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn end_ride(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let token = get_token(&headers)?;
+    let response = state.rider_service
+        .end_ride(token, id)
+        .await
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+    Ok(ApiResponse::success(response))
+}
+
 pub async fn send_message(
     State(state): State<AppState>,
     headers: HeaderMap,

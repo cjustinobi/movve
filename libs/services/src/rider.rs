@@ -36,6 +36,18 @@ impl RiderServiceClient {
         self.post_proxy(token, &url, &()).await
     }
 
+    pub async fn start_ride(&self, token: &str, ride_id: Uuid) -> Result<serde_json::Value> {
+        let url = format!("{}/api/rider/rides/{}/start", self.base_url, ride_id);
+        self.post_proxy(token, &url, &()).await
+    }
+
+    pub async fn end_ride(&self, token: &str, ride_id: Uuid) -> Result<serde_json::Value> {
+        let url = format!("{}/api/rider/rides/{}/end", self.base_url, ride_id);
+        self.post_proxy(token, &url, &()).await
+    }
+
+
+
     pub async fn send_message(
         &self,
         token: &str,

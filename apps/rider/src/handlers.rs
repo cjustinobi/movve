@@ -152,19 +152,6 @@ pub async fn cancel_ride(
     ))
 }
 
-/// Start Ride (Driver)
-#[utoipa::path(
-    post,
-    path = "/api/rider/rides/{id}/start",
-    responses(
-        (status = 200, description = "Ride started", body = ApiResponse<RideResponse>),
-    ),
-    params(
-        ("id" = Uuid, Path, description = "Ride ID")
-    ),
-    tag = "Driver",
-    security(("bearerAuth" = []))
-)]
 pub async fn start_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -177,19 +164,6 @@ pub async fn start_ride(
     Ok(ApiResponse::success_with_message("Ride started", response))
 }
 
-/// End Ride (Driver)
-#[utoipa::path(
-    post,
-    path = "/api/rider/rides/{id}/end",
-    responses(
-        (status = 200, description = "Ride completed", body = ApiResponse<RideResponse>),
-    ),
-    params(
-        ("id" = Uuid, Path, description = "Ride ID")
-    ),
-    tag = "Driver",
-    security(("bearerAuth" = []))
-)]
 pub async fn end_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

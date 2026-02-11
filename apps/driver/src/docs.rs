@@ -14,6 +14,13 @@ use utoipa::OpenApi;
         crate::handlers::upload_driver_license,
         crate::handlers::upload_vehicle_image,
         crate::handlers::upload_vehicle_insurance,
+        crate::handlers::start_ride,
+        crate::handlers::end_ride,
+        crate::handlers::mark_ride_arrived,
+        crate::handlers::accept_ride,
+        crate::handlers::cancel_ride,
+        // crate::handlers::send_message,
+        // crate::handlers::get_messages,
     ),
     components(schemas(
         crate::model::Driver,

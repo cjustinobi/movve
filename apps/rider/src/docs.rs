@@ -14,7 +14,6 @@ use utoipa::OpenApi;
         rate_driver,
         get_driver_location,
         get_ride_status,
-        end_ride,
         send_message,
         get_messages,
     ),
