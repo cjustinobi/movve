@@ -9,12 +9,20 @@ use utoipa::OpenApi;
 use crate::model::Claims;
 use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
 use jsonwebtoken::{DecodingKey, Validation, decode};
+use tracing::info;
+use axum::http::Method;
 
 async fn jwt_auth_middleware(
     secret: String,
     mut req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
+    // Log presence of authorization header for debugging
+    match req.headers().get("authorization").and_then(|h| h.to_str().ok()) {
+        Some(hdr) => info!("Found authorization header: {}", hdr),
+        None => info!("No authorization header found on request"),
+    }
+
     let auth_header = req
         .headers()
         .get("authorization")
@@ -25,16 +33,33 @@ async fn jwt_auth_middleware(
         .strip_prefix("Bearer ")
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let token_data = decode::<Claims>(
+    // Attempt to decode and log errors for debugging
+    match decode::<Claims>(
         token,
         &DecodingKey::from_secret(secret.as_bytes()),
         &Validation::default(),
-    )
-    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    ) {
+        Ok(token_data) => {
+            info!("JWT decode successful for sub: {}", token_data.claims.sub);
+            // Add claims to request extensions
+            req.extensions_mut().insert(token_data.claims);
+            Ok(next.run(req).await)
+        }
+        Err(e) => {
+            info!("JWT decode failed: {}", e);
+            Err(StatusCode::UNAUTHORIZED)
+        }
+    }
+}
 
-    // Add claims to request extensions
-    req.extensions_mut().insert(token_data.claims);
-
+async fn request_logger(mut req: Request, next: Next) -> Result<Response, StatusCode> {
+    // Log method and URI for every incoming request
+    info!("Incoming request: {} {}", req.method(), req.uri());
+    // Optionally log authorization header existence
+    match req.headers().get("authorization").and_then(|h| h.to_str().ok()) {
+        Some(hdr) => info!("Authorization header present: {}", hdr),
+        None => info!("No Authorization header on incoming request"),
+    }
     Ok(next.run(req).await)
 }
 
@@ -114,5 +139,6 @@ pub fn create_routes(state: AppState) -> Router {
                 .url("/api/driver/openapi.json", docs::DriverApiDoc::openapi()),
         )
         .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB limit
+        .layer(middleware::from_fn(request_logger))
         .with_state(state)
 }

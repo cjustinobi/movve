@@ -108,7 +108,7 @@ impl RiderService {
                 };
 
                 DriverOption {
-                    driver_id: driver.id,
+                    driver_id: driver.user_id,
                     name: format!("Driver {}", driver.id),
                     vehicle: format!(
                         "{} {} ({})",

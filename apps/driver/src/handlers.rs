@@ -83,7 +83,7 @@ pub async fn create_driver(
 }
 
 /// Lists drivers with optional status filter
-/// 
+///
 /// Lists drivers, optionally filtering by their status (e.g., online, offline, busy).
 #[utoipa::path(
     get,
@@ -134,7 +134,7 @@ pub async fn get_driver(
 }
 
 /// Retrieves a driver by user ID
-/// 
+///
 /// Fetches the details of a specific driver using the associated user ID. This is useful for drivers to view or update their own profile information.
 #[utoipa::path(
     get,
@@ -204,7 +204,7 @@ pub async fn update_location(
 }
 
 /// Retrieves the driver's recent location
-/// 
+///
 /// Fetches the most recent location of the driver, which can be used for tracking or displaying on a map.
 #[utoipa::path(
     get,
@@ -231,7 +231,7 @@ pub async fn get_driver_location(
 }
 
 /// Updates the driver's status
-/// 
+///
 /// Allows the driver to update their current status (e.g., online, offline, busy), which can affect their availability for receiving ride requests.
 #[utoipa::path(
     put,
@@ -282,6 +282,8 @@ pub async fn update_location_ws(
     State(state): State<AppState>,
     Extension(claims): Extension<crate::model::Claims>,
 ) -> impl axum::response::IntoResponse {
+    // Log claims early to verify authentication during upgrade
+    info!("update_location_ws called. claims.sub={}", claims.sub);
     ws.on_upgrade(move |socket| handle_socket(socket, state, claims))
 }
 
@@ -299,23 +301,46 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
     while let Some(Ok(msg)) = socket.recv().await {
         match msg {
             Message::Text(text) => {
-                if let Ok(req) = serde_json::from_str::<UpdateLocationRequest>(&text) {
-                    if let Ok(driver) = state.driver_service.get_driver_by_user_id(driver_id) {
-                        if let Err(e) = state
-                            .driver_service
-                            .update_driver_location(
-                                driver.id,
-                                req.latitude,
-                                req.longitude,
-                                state.redis_conn.clone(),
-                            )
-                            .await
-                        {
-                            info!(
-                                "Failed to update location via WS for driver {}: {}",
-                                driver.id, e
-                            );
+                // Attempt to deserialize incoming text into UpdateLocationRequest
+                match serde_json::from_str::<UpdateLocationRequest>(&text) {
+                    Ok(req) => {
+                        // Lookup driver by authenticated user id
+                        match state.driver_service.get_driver_by_user_id(driver_id) {
+                            Ok(driver) => {
+                                if let Err(e) = state
+                                    .driver_service
+                                    .update_driver_location(
+                                        driver.id,
+                                        req.latitude,
+                                        req.longitude,
+                                        state.redis_conn.clone(),
+                                    )
+                                    .await
+                                {
+                                    info!(
+                                        "Failed to update location via WS for driver {}: {}",
+                                        driver.id, e
+                                    );
+                                } else {
+                                    info!(
+                                        "Updated location via WS for driver {}: {}, {}",
+                                        driver.id, req.latitude, req.longitude
+                                    );
+                                }
+                            }
+                            Err(e) => {
+                                info!(
+                                    "Driver lookup failed for user_id {} during WS message: {}",
+                                    driver_id, e
+                                );
+                            }
                         }
+                    }
+                    Err(e) => {
+                        info!(
+                            "Failed to deserialize UpdateLocationRequest from WS for driver {}: {} - raw: {}",
+                            driver_id, e, text
+                        );
                     }
                 }
             }
@@ -331,7 +356,7 @@ pub async fn health_check() -> Json<serde_json::Value> {
 }
 
 /// Uploads a driver license image
-/// 
+///
 /// Allows the driver to upload an image of their driver's license, which can be used for verification purposes. The image is processed and stored using the cloudinary service, and the URL is returned in the response.
 #[utoipa::path(
     post,
@@ -354,7 +379,7 @@ pub async fn upload_driver_license(
 }
 
 /// Uploads a vehicle image
-/// 
+///
 /// Allows the driver to upload an image of their vehicle, which can be used for verification purposes. The image is processed and stored using the cloudinary service, and the URL is returned in the response.
 #[utoipa::path(
     post,
@@ -377,7 +402,7 @@ pub async fn upload_vehicle_image(
 }
 
 /// Uploads a vehicle insurance image
-/// 
+///
 /// Allows the driver to upload an image of their vehicle insurance, which can be used for verification purposes. The image is processed and stored using the cloudinary service, and the URL is returned in the response.
 #[utoipa::path(
     post,
@@ -400,7 +425,7 @@ pub async fn upload_vehicle_insurance(
 }
 
 /// Retrieves the list of available vehicle types
-/// 
+///
 /// Fetches a list of available vehicle types that drivers can choose from when registering or updating their profile. This information can help drivers understand the different categories of vehicles and their associated details, such as
 #[utoipa::path(
     get,
@@ -487,7 +512,6 @@ pub async fn accept_ride(
     Ok(ApiResponse::success(response))
 }
 
-
 #[utoipa::path(
     post,
     path = "/api/driver/rides/{id}/cancel",
@@ -559,7 +583,8 @@ pub async fn start_ride(
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     let token = get_token(&headers)?;
-    let response = state.rider_service
+    let response = state
+        .rider_service
         .start_ride(token, id)
         .await
         .map_err(|e| AppError::InternalError(e.to_string()))?;
@@ -585,7 +610,8 @@ pub async fn end_ride(
     Path(id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     let token = get_token(&headers)?;
-    let response = state.rider_service
+    let response = state
+        .rider_service
         .end_ride(token, id)
         .await
         .map_err(|e| AppError::InternalError(e.to_string()))?;
