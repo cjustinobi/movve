@@ -10,6 +10,7 @@ use utoipa::OpenApi;
         crate::handlers::get_driver_location,
         crate::handlers::get_vehicle_types,
         crate::handlers::update_location,
+        crate::handlers::update_location_ws,
         crate::handlers::update_status,
         crate::handlers::upload_driver_license,
         crate::handlers::upload_vehicle_image,
