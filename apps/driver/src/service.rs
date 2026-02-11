@@ -125,7 +125,7 @@ impl DriverService {
         // Fallback to PostgreSQL
         let driver = self
             .repo
-            .find_by_id(driver_id)
+            .find_by_user_id(driver_id)
             .map_err(|e| AppError::NotFound(format!("Driver not found: {}", e)))?;
 
         let lat = driver.current_latitude.clone().unwrap_or_default();

@@ -72,15 +72,6 @@ impl DriverRepository {
         query.select(Driver::as_select()).load::<Driver>(&mut conn)
     }
 
-    pub fn find_by_id(&self, driver_id: Uuid) -> Result<Driver, Error> {
-        let mut conn = self.pool.get().expect("Failed to get DB connection");
-
-        drivers
-            .filter(id.eq(driver_id))
-            .select(Driver::as_select())
-            .first::<Driver>(&mut conn)
-    }
-
     pub fn find_by_user_id(&self, uid: Uuid) -> Result<Driver, Error> {
         let mut conn = self.pool.get().expect("Failed to get DB connection");
 
