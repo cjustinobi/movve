@@ -109,7 +109,7 @@ impl RiderService {
 
                 DriverOption {
                     driver_id: driver.user_id,
-                    name: format!("Driver {}", driver.id),
+                    name: format!("Driver {}", driver.user_id),
                     vehicle: format!(
                         "{} {} ({})",
                         driver.vehicle_model, driver.vehicle_year, driver.vehicle_colour
