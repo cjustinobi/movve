@@ -313,19 +313,6 @@ pub async fn get_ride_status(
     })))
 }
 
-/// Accept Ride (Driver)
-#[utoipa::path(
-    post,
-    path = "/api/rider/rides/{id}/accept",
-    responses(
-        (status = 200, description = "Ride accepted", body = ApiResponse<RideResponse>),
-    ),
-    params(
-        ("id" = Uuid, Path, description = "Ride ID")
-    ),
-    tag = "Driver",
-    security(("bearerAuth" = []))
-)]
 pub async fn accept_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -338,20 +325,6 @@ pub async fn accept_ride(
     Ok(ApiResponse::success_with_message("Ride accepted", response))
 }
 
-/// Cancel Ride (Driver)
-#[utoipa::path(
-    post,
-    path = "/api/rider/rides/{id}/driver-cancel",
-    request_body = CancelRideRequest,
-    responses(
-        (status = 200, description = "Ride cancelled by driver", body = ApiResponse<RideResponse>),
-    ),
-    params(
-        ("id" = Uuid, Path, description = "Ride ID")
-    ),
-    tag = "Driver",
-    security(("bearerAuth" = []))
-)]
 pub async fn driver_cancel_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -371,19 +344,6 @@ pub async fn driver_cancel_ride(
     ))
 }
 
-/// Mark Ride as Arrived (Driver)
-#[utoipa::path(
-    post,
-    path = "/api/rider/rides/{id}/arrived",
-    responses(
-        (status = 200, description = "Ride marked as arrived", body = ApiResponse<RideResponse>),
-    ),
-    params(
-        ("id" = Uuid, Path, description = "Ride ID")
-    ),
-    tag = "Driver",
-    security(("bearerAuth" = []))
-)]
 pub async fn mark_ride_arrived(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

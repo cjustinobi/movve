@@ -82,6 +82,9 @@ pub async fn create_driver(
     ))
 }
 
+/// Lists drivers with optional status filter
+/// 
+/// Lists drivers, optionally filtering by their status (e.g., online, offline, busy).
 #[utoipa::path(
     get,
     path = "/api/driver/drivers",
@@ -103,6 +106,9 @@ pub async fn list_drivers(
     Ok(ApiResponse::success(drivers))
 }
 
+/// Retrieves a driver by ID
+///
+/// Fetches the details of a specific driver using their unique identifier.
 #[utoipa::path(
     get,
     path = "/api/driver/drivers/{id}",
@@ -127,6 +133,9 @@ pub async fn get_driver(
     Ok(ApiResponse::success(driver))
 }
 
+/// Retrieves a driver by user ID
+/// 
+/// Fetches the details of a specific driver using the associated user ID. This is useful for drivers to view or update their own profile information.
 #[utoipa::path(
     get,
     path = "/api/driver/drivers/by-user/{user_id}",
@@ -194,6 +203,9 @@ pub async fn update_location(
     ))
 }
 
+/// Retrieves the driver's recent location
+/// 
+/// Fetches the most recent location of the driver, which can be used for tracking or displaying on a map.
 #[utoipa::path(
     get,
     path = "/api/driver/location/{id}",
@@ -218,6 +230,9 @@ pub async fn get_driver_location(
     Ok(ApiResponse::success(location))
 }
 
+/// Updates the driver's status
+/// 
+/// Allows the driver to update their current status (e.g., online, offline, busy), which can affect their availability for receiving ride requests.
 #[utoipa::path(
     put,
     path = "/api/driver/status",
@@ -250,6 +265,18 @@ pub async fn update_status(
     Ok(ApiResponse::message_only(StatusCode::OK, "Status updated"))
 }
 
+/// Updates the driver's location via WebSocket
+///
+/// Allows the driver to send real-time location updates through a WebSocket connection, which can be used for
+#[utoipa::path(
+    get,
+    path = "/api/driver/location/ws",
+    responses(
+        (status = 101, description = "WebSocket connection established"),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
 pub async fn update_location_ws(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
@@ -303,6 +330,9 @@ pub async fn health_check() -> Json<serde_json::Value> {
     Json(json!({"status": "Driver service is healthy"}))
 }
 
+/// Uploads a driver license image
+/// 
+/// Allows the driver to upload an image of their driver's license, which can be used for verification purposes. The image is processed and stored using the cloudinary service, and the URL is returned in the response.
 #[utoipa::path(
     post,
     path = "/api/driver/upload/license",
@@ -323,6 +353,9 @@ pub async fn upload_driver_license(
     ))
 }
 
+/// Uploads a vehicle image
+/// 
+/// Allows the driver to upload an image of their vehicle, which can be used for verification purposes. The image is processed and stored using the cloudinary service, and the URL is returned in the response.
 #[utoipa::path(
     post,
     path = "/api/driver/upload/vehicle-image",
@@ -343,6 +376,9 @@ pub async fn upload_vehicle_image(
     ))
 }
 
+/// Uploads a vehicle insurance image
+/// 
+/// Allows the driver to upload an image of their vehicle insurance, which can be used for verification purposes. The image is processed and stored using the cloudinary service, and the URL is returned in the response.
 #[utoipa::path(
     post,
     path = "/api/driver/upload/insurance",
@@ -363,6 +399,9 @@ pub async fn upload_vehicle_insurance(
     ))
 }
 
+/// Retrieves the list of available vehicle types
+/// 
+/// Fetches a list of available vehicle types that drivers can choose from when registering or updating their profile. This information can help drivers understand the different categories of vehicles and their associated details, such as
 #[utoipa::path(
     get,
     path = "/api/driver/vehicle-types",
@@ -422,6 +461,18 @@ async fn process_upload(state: AppState, mut multipart: Multipart) -> Result<Str
 
 // --- Proxy Handlers to Rider Service ---
 
+#[utoipa::path(
+    put,
+    path = "/api/driver/rides/{id}/accept",
+    params(
+        ("id" = Uuid, Path, description = "Ride unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Ride accepted", body = ApiResponse<serde_json::Value>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+    )]
 pub async fn accept_ride(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -436,6 +487,19 @@ pub async fn accept_ride(
     Ok(ApiResponse::success(response))
 }
 
+
+#[utoipa::path(
+    post,
+    path = "/api/driver/rides/{id}/cancel",
+    params(
+        ("id" = Uuid, Path, description = "Ride unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Ride cancelled", body = ApiResponse<serde_json::Value>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
 pub async fn cancel_ride(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -450,6 +514,18 @@ pub async fn cancel_ride(
     Ok(ApiResponse::success(response))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/driver/rides/{id}/arrived",
+    params(
+        ("id" = Uuid, Path, description = "Ride unique identifier")
+    ),
+    responses(
+        (status = 200, description = "Ride marked as arrived", body = ApiResponse<serde_json::Value>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
 pub async fn mark_ride_arrived(
     State(state): State<AppState>,
     headers: HeaderMap,
