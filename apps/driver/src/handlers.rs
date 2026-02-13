@@ -32,10 +32,12 @@ pub struct ListDriversQuery {
     pub status: Option<DriverStatus>,
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct UpdateLocationRequest {
     pub latitude: f64,
     pub longitude: f64,
+    #[serde(default)]
+    pub is_heartbeat: bool,
 }
 
 /// Creates a new driver
@@ -307,7 +309,10 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
                         // Lookup driver by authenticated user id
                         match state.driver_service.get_driver_by_user_id(driver_id) {
                             Ok(driver) => {
-                                if let Err(e) = state
+                                // Skip database update for heartbeat messages
+                                if req.is_heartbeat {
+                                    info!("Heartbeat received for driver {}", driver.id);
+                                } else if let Err(e) = state
                                     .driver_service
                                     .update_driver_location(
                                         driver.id,
