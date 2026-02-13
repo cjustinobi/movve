@@ -120,7 +120,7 @@ pub async fn proxy_ws(
     ws.on_upgrade(move |socket| handle_ws_socket(socket, target_url, headers))
 }
 
-async fn handle_ws_socket(mut client_socket: WebSocket, target_url: String, headers: HeaderMap) {
+async fn handle_ws_socket(client_socket: WebSocket, target_url: String, headers: HeaderMap) {
     let mut request = target_url.clone().into_client_request().unwrap();
 
     // Forward headers
@@ -136,7 +136,7 @@ async fn handle_ws_socket(mut client_socket: WebSocket, target_url: String, head
     }
 
     match tokio_tungstenite::connect_async(request).await {
-        Ok((mut backend_socket, _)) => {
+        Ok((backend_socket, _)) => {
             tracing::info!("Connected to backend WebSocket: {}", target_url);
 
             let (mut client_sender, mut client_receiver) = client_socket.split();
