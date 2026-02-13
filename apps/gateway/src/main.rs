@@ -5,7 +5,7 @@ use axum::{
     Router,
     routing::{any, get},
 };
-use common::{AppConfig};
+use common::AppConfig;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa_swagger_ui::{Config, SwaggerUi};
@@ -55,6 +55,10 @@ async fn main() -> Result<(), anyhow::Error> {
     /// API service routes - proxy to microservices and let them handle their own security
     pub fn api_routes() -> Router<AppState> {
         Router::new()
+            // WebSocket routes - MUST be specific to use the WS proxy handler
+            .route("/api/driver/location/ws", any(proxy::proxy_ws))
+            .route("/api/driver/chat/ws", any(proxy::proxy_ws))
+            // Standard API routes
             .route("/api/auth/{*path}", any(proxy::proxy_by_prefix))
             .route("/api/driver/{*path}", any(proxy::proxy_by_prefix))
             .route("/api/rider/{*path}", any(proxy::proxy_by_prefix))

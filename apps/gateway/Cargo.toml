@@ -15,5 +15,7 @@ tracing-subscriber = { workspace = true }
 dotenvy = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
+tokio-tungstenite = { version = "0.24.0", features = ["native-tls"] }
+futures-util = "0.3"
 
 common = { path = "../../libs/common" }
