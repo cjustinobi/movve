@@ -300,57 +300,88 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
 
     info!("Driver {} connected via WebSocket", driver_id);
 
-    while let Some(Ok(msg)) = socket.recv().await {
-        match msg {
-            Message::Text(text) => {
-                // Attempt to deserialize incoming text into UpdateLocationRequest
-                match serde_json::from_str::<UpdateLocationRequest>(&text) {
-                    Ok(req) => {
-                        // Lookup driver by authenticated user id
-                        match state.driver_service.get_driver_by_user_id(driver_id) {
-                            Ok(driver) => {
-                                // Skip database update for heartbeat messages
-                                if req.is_heartbeat {
-                                    info!("Heartbeat received for driver {}", driver.id);
-                                } else if let Err(e) = state
-                                    .driver_service
-                                    .update_driver_location(
-                                        driver.id,
-                                        req.latitude,
-                                        req.longitude,
-                                        state.redis_conn.clone(),
-                                    )
-                                    .await
-                                {
-                                    info!(
-                                        "Failed to update location via WS for driver {}: {}",
-                                        driver.id, e
-                                    );
-                                } else {
-                                    info!(
-                                        "Updated location via WS for driver {}: {}, {}",
-                                        driver.id, req.latitude, req.longitude
-                                    );
+    // Send a ping to keep connection alive and verify it's working
+    if let Err(e) = socket.send(Message::Ping(vec![].into())).await {
+        info!("Failed to send initial ping to driver {}: {}", driver_id, e);
+        return;
+    }
+
+    loop {
+        match socket.recv().await {
+            Some(Ok(msg)) => {
+                match msg {
+                    Message::Text(text) => {
+                        // Attempt to deserialize incoming text into UpdateLocationRequest
+                        match serde_json::from_str::<UpdateLocationRequest>(&text) {
+                            Ok(req) => {
+                                // Lookup driver by authenticated user id
+                                match state.driver_service.get_driver_by_user_id(driver_id) {
+                                    Ok(driver) => {
+                                        // Skip database update for heartbeat messages
+                                        if req.is_heartbeat {
+                                            info!("Heartbeat received for driver {}", driver.id);
+                                        } else if let Err(e) = state
+                                            .driver_service
+                                            .update_driver_location(
+                                                driver.id,
+                                                req.latitude,
+                                                req.longitude,
+                                                state.redis_conn.clone(),
+                                            )
+                                            .await
+                                        {
+                                            info!(
+                                                "Failed to update location via WS for driver {}: {}",
+                                                driver.id, e
+                                            );
+                                        } else {
+                                            info!(
+                                                "Updated location via WS for driver {}: {}, {}",
+                                                driver.id, req.latitude, req.longitude
+                                            );
+                                        }
+                                    }
+                                    Err(e) => {
+                                        info!(
+                                            "Driver lookup failed for user_id {} during WS message: {}",
+                                            driver_id, e
+                                        );
+                                    }
                                 }
                             }
                             Err(e) => {
                                 info!(
-                                    "Driver lookup failed for user_id {} during WS message: {}",
-                                    driver_id, e
+                                    "Failed to deserialize UpdateLocationRequest from WS for driver {}: {} - raw: {}",
+                                    driver_id, e, text
                                 );
                             }
                         }
                     }
-                    Err(e) => {
-                        info!(
-                            "Failed to deserialize UpdateLocationRequest from WS for driver {}: {} - raw: {}",
-                            driver_id, e, text
-                        );
+                    Message::Ping(data) => {
+                        info!("Ping received from driver {}, sending pong", driver_id);
+                        if let Err(e) = socket.send(Message::Pong(data)).await {
+                            info!("Failed to send pong to driver {}: {}", driver_id, e);
+                            break;
+                        }
                     }
+                    Message::Pong(_) => {
+                        info!("Pong received from driver {}", driver_id);
+                    }
+                    Message::Close(_) => {
+                        info!("Close message received from driver {}", driver_id);
+                        break;
+                    }
+                    _ => {}
                 }
             }
-            Message::Close(_) => break,
-            _ => {}
+            Some(Err(e)) => {
+                info!("WebSocket error for driver {}: {}", driver_id, e);
+                break;
+            }
+            None => {
+                info!("WebSocket stream ended for driver {}", driver_id);
+                break;
+            }
         }
     }
     info!("Driver {} disconnected from WebSocket:", driver_id);
