@@ -85,6 +85,7 @@ async fn proxy_request(
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use futures_util::{SinkExt, StreamExt};
+use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 
 pub async fn proxy_ws(
     State(state): State<AppState>,
@@ -113,11 +114,28 @@ pub async fn proxy_ws(
 
     tracing::info!("Proxying WebSocket to: {}", target_url);
 
-    ws.on_upgrade(move |socket| handle_ws_socket(socket, target_url))
+    // Extract headers to forward
+    let headers = req.headers().clone();
+
+    ws.on_upgrade(move |socket| handle_ws_socket(socket, target_url, headers))
 }
 
-async fn handle_ws_socket(mut client_socket: WebSocket, target_url: String) {
-    match tokio_tungstenite::connect_async(&target_url).await {
+async fn handle_ws_socket(mut client_socket: WebSocket, target_url: String, headers: HeaderMap) {
+    let mut request = target_url.clone().into_client_request().unwrap();
+
+    // Forward headers
+    for (key, value) in headers.iter() {
+        if key != "host"
+            && key != "upgrade"
+            && key != "connection"
+            && key != "sec-websocket-key"
+            && key != "sec-websocket-version"
+        {
+            request.headers_mut().insert(key.clone(), value.clone());
+        }
+    }
+
+    match tokio_tungstenite::connect_async(request).await {
         Ok((mut backend_socket, _)) => {
             tracing::info!("Connected to backend WebSocket: {}", target_url);
 
