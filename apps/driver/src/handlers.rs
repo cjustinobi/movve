@@ -353,7 +353,7 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
             _ => {}
         }
     }
-    info!("Driver {} disconnected from WebSocket", driver_id);
+    info!("Driver {} disconnected from WebSocket:", driver_id);
 }
 
 pub async fn health_check() -> Json<serde_json::Value> {
