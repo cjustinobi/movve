@@ -82,6 +82,28 @@ impl RiderRepository {
         .map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
+    /// Get all rides for a specific driver
+    pub async fn get_rides_by_driver(&self, driver_id_val: Uuid) -> Result<Vec<Ride>, AppError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool
+                .get()
+                .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
+
+            let result = rides::table
+                .filter(rides::driver_id.eq(driver_id_val))
+                .order(rides::created_at.desc())
+                .select(Ride::as_select())
+                .load(&mut conn)
+                .map_err(|e| AppError::BadRequest(format!("Failed to fetch rides: {}", e)))?;
+
+            Ok(result)
+        })
+        .await
+        .map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
+
     /// Update ride status
     pub async fn update_ride_status(
         &self,

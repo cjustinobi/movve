@@ -46,8 +46,6 @@ impl RiderServiceClient {
         self.post_proxy(token, &url, &()).await
     }
 
-
-
     pub async fn send_message(
         &self,
         token: &str,
@@ -110,5 +108,32 @@ impl RiderServiceClient {
 
     pub fn get_ws_url(&self) -> String {
         self.base_url.replace("http", "ws") + "/api/rider/chat/ws"
+    }
+
+    pub async fn get_driver_rides(
+        &self,
+        token: &str,
+        driver_id: Uuid,
+    ) -> Result<Vec<serde_json::Value>> {
+        let url = format!("{}/api/rider/driver/rides/{}", self.base_url, driver_id);
+        let response = self
+            .client
+            .get(&url)
+            .header("Authorization", format!("Bearer {}", token))
+            .send()
+            .await?;
+
+        let status = response.status();
+        if status.is_success() {
+            let api_response: common::ApiResponse<Vec<serde_json::Value>> = response.json().await?;
+            Ok(api_response.data)
+        } else {
+            let error_text = response.text().await?;
+            error!(
+                "Failed to get driver rides: status={}, body={}",
+                status, error_text
+            );
+            Err(anyhow!("Failed to get driver rides: {}", status))
+        }
     }
 }

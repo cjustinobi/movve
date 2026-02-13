@@ -162,6 +162,46 @@ pub async fn get_driver_by_user(
     Ok(ApiResponse::success(driver))
 }
 
+/// Retrieves the driver's ride history
+///
+/// Fetches the list of rides associated with the authenticated driver.
+#[utoipa::path(
+    get,
+    path = "/api/driver/rides",
+    responses(
+        (status = 200, description = "Ride history", body = ApiResponse<Vec<crate::model::RideResponse>>),
+    ),
+    tag = "Driver",
+    security(("bearerAuth" = []))
+)]
+pub async fn get_rides(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Extension(claims): Extension<crate::model::Claims>,
+) -> Result<ApiResponse<Vec<crate::model::RideResponse>>, AppError> {
+    let token = get_token(&headers)?;
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
+
+    // Get driver by user_id
+    let driver = state
+        .driver_service
+        .get_driver_by_user_id(user_id)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+    let rides_json = state
+        .driver_service
+        .get_driver_history(token, driver.id)
+        .await?;
+
+    // Convert serde_json::Value to RideResponse
+    let rides: Vec<crate::model::RideResponse> =
+        serde_json::from_value(serde_json::Value::Array(rides_json))
+            .map_err(|e| AppError::InternalError(format!("Failed to parse ride history: {}", e)))?;
+
+    Ok(ApiResponse::success(rides))
+}
+
 /// Updates the driver's location
 ///
 /// Updates the driver's location in the database and Redis cache.

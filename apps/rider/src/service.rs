@@ -238,6 +238,11 @@ impl RiderService {
         Ok(rides.into_iter().map(|r| r.into()).collect())
     }
 
+    pub async fn get_driver_history(&self, driver_id: Uuid) -> Result<Vec<RideResponse>, AppError> {
+        let rides = self.repository.get_rides_by_driver(driver_id).await?;
+        Ok(rides.into_iter().map(|r| r.into()).collect())
+    }
+
     pub async fn cancel_ride(
         &self,
         ride_id: Uuid,

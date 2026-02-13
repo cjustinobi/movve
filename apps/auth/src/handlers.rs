@@ -196,12 +196,12 @@ pub async fn verify_email(
     State(state): State<AppState>,
     Json(req): Json<VerifyEmailRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
-    let user = state
-        .auth_service
-        .get_user_by_email(&req.email)
-        .await?;
+    let user = state.auth_service.get_user_by_email(&req.email).await?;
 
-    state.auth_service.verify_email(&user.email, &req.code).await?;
+    state
+        .auth_service
+        .verify_email(&user.email, &req.code)
+        .await?;
 
     Ok(ApiResponse::message_only(
         StatusCode::OK,
@@ -485,9 +485,9 @@ pub async fn upload_avatar(
                 last_name: None,
                 phone: None,
                 gender: None,
+                dob: None,
                 nok_name: None,
                 nok_phone: None,
-                dob: None,
                 avatar: Some(url.clone()),
             },
         )

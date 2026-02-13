@@ -119,6 +119,27 @@ pub async fn get_rides(
     Ok(ApiResponse::success(response))
 }
 
+/// Get Driver Ride History
+#[utoipa::path(
+    get,
+    path = "/api/rider/driver/rides/{driver_id}",
+    responses(
+        (status = 200, description = "Driver ride history", body = ApiResponse<Vec<RideResponse>>),
+    ),
+    params(
+        ("driver_id" = Uuid, Path, description = "Driver ID")
+    ),
+    tag = "Rider",
+    security(("bearerAuth" = []))
+)]
+pub async fn get_driver_rides(
+    State(state): State<AppState>,
+    Path(driver_id): Path<Uuid>,
+) -> Result<ApiResponse<Vec<RideResponse>>, AppError> {
+    let response = state.rider_service.get_driver_history(driver_id).await?;
+    Ok(ApiResponse::success(response))
+}
+
 /// Cancel Ride
 #[utoipa::path(
     post,

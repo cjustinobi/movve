@@ -12,6 +12,7 @@ pub struct DriverService {
     repo: DriverRepository,
     pub jwt_config: JwtConfig,
     auth_client: Arc<AuthServiceClient>,
+    rider_client: Arc<services::RiderServiceClient>,
 }
 
 impl DriverService {
@@ -19,11 +20,13 @@ impl DriverService {
         repo: DriverRepository,
         jwt_config: JwtConfig,
         auth_client: Arc<AuthServiceClient>,
+        rider_client: Arc<services::RiderServiceClient>,
     ) -> Self {
         Self {
             repo,
             jwt_config,
             auth_client,
+            rider_client,
         }
     }
 
@@ -137,5 +140,16 @@ impl DriverService {
             longitude: lon.to_f64().unwrap_or_default(),
             updated_at: driver.updated_at.unwrap_or_else(chrono::Utc::now),
         })
+    }
+
+    pub async fn get_driver_history(
+        &self,
+        token: &str,
+        driver_id: Uuid,
+    ) -> Result<Vec<serde_json::Value>, AppError> {
+        self.rider_client
+            .get_driver_rides(token, driver_id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
     }
 }

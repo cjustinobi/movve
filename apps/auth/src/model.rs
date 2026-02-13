@@ -18,12 +18,18 @@ pub struct User {
     pub password_hash: String,
     pub role: UserRole,
     pub avatar: Option<String>,
+    pub gender: Option<Gender>,
+    pub dob: Option<NaiveDate>,
+    pub nok_name: Option<String>,
+    pub nok_phone: Option<String>,
     pub email_verified: bool,
     pub profile_completed: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub profile: Option<serde_json::Value>,
 }
+
+use chrono::NaiveDate;
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct RefreshToken {
@@ -148,6 +154,10 @@ pub struct UserInfo {
     pub last_name: Option<String>,
     pub role: UserRole,
     pub avatar: Option<String>,
+    pub gender: Option<Gender>,
+    pub dob: Option<NaiveDate>,
+    pub nok_name: Option<String>,
+    pub nok_phone: Option<String>,
     pub email_verified: bool,
     pub profile_completed: bool,
     pub profile: Option<serde_json::Value>,

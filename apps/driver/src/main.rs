@@ -47,15 +47,22 @@ async fn main() -> Result<(), anyhow::Error> {
         .build(manager)
         .expect("Failed to create DB pool");
 
+    // Initialize Rider Service Client
+
     // Initialize repository and service layer
     let auth_service = Arc::new(AuthServiceClient::new(
         config.services.auth_service_url.clone(),
+    ));
+
+    let rider_service = Arc::new(RiderServiceClient::new(
+        config.services.rider_service_url.clone(),
     ));
     let repo = DriverRepository::new(pool);
     let service = Arc::new(DriverService::new(
         repo,
         config.jwt.clone(),
         auth_service.clone(),
+        rider_service.clone(),
     ));
 
     let mail_service = Arc::new(MailService::new(
@@ -64,10 +71,6 @@ async fn main() -> Result<(), anyhow::Error> {
     ));
 
     let cloudinary_service = Arc::new(CloudinaryService::new(&config));
-
-    let rider_service = Arc::new(RiderServiceClient::new(
-        config.services.rider_service_url.clone(),
-    ));
 
     // Initialize Redis connection manager
     let redis_client = redis::Client::open(config.services.redis_url.clone())?;

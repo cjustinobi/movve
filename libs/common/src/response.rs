@@ -1,13 +1,13 @@
 use axum::{
-    response::{IntoResponse, Response},
     Json,
     http::StatusCode,
+    response::{IntoResponse, Response},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Serialize, ToSchema)]
-pub struct ApiResponse<T: Serialize> {
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ApiResponse<T> {
     pub status_code: u16,
     pub message: String,
     pub data: T,
@@ -37,9 +37,9 @@ impl<T: Serialize> ApiResponse<T> {
 
 impl<T: Serialize> IntoResponse for ApiResponse<T> {
     fn into_response(self) -> Response {
-        let status = StatusCode::from_u16(self.status_code)
-            .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-        
+        let status =
+            StatusCode::from_u16(self.status_code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+
         (status, Json(self)).into_response()
     }
 }

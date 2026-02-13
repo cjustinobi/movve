@@ -139,3 +139,38 @@ pub struct DriverLocation {
     pub longitude: f64,
     pub updated_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct Location {
+    pub address: String,
+    pub latitude: f64,
+    pub longitude: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RideStatus {
+    Requested,
+    Accepted,
+    Arrived,
+    InProgress,
+    Stopped,
+    PitStop,
+    Completed,
+    Paid,
+    Cancelled,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RideResponse {
+    pub id: Uuid,
+    pub user: String,
+    pub pickup: Location,
+    pub destination: Location,
+    pub fare: f64,
+    pub status: RideStatus,
+    pub distance: f64,
+    pub duration: f64,
+    pub otp: Option<String>,
+    pub created_at: DateTime<Utc>,
+}

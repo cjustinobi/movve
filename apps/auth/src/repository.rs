@@ -2,7 +2,7 @@ use crate::{
     model::{User, UserRole},
     schema::{email_verification_tokens, password_resets, refresh_tokens, users},
 };
-use chrono::{Duration, NaiveDateTime, Utc};
+use chrono::{Duration, NaiveDate, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::result::Error as DieselError;
@@ -30,6 +30,10 @@ pub struct UserDb {
     pub phone: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    pub gender: Option<crate::model::Gender>,
+    pub dob: Option<NaiveDate>,
+    pub nok_name: Option<String>,
+    pub nok_phone: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
     pub email_verified: bool,
@@ -50,6 +54,10 @@ impl From<UserDb> for User {
             password_hash: user_db.password_hash,
             role: user_db.role,
             avatar: user_db.avatar,
+            gender: user_db.gender,
+            dob: user_db.dob,
+            nok_name: user_db.nok_name,
+            nok_phone: user_db.nok_phone,
             email_verified: user_db.email_verified,
             profile_completed: user_db.profile_completed,
             created_at: user_db.created_at,
@@ -66,9 +74,9 @@ pub struct UserUpdate {
     pub last_name: Option<Option<String>>,
     pub phone: Option<Option<String>>,
     pub gender: Option<Option<crate::model::Gender>>,
+    pub dob: Option<Option<NaiveDate>>,
     pub nok_name: Option<Option<String>>,
     pub nok_phone: Option<Option<String>>,
-    pub dob: Option<Option<chrono::NaiveDate>>,
     pub avatar: Option<Option<String>>,
     pub profile_completed: Option<bool>,
 }

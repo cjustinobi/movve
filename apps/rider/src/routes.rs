@@ -48,6 +48,10 @@ pub fn create_routes(state: AppState) -> Router {
             "/api/rider/rides",
             post(handlers::create_ride).get(handlers::get_rides),
         )
+        .route(
+            "/api/rider/driver/rides/{driver_id}",
+            get(handlers::get_driver_rides),
+        )
         .route("/api/rider/{id}", get(handlers::get_ride))
         .route("/api/rider/{id}/cancel", post(handlers::cancel_ride))
         .route("/api/rider/{id}/pay", post(handlers::pay_ride))
