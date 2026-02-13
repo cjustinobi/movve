@@ -314,6 +314,18 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
                                         // Skip database update for heartbeat messages
                                         if req.is_heartbeat {
                                             info!("Heartbeat received for driver {}", driver.id);
+                                            // Send ack to keep connection alive and prevent proxy timeouts
+                                            if let Err(e) = socket
+                                                .send(Message::Text(
+                                                    serde_json::json!({"type": "heartbeat_ack"})
+                                                        .to_string()
+                                                        .into(),
+                                                ))
+                                                .await
+                                            {
+                                                info!("Failed to send heartbeat ack: {}", e);
+                                                break;
+                                            }
                                         } else if let Err(e) = state
                                             .driver_service
                                             .update_driver_location(
