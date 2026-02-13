@@ -44,7 +44,6 @@ impl<T: Serialize> IntoResponse for ApiResponse<T> {
     }
 }
 
-// Helper for responses with no data
 #[derive(Serialize, ToSchema)]
 pub struct EmptyData {}
 
