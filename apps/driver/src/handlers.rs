@@ -300,12 +300,6 @@ async fn handle_socket(mut socket: WebSocket, state: AppState, claims: crate::mo
 
     info!("Driver {} connected via WebSocket", driver_id);
 
-    // Send a ping to keep connection alive and verify it's working
-    if let Err(e) = socket.send(Message::Ping(vec![].into())).await {
-        info!("Failed to send initial ping to driver {}: {}", driver_id, e);
-        return;
-    }
-
     loop {
         match socket.recv().await {
             Some(Ok(msg)) => {
