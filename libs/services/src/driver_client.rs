@@ -154,7 +154,7 @@ impl DriverServiceClient {
 
     /// Get active drivers
     pub async fn get_active_drivers(&self) -> Result<Vec<Driver>> {
-        let url = format!("{}/api/driver/drivers?status=active", self.base_url);
+        let url = format!("{}/api/driver/drivers?status=online", self.base_url);
         let response = self.client.get(&url).send().await?;
 
         if !response.status().is_success() {
