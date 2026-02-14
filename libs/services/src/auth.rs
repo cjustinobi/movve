@@ -1,19 +1,11 @@
 use anyhow::{Result, anyhow};
 use reqwest::Client;
-use serde::Deserialize;
 use tracing::error;
 use uuid::Uuid;
 
 pub struct AuthServiceClient {
     client: Client,
     base_url: String,
-}
-
-#[derive(Deserialize)]
-struct ApiResponse<T> {
-    pub status_code: u16,
-    pub message: String,
-    pub data: T,
 }
 
 impl AuthServiceClient {
