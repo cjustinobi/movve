@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       
       - name: Setup Rust environment
         run: |
@@ -26,6 +28,11 @@ jobs:
           source $HOME/.cargo/env
           rustc --version
           cargo --version
+
+      - name: Ensure incremental build
+        run: |
+          source $HOME/.cargo/env
+          export CARGO_INCREMENTAL=1
       
       - name: Build gateway in release mode
         run: |

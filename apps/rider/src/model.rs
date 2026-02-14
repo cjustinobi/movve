@@ -75,6 +75,9 @@ fn default_vehicle_type() -> VehicleType {
 pub struct DriverOption {
     pub driver_id: Uuid,
     pub name: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub avatar: Option<String>,
     pub vehicle: String,
     pub vehicle_type: String,
     /// Vehicle type title (e.g., "Movve Go")
@@ -89,6 +92,20 @@ pub struct DriverOption {
     pub distance_from_pickup: f64, // Distance in meters
     pub total_rides: i32,
     pub current_location: Location,
+}
+
+/// Combined driver info for response
+#[derive(Debug, Serialize, ToSchema, Clone)]
+pub struct RideDriver {
+    pub id: Uuid,
+    pub name: String,
+    pub avatar: Option<String>,
+    pub phone: Option<String>,
+    pub rating: Option<f64>,
+    pub total_rides: Option<i32>,
+    pub vehicle_model: String,
+    pub vehicle_color: String,
+    pub vehicle_plate: String,
 }
 
 #[derive(
@@ -315,6 +332,7 @@ pub enum WsMessage {
 pub struct RideResponse {
     pub id: Uuid,
     pub user: String,
+    pub driver: Option<RideDriver>,
     pub pickup: Location,
     pub destination: Location,
     pub fare: f64,
@@ -330,6 +348,7 @@ impl From<Ride> for RideResponse {
         Self {
             id: ride.id,
             user: ride.rider_id.to_string(),
+            driver: None, // Populated by service
             pickup: ride.pickup,
             destination: ride.destination,
             fare: ride.fare,

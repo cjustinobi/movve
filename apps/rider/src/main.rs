@@ -1,7 +1,6 @@
 mod database;
 mod distance_service;
 mod docs;
-mod driver_client;
 mod handlers;
 mod model;
 mod notification_service;
@@ -19,10 +18,11 @@ use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use distance_service::DistanceService;
-use driver_client::DriverClient;
 use notification_service::NotificationService;
 use repository::RiderRepository;
 use service::RiderService;
+use services::auth::AuthServiceClient;
+use services::driver_client::DriverServiceClient;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -52,8 +52,8 @@ async fn main() -> Result<(), anyhow::Error> {
     // Initialize repository and service layer
     let repo = RiderRepository::new(pool);
 
-    let driver_service_url = config.services.driver_service_url.clone();
-    let driver_client = Arc::new(DriverClient::new(driver_service_url));
+    let driver_client = Arc::new(DriverServiceClient::new(&config));
+    let auth_client = Arc::new(AuthServiceClient::new(&config));
 
     // Initialize distance service with Google Maps API key (optional)
     let google_api_key = std::env::var("GOOGLE_MAPS_API_KEY").ok();
@@ -69,6 +69,7 @@ async fn main() -> Result<(), anyhow::Error> {
         repo.clone(),
         config.jwt.clone(),
         driver_client,
+        auth_client,
         distance_service,
     ));
 

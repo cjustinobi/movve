@@ -50,9 +50,7 @@ async fn main() -> Result<(), anyhow::Error> {
     // Initialize Rider Service Client
 
     // Initialize repository and service layer
-    let auth_service = Arc::new(AuthServiceClient::new(
-        config.services.auth_service_url.clone(),
-    ));
+    let auth_service = Arc::new(AuthServiceClient::new(&config));
 
     let rider_service = Arc::new(RiderServiceClient::new(
         config.services.rider_service_url.clone(),
