@@ -62,6 +62,12 @@ jobs:
           source /opt/movve/.env
           export RIDER_DATABASE_URL=$RIDER_DATABASE_URL
           
+          # Install Diesel CLI temporarily (only if not installed)
+          if ! command -v diesel &> /dev/null; then
+            source $HOME/.cargo/env
+            cargo install diesel_cli --no-default-features --features postgres
+          fi
+          
           diesel migration run --migration-dir /opt/movve/rider/migrations --database-url $RIDER_DATABASE_URL
 
       - name: Start rider service
