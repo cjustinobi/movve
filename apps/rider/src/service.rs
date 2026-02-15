@@ -8,6 +8,7 @@ use common::{AppError, JwtConfig};
 use services::auth::AuthServiceClient;
 use services::driver_client::DriverServiceClient;
 use std::sync::Arc;
+use tracing::info;
 
 use utils::generate_numeric_code;
 use uuid::Uuid;
@@ -43,6 +44,7 @@ impl RiderService {
         &self,
         req: RideEstimateRequest,
     ) -> Result<RideEstimateResponse, AppError> {
+        info!("Estimating ride!!!");
         let (distance, duration) = self
             .distance_service
             .calculate_distance_and_duration(
@@ -172,7 +174,16 @@ impl RiderService {
 
             driver_options.push(DriverOption {
                 driver_id: driver.user_id,
-                name: format!("Driver {}", driver.user_id), // Fallback or keep as is?
+                name: {
+                    let f = first_name.as_deref().unwrap_or("");
+                    let l = last_name.as_deref().unwrap_or("");
+                    let n = format!("{} {}", f, l).trim().to_string();
+                    if n.is_empty() {
+                        format!("Driver {}", driver.user_id)
+                    } else {
+                        n
+                    }
+                },
                 first_name,
                 last_name,
                 avatar,

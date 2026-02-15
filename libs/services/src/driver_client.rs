@@ -3,6 +3,7 @@ use common::AppConfig;
 use reqwest::Client;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
+use tracing::info;
 use uuid::Uuid;
 
 fn deserialize_opt_f64<'de, D>(deserializer: D) -> Result<Option<f64>, D::Error>
@@ -115,11 +116,7 @@ pub struct Driver {
     pub total_rides: Option<i32>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub status: String,
-    pub data: T,
-}
+use common::response::ApiResponse;
 
 #[derive(Clone)]
 pub struct DriverServiceClient {
@@ -154,6 +151,7 @@ impl DriverServiceClient {
 
     /// Get active drivers
     pub async fn get_active_drivers(&self) -> Result<Vec<Driver>> {
+        info!("Fetching active drivers");
         let url = format!("{}/api/driver/drivers?status=online", self.base_url);
         let response = self.client.get(&url).send().await?;
 

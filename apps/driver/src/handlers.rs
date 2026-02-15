@@ -183,11 +183,6 @@ pub async fn get_rides(
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
 
-    // Get driver by user_id
-    // let driver = state
-    //     .driver_service
-    //     .get_driver_by_user_id(user_id)
-    //     .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     let rides_json = state
         .driver_service
