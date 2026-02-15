@@ -1,27 +1,15 @@
-mod docs;
-mod handlers;
-mod model;
-mod repository;
-mod routes;
-mod schema;
-mod service;
-
+use auth_seed::repository::UserRepository;
+use auth_seed::routes;
+use auth_seed::service::AuthService;
 use common::AppConfig;
 use diesel::PgConnection;
 use diesel::r2d2::{self, ConnectionManager};
-use repository::UserRepository;
-use service::AuthService;
 use services::{CloudinaryService, DriverServiceClient, MailService};
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-#[derive(Clone)]
-pub struct AppState {
-    pub auth_service: Arc<AuthService>,
-    pub mail_service: Arc<MailService>,
-    pub cloudinary_service: Arc<CloudinaryService>,
-    pub driver_service: Arc<DriverServiceClient>,
-}
+// Use AppState from lib
+use auth_seed::AppState;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
