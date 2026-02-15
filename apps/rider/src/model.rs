@@ -291,16 +291,7 @@ pub struct SendMessageRequest {
     pub content: String,
 }
 
-/// Response for a message
-#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
-pub struct MessageResponse {
-    pub id: Uuid,
-    pub conversation_id: Uuid,
-    pub sender_id: Uuid,
-    pub sender_role: String,
-    pub content: String,
-    pub created_at: DateTime<Utc>,
-}
+pub use common::models::{MessageResponse, WsMessage};
 
 impl From<Message> for MessageResponse {
     fn from(m: Message) -> Self {
@@ -311,20 +302,9 @@ impl From<Message> for MessageResponse {
             sender_role: m.sender_role,
             content: m.content,
             created_at: m.created_at,
+            is_read: false,
         }
     }
-}
-
-/// WebSocket Message structure
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum WsMessage {
-    ChatMessage(MessageResponse),
-    RideStatusUpdate {
-        ride_id: Uuid,
-        status: RideStatus,
-        message: String,
-    },
 }
 
 /// Response for ride operations

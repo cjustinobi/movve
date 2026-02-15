@@ -79,6 +79,11 @@ pub fn create_routes(state: AppState) -> Router {
             "/api/rider/chat/conversations/{context_type}/{context_id}/messages",
             get(handlers::get_messages),
         )
+        // Global Config
+        .route(
+            "/api/config/context-types",
+            get(handlers::get_chat_context_types),
+        )
         .route("/api/rider/chat/ws", get(handlers::chat_ws))
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();

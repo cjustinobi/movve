@@ -1,21 +1,20 @@
-use crate::handlers::*;
 use crate::model::*;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        estimate_ride,
-        create_ride,
-        get_ride,
-        get_rides,
-        cancel_ride,
-        pay_ride,
-        rate_driver,
-        get_driver_location,
-        get_ride_status,
-        send_message,
-        get_messages,
+        crate::handlers::estimate_ride,
+        crate::handlers::create_ride,
+        crate::handlers::get_ride,
+        crate::handlers::get_rides,
+        crate::handlers::cancel_ride,
+        crate::handlers::pay_ride,
+        crate::handlers::rate_driver,
+        crate::handlers::get_driver_location,
+        crate::handlers::get_ride_status,
+        crate::handlers::send_message,
+        crate::handlers::get_messages,
     ),
     components(
         schemas(

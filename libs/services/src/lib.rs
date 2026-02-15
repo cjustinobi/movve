@@ -2,6 +2,7 @@ pub mod auth;
 pub mod cloudinary;
 pub mod driver_client;
 pub mod mail;
+pub mod notification;
 pub mod rider;
 pub mod templates;
 
@@ -9,6 +10,7 @@ pub use auth::AuthServiceClient;
 pub use cloudinary::CloudinaryService;
 pub use driver_client::DriverServiceClient;
 pub use mail::MailService;
+pub use notification::NotificationService;
 pub use rider::RiderServiceClient;
 pub use templates::*;
 

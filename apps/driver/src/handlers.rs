@@ -729,15 +729,102 @@ pub async fn get_messages(
 }
 
 pub async fn chat_ws(
-    _ws: WebSocketUpgrade,
-    State(_state): State<AppState>,
+    ws: WebSocketUpgrade,
+    State(state): State<AppState>,
+    Extension(claims): Extension<crate::model::Claims>,
 ) -> impl axum::response::IntoResponse {
-    // For now, redirect or just note that drivers should connect to rider ws
-    // Actually, we should proxy the WS connection, but that's complex.
-    // Simplifying: the driver app can just connect to the rider WS endpoint directly.
-    // If we MUST proxy, we'd use something like `proxy_socket`.
-    // For this task, I'll just return a placeholder or implement a basic proxy.
-    StatusCode::NOT_IMPLEMENTED
+    info!("chat_ws called. claims.sub={}", claims.sub);
+    ws.on_upgrade(move |socket| handle_chat_socket(socket, state, claims))
+}
+
+async fn handle_chat_socket(mut socket: WebSocket, state: AppState, claims: crate::model::Claims) {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid user ID in claims: {}", e);
+            let _ = socket.close().await;
+            return;
+        }
+    };
+
+    // Subscribe to notifications for this user (driver)
+    // The driver service's NotificationService listens on Redis and forwards here.
+    let mut rx = state.notification_service.subscribe_user(user_id).await;
+
+    info!("Driver {} connected to Chat WebSocket", user_id);
+
+    loop {
+        tokio::select! {
+             // Receive from NotificationService (Redis -> here -> Client)
+             msg = rx.recv() => {
+                 match msg {
+                     Ok(ws_msg) => {
+                         // Serialize and send to client
+                         match serde_json::to_string(&ws_msg) {
+                             Ok(text) => {
+                                 if let Err(e) = socket.send(Message::Text(text.into())).await {
+                                     info!("Failed to send chat message to driver {}: {}", user_id, e);
+                                     break;
+                                 }
+                             }
+                             Err(e) => {
+                                 tracing::error!("Failed to serialize WsMessage: {}", e);
+                             }
+                         }
+                     }
+                     Err(e) => {
+                         tracing::error!("Broadcast receiver error for driver {}: {}", user_id, e);
+                         // Keep loop running? RecvError::Closed means channel closed.
+                         // RecvError::Lagged means missed messages.
+                         if let tokio::sync::broadcast::error::RecvError::Closed = e {
+                             break;
+                         }
+                     }
+                 }
+             }
+
+             // Receive from Client (Driver App)
+             // Driver App usually sends messages via HTTP POST, but might send Ping/Pong here
+             client_msg = socket.recv() => {
+                 match client_msg {
+                     Some(Ok(msg)) => {
+                         match msg {
+                             Message::Ping(data) => {
+                                 if let Err(e) = socket.send(Message::Pong(data)).await {
+                                     info!("Failed to send pong to driver {}: {}", user_id, e);
+                                     break;
+                                 }
+                             }
+                             Message::Pong(_) => {}
+                             Message::Close(_) => {
+                                 info!("Chat WebSocket closed by driver {}", user_id);
+                                 break;
+                             }
+                             Message::Text(text) => {
+                                 // Handle potential incoming messages?
+                                 // For now, we assume drivers send messages via HTTP.
+                                 // But we could log it.
+                                 info!("Received text from driver {}: {}", user_id, text);
+                             }
+                             _ => {}
+                         }
+                     }
+                     Some(Err(e)) => {
+                         info!("Chat WebSocket error for driver {}: {}", user_id, e);
+                         break;
+                     }
+                     None => {
+                         info!("Chat WebSocket stream ended for driver {}", user_id);
+                         break;
+                     }
+                 }
+             }
+        }
+    }
+
+    // Cleanup
+    state.notification_service.unsubscribe_user(user_id).await;
+    info!("Driver {} disconnected from Chat WebSocket", user_id);
 }
 
 fn get_token(headers: &HeaderMap) -> Result<&str, AppError> {

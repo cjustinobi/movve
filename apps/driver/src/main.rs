@@ -2,6 +2,7 @@ mod database;
 mod docs;
 mod handlers;
 mod model;
+mod notification_service;
 mod repository;
 mod routes;
 mod schema;
@@ -15,6 +16,7 @@ use services::{AuthServiceClient, CloudinaryService, MailService, RiderServiceCl
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use notification_service::NotificationService;
 use repository::DriverRepository;
 use service::DriverService;
 
@@ -25,6 +27,7 @@ pub struct AppState {
     pub auth_service: Arc<AuthServiceClient>,
     pub cloudinary_service: Arc<CloudinaryService>,
     pub rider_service: Arc<RiderServiceClient>,
+    pub notification_service: Arc<NotificationService>,
     pub redis_conn: redis::aio::ConnectionManager,
 }
 
@@ -72,7 +75,10 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Initialize Redis connection manager
     let redis_client = redis::Client::open(config.services.redis_url.clone())?;
-    let redis_conn = redis::aio::ConnectionManager::new(redis_client).await?;
+    let redis_conn = redis::aio::ConnectionManager::new(redis_client.clone()).await?;
+
+    // Initialize Notification Service
+    let notification_service = Arc::new(NotificationService::new(redis_client, redis_conn.clone()));
 
     // Shared app state
     let state = AppState {
@@ -81,6 +87,7 @@ async fn main() -> Result<(), anyhow::Error> {
         auth_service,
         cloudinary_service,
         rider_service,
+        notification_service,
         redis_conn,
     };
 

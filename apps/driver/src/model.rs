@@ -174,3 +174,5 @@ pub struct RideResponse {
     pub otp: Option<String>,
     pub created_at: DateTime<Utc>,
 }
+
+use common::models::{MessageResponse, WsMessage};

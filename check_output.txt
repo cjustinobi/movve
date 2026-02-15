@@ -1,0 +1,288 @@
+warning: unused variable: `e`
+  --> libs/services/src/notification.rs:39:24
+   |
+39 |             if let Err(e) = pubsub.subscribe("chat:messages").await {
+   |                        ^ help: if this is intentional, prefix it with an underscore: `_e`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: `services` (lib) generated 1 warning
+    Checking rider v0.1.0 (/Users/justin/Projects/movve_monorepo/apps/rider)
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_estimate_ride`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_estimate_ride`
+  |
+  = help: if you wanted to use a crate named `__path_estimate_ride`, use `cargo add __path_estimate_ride` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_estimate_ride;
+  |
+
+error[E0412]: cannot find type `__path_estimate_ride` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_estimate_ride;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_create_ride`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_create_ride`
+  |
+  = help: if you wanted to use a crate named `__path_create_ride`, use `cargo add __path_create_ride` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_create_ride;
+  |
+
+error[E0412]: cannot find type `__path_create_ride` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_create_ride;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_get_ride`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_get_ride`
+  |
+  = help: if you wanted to use a crate named `__path_get_ride`, use `cargo add __path_get_ride` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_ride;
+  |
+
+error[E0412]: cannot find type `__path_get_ride` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_ride;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_get_rides`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_get_rides`
+  |
+  = help: if you wanted to use a crate named `__path_get_rides`, use `cargo add __path_get_rides` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_rides;
+  |
+
+error[E0412]: cannot find type `__path_get_rides` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_rides;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_cancel_ride`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_cancel_ride`
+  |
+  = help: if you wanted to use a crate named `__path_cancel_ride`, use `cargo add __path_cancel_ride` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_cancel_ride;
+  |
+
+error[E0412]: cannot find type `__path_cancel_ride` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_cancel_ride;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_pay_ride`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_pay_ride`
+  |
+  = help: if you wanted to use a crate named `__path_pay_ride`, use `cargo add __path_pay_ride` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_pay_ride;
+  |
+
+error[E0412]: cannot find type `__path_pay_ride` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_pay_ride;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_rate_driver`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_rate_driver`
+  |
+  = help: if you wanted to use a crate named `__path_rate_driver`, use `cargo add __path_rate_driver` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_rate_driver;
+  |
+
+error[E0412]: cannot find type `__path_rate_driver` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_rate_driver;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_get_driver_location`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_get_driver_location`
+  |
+  = help: if you wanted to use a crate named `__path_get_driver_location`, use `cargo add __path_get_driver_location` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_driver_location;
+  |
+
+error[E0412]: cannot find type `__path_get_driver_location` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_driver_location;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_get_ride_status`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_get_ride_status`
+  |
+  = help: if you wanted to use a crate named `__path_get_ride_status`, use `cargo add __path_get_ride_status` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_ride_status;
+  |
+
+error[E0412]: cannot find type `__path_get_ride_status` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_ride_status;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_send_message`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_send_message`
+  |
+  = help: if you wanted to use a crate named `__path_send_message`, use `cargo add __path_send_message` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_send_message;
+  |
+
+error[E0412]: cannot find type `__path_send_message` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_send_message;
+  |
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `__path_get_messages`
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ use of unresolved module or unlinked crate `__path_get_messages`
+  |
+  = help: if you wanted to use a crate named `__path_get_messages`, use `cargo add __path_get_messages` to add it to your `Cargo.toml`
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_messages;
+  |
+
+error[E0412]: cannot find type `__path_get_messages` in this scope
+ --> apps/rider/src/docs.rs:4:10
+  |
+4 | #[derive(OpenApi)]
+  |          ^^^^^^^ not found in this scope
+  |
+  = note: this error originates in the derive macro `OpenApi` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this struct
+  |
+1 + use crate::handlers::__path_get_messages;
+  |
+
+Some errors have detailed explanations: E0412, E0433.
+For more information about an error, try `rustc --explain E0412`.
+error: could not compile `rider` (bin "rider") due to 22 previous errors

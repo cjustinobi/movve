@@ -417,6 +417,25 @@ pub async fn get_messages(
     Ok(ApiResponse::success(response))
 }
 
+/// Get Valid Chat Context Types
+#[utoipa::path(
+    get,
+    path = "/api/config/context-types",
+    responses(
+        (status = 200, description = "Valid context types", body = ApiResponse<Vec<String>>),
+    ),
+    tag = "Config"
+)]
+pub async fn get_chat_context_types() -> Json<ApiResponse<Vec<String>>> {
+    use common::models::ChatContextType;
+    let types = vec![
+        ChatContextType::Ride.to_string(),
+        ChatContextType::Order.to_string(),
+        ChatContextType::Support.to_string(),
+    ];
+    Json(ApiResponse::success(types))
+}
+
 /// Chat WebSocket
 pub async fn chat_ws(
     ws: WebSocketUpgrade,

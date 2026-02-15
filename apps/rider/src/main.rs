@@ -78,8 +78,16 @@ async fn main() -> Result<(), anyhow::Error> {
         config.mail.from_email.clone(),
     ));
 
+    // Initialize Redis connection manager
+    let redis_client = redis::Client::open(config.services.redis_url.clone())?;
+    let redis_conn = redis::aio::ConnectionManager::new(redis_client.clone()).await?;
+
     // Initialize notification service
-    let notification_service = Arc::new(NotificationService::new(repo.clone()));
+    let notification_service = Arc::new(NotificationService::new(
+        repo.clone(),
+        redis_client,
+        redis_conn,
+    ));
 
     // Shared app state
     let state = AppState {
