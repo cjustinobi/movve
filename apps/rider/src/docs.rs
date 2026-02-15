@@ -15,6 +15,7 @@ use utoipa::OpenApi;
         crate::handlers::get_ride_status,
         crate::handlers::send_message,
         crate::handlers::get_messages,
+        crate::handlers::get_chat_context_types,
     ),
     components(
         schemas(
