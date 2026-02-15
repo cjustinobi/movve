@@ -23,12 +23,18 @@ impl RiderServiceClient {
         self.post_proxy(token, &url, &()).await
     }
 
-    pub async fn cancel_ride(&self, token: &str, ride_id: Uuid) -> Result<serde_json::Value> {
+    pub async fn cancel_ride(
+        &self,
+        token: &str,
+        ride_id: Uuid,
+        reason: String,
+    ) -> Result<serde_json::Value> {
         let url = format!(
             "{}/api/rider/rides/{}/driver-cancel",
             self.base_url, ride_id
         );
-        self.post_proxy(token, &url, &()).await
+        let body = serde_json::json!({ "reason": reason });
+        self.post_proxy(token, &url, &body).await
     }
 
     pub async fn mark_ride_arrived(&self, token: &str, ride_id: Uuid) -> Result<serde_json::Value> {

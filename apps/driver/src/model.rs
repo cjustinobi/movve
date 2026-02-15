@@ -140,6 +140,11 @@ pub struct DriverLocation {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct CancelRideRequest {
+    pub reason: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Location {
     pub address: String,

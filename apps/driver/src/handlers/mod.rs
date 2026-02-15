@@ -1,6 +1,8 @@
 use crate::{
     AppState,
-    model::{Driver, DriverLocation, DriverStatus, NewDriver, UpdateStatusRequest},
+    model::{
+        CancelRideRequest, Driver, DriverLocation, DriverStatus, NewDriver, UpdateStatusRequest,
+    },
 };
 
 use axum::{
@@ -605,11 +607,12 @@ pub async fn cancel_ride(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
+    Json(req): Json<crate::model::CancelRideRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     let token = get_token(&headers)?;
     let response = state
         .rider_service
-        .cancel_ride(token, id)
+        .cancel_ride(token, id, req.reason)
         .await
         .map_err(|e| AppError::InternalError(e.to_string()))?;
     Ok(ApiResponse::success(response))
