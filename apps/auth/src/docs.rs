@@ -18,7 +18,12 @@ use utoipa::{
         crate::handlers::upload_avatar,
         crate::handlers::update_profile,
         crate::handlers::me,
-        crate::handlers::logout
+        crate::handlers::logout,
+        
+        // Social
+        crate::handlers::social::social_login,
+
+
     ),
     modifiers(&SecurityAddon),
 

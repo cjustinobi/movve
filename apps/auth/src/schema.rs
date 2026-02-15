@@ -73,9 +73,10 @@ diesel::table! {
         password_hash -> Varchar,
         role -> UserRole,
         email_verified -> Bool,
+        profile_completed -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
-        profile_completed -> Bool,
+        suspended -> Bool,
     }
 }
 

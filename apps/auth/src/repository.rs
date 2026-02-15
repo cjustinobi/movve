@@ -19,6 +19,7 @@ pub struct NewUser<'a> {
     pub password_hash: &'a str,
     pub role: UserRole, // UserRole enum (it implements Copy/Clone)
     pub email_verified: bool,
+    pub suspended: bool,
 }
 
 #[derive(Queryable, Selectable)]
@@ -38,6 +39,7 @@ pub struct UserDb {
     pub role: UserRole,
     pub email_verified: bool,
     pub profile_completed: bool,
+    pub suspended: bool,
     pub avatar: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -60,6 +62,7 @@ impl From<UserDb> for User {
             nok_phone: user_db.nok_phone,
             email_verified: user_db.email_verified,
             profile_completed: user_db.profile_completed,
+            suspended: user_db.suspended,
             created_at: user_db.created_at,
             updated_at: user_db.updated_at,
             profile: None,
@@ -177,6 +180,7 @@ impl UserRepository {
                 password_hash: &password_hash,
                 role,
                 email_verified: false,
+                suspended: false,
             };
 
             let user_db: UserDb = diesel::insert_into(users::table)
@@ -523,6 +527,127 @@ impl UserRepository {
         .await??;
 
         Ok(user)
+    }
+
+    pub async fn toggle_user_suspension(
+        &self,
+        user_id: Uuid,
+        suspend: bool,
+    ) -> Result<User, DbError> {
+        let pool = self.pool.clone();
+
+        let user = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+
+            let user_db: UserDb = diesel::update(users::table.filter(users::id.eq(user_id)))
+                .set(users::suspended.eq(suspend))
+                .returning(UserDb::as_returning())
+                .get_result(&mut conn)?;
+
+            Ok::<User, DbError>(user_db.into())
+        })
+        .await??;
+
+        Ok(user)
+    }
+
+    pub async fn delete_user(&self, user_id: Uuid) -> Result<(), DbError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+            diesel::delete(users::table.filter(users::id.eq(user_id))).execute(&mut conn)?;
+            Ok::<(), DbError>(())
+        })
+        .await??;
+
+        Ok(())
+    }
+
+    pub async fn get_all_users(
+        &self,
+        page: i64,
+        limit: i64,
+        role_filter: Option<UserRole>,
+        search_query: Option<String>,
+    ) -> Result<(Vec<User>, i64), DbError> {
+        let pool = self.pool.clone();
+        let search_query = search_query.map(|s| format!("%{}%", s));
+
+        let result = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+
+            // Build separate queries for count and list to avoid ownership issues
+            let mut count_query = users::table.into_boxed();
+            let mut list_query = users::table.into_boxed();
+
+            if let Some(role) = role_filter {
+                count_query = count_query.filter(users::role.eq(role));
+                list_query = list_query.filter(users::role.eq(role));
+            }
+
+            if let Some(search) = search_query {
+                let search_like = search.clone();
+                count_query = count_query.filter(
+                    users::email
+                        .ilike(search_like.clone())
+                        .or(users::first_name.ilike(search_like.clone()))
+                        .or(users::last_name.ilike(search_like.clone())),
+                );
+
+                let search_like = search;
+                list_query = list_query.filter(
+                    users::email
+                        .ilike(search_like.clone())
+                        .or(users::first_name.ilike(search_like.clone()))
+                        .or(users::last_name.ilike(search_like.clone())),
+                );
+            }
+
+            // Get total count
+            let total = count_query.count().get_result(&mut conn)?;
+
+            // Get paginated results
+            let users_db = list_query
+                .offset((page - 1) * limit)
+                .limit(limit)
+                .order(users::created_at.desc())
+                .select(UserDb::as_select())
+                .load::<UserDb>(&mut conn)?;
+
+            let users: Vec<User> = users_db.into_iter().map(Into::into).collect();
+
+            Ok::<(Vec<User>, i64), DbError>((users, total))
+        })
+        .await??;
+
+        Ok(result)
+    }
+
+    pub async fn get_user_stats(&self) -> Result<(i64, i64, i64), DbError> {
+        let pool = self.pool.clone();
+
+        let stats = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+
+            let total = users::table.count().get_result::<i64>(&mut conn)?;
+
+            // Active users are those not suspended
+            let active = users::table
+                .filter(users::suspended.eq(false))
+                .count()
+                .get_result::<i64>(&mut conn)?;
+
+            let inactive = users::table
+                .filter(users::suspended.eq(true))
+                .count()
+                .get_result::<i64>(&mut conn)?;
+
+            Ok::<(i64, i64, i64), DbError>((total, active, inactive))
+        })
+        .await??;
+
+        Ok(stats)
     }
 }
 

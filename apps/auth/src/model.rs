@@ -24,6 +24,8 @@ pub struct User {
     pub nok_phone: Option<String>,
     pub email_verified: bool,
     pub profile_completed: bool,
+    #[schema(default = false)]
+    pub suspended: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub profile: Option<serde_json::Value>,

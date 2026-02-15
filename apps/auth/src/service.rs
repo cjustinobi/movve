@@ -439,4 +439,174 @@ impl AuthService {
             .map_err(|e| AppError::InternalError(e.to_string()))?
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))
     }
+
+    // ---------- Admin Methods ----------
+
+    pub async fn toggle_user_suspension(
+        &self,
+        user_id: Uuid,
+        suspend: bool,
+    ) -> Result<User, AppError> {
+        self.repo
+            .toggle_user_suspension(user_id, suspend)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    pub async fn delete_user(&self, user_id: Uuid) -> Result<(), AppError> {
+        self.repo
+            .delete_user(user_id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    pub async fn get_all_users(
+        &self,
+        page: i64,
+        limit: i64,
+        role_filter: Option<crate::model::UserRole>,
+        search_query: Option<String>,
+    ) -> Result<(Vec<User>, i64), AppError> {
+        self.repo
+            .get_all_users(page, limit, role_filter, search_query)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    pub async fn get_user_stats(&self) -> Result<(i64, i64, i64), AppError> {
+        self.repo
+            .get_user_stats()
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    // ---------- Social Login ----------
+
+    pub async fn social_login(
+        &self,
+        provider: &str,
+        token: &str,
+    ) -> Result<AuthResponse, AppError> {
+        let (email, first_name, last_name, avatar) = match provider {
+            "google" => self.verify_google_token(token).await?,
+            "apple" => {
+                return Err(AppError::BadRequest(
+                    "Apple login not implemented yet".to_string(),
+                ));
+            }
+            _ => return Err(AppError::BadRequest("Invalid provider".to_string())),
+        };
+
+        // Find or Create User
+        let user = match self
+            .repo
+            .find_by_email(&email)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))?
+        {
+            Some(u) => u,
+            None => {
+                // Create new user with random password
+                let password = Uuid::new_v4().to_string(); // Random password
+                let password_hash = self.hash_password(&password)?;
+
+                let mut user = self
+                    .repo
+                    .create_user(&email, &password_hash, crate::model::UserRole::User)
+                    .await
+                    .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+                // Update profile with name and avatar
+                let update = UserUpdate {
+                    first_name: Some(Some(first_name)),
+                    last_name: Some(Some(last_name)),
+                    avatar: Some(Some(avatar)),
+                    phone: None,
+                    gender: None,
+                    nok_name: None,
+                    nok_phone: None,
+                    dob: None,
+                    profile_completed: Some(true),
+                };
+
+                user = self
+                    .repo
+                    .update_user(user.id, update)
+                    .await
+                    .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+                // Mark email as verified for social login
+                self.repo
+                    .mark_user_as_verified(user.id)
+                    .await
+                    .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+                user
+            }
+        };
+
+        if user.suspended {
+            return Err(AppError::Unauthorized("User is suspended".to_string()));
+        }
+
+        let token = self.generate_token(&user)?;
+        let refresh_token = self.generate_refresh_token(&user).await?;
+
+        Ok(AuthResponse {
+            token,
+            refresh_token,
+            user: UserInfo {
+                id: user.id,
+                email: user.email,
+                phone: user.phone,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                role: user.role,
+                avatar: user.avatar,
+                gender: user.gender,
+                dob: user.dob,
+                nok_name: user.nok_name,
+                nok_phone: user.nok_phone,
+                email_verified: user.email_verified,
+                profile_completed: user.profile_completed,
+                profile: user.profile.clone(),
+            },
+        })
+    }
+
+    async fn verify_google_token(
+        &self,
+        token: &str,
+    ) -> Result<(String, String, String, String), AppError> {
+        let client = reqwest::Client::new();
+        let resp = client
+            .get("https://oauth2.googleapis.com/tokeninfo")
+            .query(&[("id_token", token)])
+            .send()
+            .await
+            .map_err(|e| {
+                AppError::InternalError(format!("Failed to verify Google token: {}", e))
+            })?;
+
+        if !resp.status().is_success() {
+            return Err(AppError::Unauthorized("Invalid Google token".to_string()));
+        }
+
+        let claims: serde_json::Value = resp.json().await.map_err(|e| {
+            AppError::InternalError(format!("Failed to parse Google response: {}", e))
+        })?;
+
+        let email = claims["email"].as_str().unwrap_or("").to_string();
+        let first_name = claims["given_name"].as_str().unwrap_or("").to_string();
+        let last_name = claims["family_name"].as_str().unwrap_or("").to_string();
+        let avatar = claims["picture"].as_str().unwrap_or("").to_string();
+
+        if email.is_empty() {
+            return Err(AppError::Unauthorized(
+                "Invalid Google token: missing email".to_string(),
+            ));
+        }
+
+        Ok((email, first_name, last_name, avatar))
+    }
 }

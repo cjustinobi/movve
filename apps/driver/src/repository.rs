@@ -61,15 +61,41 @@ impl DriverRepository {
     }
 
     pub fn find_all(&self, status_filter: Option<DriverStatus>) -> Result<Vec<Driver>, Error> {
-        let mut conn = self.pool.get().expect("Failed to get DB connection");
-
+        let mut conn = self.pool.get().map_err(|_| Error::NotFound)?;
         let mut query = drivers.into_boxed();
 
         if let Some(s) = status_filter {
             query = query.filter(status.eq(s));
         }
 
-        query.select(Driver::as_select()).load::<Driver>(&mut conn)
+        let result = query
+            .select(Driver::as_select())
+            .load::<Driver>(&mut conn)?;
+        Ok(result)
+    }
+
+    pub async fn get_stats(&self) -> Result<(i64, i64, i64), Error> {
+        let pool = self.pool.clone();
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get().map_err(|_| Error::NotFound)?; // Using NotFound as generic error for pool failure
+            let total = drivers.count().get_result::<i64>(&mut conn)?;
+            let active = drivers
+                .filter(
+                    status
+                        .eq(DriverStatus::Online)
+                        .or(status.eq(DriverStatus::Busy)),
+                ) // verified active means online/busy
+                .count()
+                .get_result::<i64>(&mut conn)?;
+            let inactive = drivers
+                .filter(status.eq(DriverStatus::Offline))
+                .count()
+                .get_result::<i64>(&mut conn)?;
+            Ok::<_, Error>((total, active, inactive))
+        })
+        .await
+        .map_err(|_| Error::NotFound)? // Map JoinError to Diesel Error
+        // .await??
     }
 
     pub fn find_by_user_id(&self, uid: Uuid) -> Result<Driver, Error> {

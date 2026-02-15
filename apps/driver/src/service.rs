@@ -152,4 +152,42 @@ impl DriverService {
             .await
             .map_err(|e| AppError::InternalError(e.to_string()))
     }
+
+    pub async fn get_driver_stats(&self) -> Result<(i64, i64, i64), AppError> {
+        self.repo
+            .get_stats()
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    pub fn get_online_driver_locations(
+        &self,
+    ) -> Result<Vec<crate::model::DriverMapLocation>, AppError> {
+        let drivers = self
+            .repo
+            .find_all(Some(DriverStatus::Online))
+            .map_err(|e| AppError::InternalError(e.to_string()))?;
+
+        use bigdecimal::ToPrimitive;
+
+        let locations = drivers
+            .into_iter()
+            .map(|d| crate::model::DriverMapLocation {
+                id: d.id,
+                latitude: d
+                    .current_latitude
+                    .and_then(|l| l.to_f64())
+                    .unwrap_or_default(),
+                longitude: d
+                    .current_longitude
+                    .and_then(|l| l.to_f64())
+                    .unwrap_or_default(),
+                vehicle_type: d.vehicle_type,
+                vehicle_colour: d.vehicle_colour,
+                heading: 0.0,
+            })
+            .collect();
+
+        Ok(locations)
+    }
 }

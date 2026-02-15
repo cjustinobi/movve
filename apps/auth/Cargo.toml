@@ -29,3 +29,4 @@ diesel = { version = "2.3.3", features = ["postgres", "r2d2", "uuid", "chrono"] 
 common = { path = "../../libs/common" }
 utils = { path = "../../libs/utils" }
 services = { path = "../../libs/services" }
+reqwest = { workspace = true, features = ["json"] }

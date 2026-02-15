@@ -121,6 +121,7 @@ dependencies = [
  "diesel",
  "dotenvy",
  "jsonwebtoken",
+ "reqwest",
  "serde",
  "serde_json",
  "services",

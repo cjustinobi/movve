@@ -20,8 +20,6 @@ use utoipa::OpenApi;
         crate::handlers::mark_ride_arrived,
         crate::handlers::accept_ride,
         crate::handlers::cancel_ride,
-        // crate::handlers::send_message,
-        // crate::handlers::get_messages,
     ),
     components(schemas(
         crate::model::Driver,
@@ -30,6 +28,8 @@ use utoipa::OpenApi;
         crate::model::VehicleType,
         crate::model::UpdateStatusRequest,
         crate::model::DriverLocation,
+        crate::model::DriverMapLocation,
+        crate::model::DriverStatsResponse,
     )),
     tags(
         (name = "Driver", description = "Endpoints for managing drivers")

@@ -175,4 +175,19 @@ pub struct RideResponse {
     pub created_at: DateTime<Utc>,
 }
 
-use common::models::{MessageResponse, WsMessage};
+#[derive(Serialize, ToSchema)]
+pub struct DriverMapLocation {
+    pub id: Uuid,
+    pub latitude: f64,
+    pub longitude: f64,
+    pub vehicle_type: VehicleType,
+    pub vehicle_colour: VehicleColour,
+    pub heading: f64,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct DriverStatsResponse {
+    pub total_drivers: i64,
+    pub active_drivers: i64,
+    pub inactive_drivers: i64,
+}

@@ -7,6 +7,8 @@ use common::{ApiResponse, AppError, EmptyData};
 use tracing::{info, info_span};
 use uuid::Uuid;
 
+pub mod social;
+
 use crate::{
     AppState,
     model::{

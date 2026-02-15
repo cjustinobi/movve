@@ -2,6 +2,7 @@ use crate::{
     AppState,
     model::{Driver, DriverLocation, DriverStatus, NewDriver, UpdateStatusRequest},
 };
+
 use axum::{
     Json,
     extract::{
@@ -182,7 +183,6 @@ pub async fn get_rides(
     let token = get_token(&headers)?;
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
-
 
     let rides_json = state
         .driver_service
