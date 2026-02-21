@@ -13,10 +13,11 @@ DRIVER_PORT = 8002
 RIDER_PORT = 8003
 ADMIN_PORT = 8004
 
-AUTH_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_auth"
-DRIVER_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_driver"
-RIDER_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_rider"
-ADMIN_DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_admin"
+DATABASE_URL = "postgres://justin:cejowisz@localhost:5432/movve_shared"
+AUTH_DATABASE_URL = "${DATABASE_URL}"
+DRIVER_DATABASE_URL = "${DATABASE_URL}"
+RIDER_DATABASE_URL = "${DATABASE_URL}"
+ADMIN_DATABASE_URL = "${DATABASE_URL}"
 
 RUST_LOG = "info"
 
@@ -78,10 +79,20 @@ category = "diesel"
 description = "Initial setup for Movve application"
 dependencies = ["diesel-auth-setup", "diesel-driver-setup", "diesel-rider-setup", "diesel-admin-setup"]
 
+[tasks.db-reset-shared]
+category = "diesel"
+description = "Drop and recreate the shared DB, then migrate all services"
+script = [
+  "diesel database reset --database-url ${DATABASE_URL} --migration-dir apps/auth/migrations",
+  "diesel migration run --database-url ${DATABASE_URL} --migration-dir apps/driver/migrations",
+  "diesel migration run --database-url ${DATABASE_URL} --migration-dir apps/rider/migrations",
+  "diesel migration run --database-url ${DATABASE_URL} --migration-dir apps/admin/migrations"
+]
+
 [tasks.db-reset]
 category = "diesel"
-description = "Drop and recreate all DBs"
-dependencies = ["diesel-driver-reset", "diesel-rider-reset", "diesel-admin-reset"]
+description = "Drop and recreate all DBs (Shared DB mode)"
+dependencies = ["db-reset-shared"]
 
 [tasks.diesel-auth-setup]
 category = "diesel"
