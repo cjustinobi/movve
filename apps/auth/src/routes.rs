@@ -60,7 +60,11 @@ pub fn create_routes(state: AppState) -> Router {
             "/api/auth/social-login",
             post(handlers::social::social_login),
         )
-        .route("/api/auth/users/{id}", get(handlers::get_user));
+        .route("/api/auth/users/{id}", get(handlers::get_user))
+        .route(
+            "/api/auth/users/{id}/ratings",
+            get(handlers::get_user_ratings),
+        );
 
     // Protected routes (authentication required)
     let protected_routes = Router::new()
@@ -72,6 +76,7 @@ pub fn create_routes(state: AppState) -> Router {
         )
         .route("/api/auth/upload/avatar", post(handlers::upload_avatar))
         .route("/api/auth/me", get(handlers::me))
+        .route("/api/auth/users/{id}/rate", post(handlers::create_rating))
         .route_layer(middleware::from_fn(move |req, next| {
             let secret = jwt_secret.clone();
             async move { jwt_auth_middleware(secret, req, next).await }

@@ -17,6 +17,8 @@ use utoipa::{
         crate::handlers::refresh_token,
         crate::handlers::upload_avatar,
         crate::handlers::update_profile,
+        crate::handlers::create_rating,
+        crate::handlers::get_user_ratings,
         crate::handlers::me,
         crate::handlers::logout,
         

@@ -1,6 +1,6 @@
-use auth_seed::repository::UserRepository;
+use auth_seed::repository::{RatingRepository, UserRepository};
 use auth_seed::routes;
-use auth_seed::service::AuthService;
+use auth_seed::service::{AuthService, RatingService};
 use common::AppConfig;
 use diesel::PgConnection;
 use diesel::r2d2::{self, ConnectionManager};
@@ -29,7 +29,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .build(manager)
         .expect("Failed to create pool");
 
-    let user_repo = UserRepository::new(pool);
+    let user_repo = UserRepository::new(pool.clone());
     let auth_service = Arc::new(AuthService::new(user_repo, config.jwt.clone()));
 
     let mail_service = Arc::new(MailService::new(
@@ -40,11 +40,15 @@ async fn main() -> Result<(), anyhow::Error> {
     let cloudinary_service = Arc::new(CloudinaryService::new(&config));
     let driver_service = Arc::new(DriverServiceClient::new(&config));
 
+    let rating_repo = RatingRepository::new(pool.clone());
+    let rating_service = Arc::new(RatingService::new(rating_repo));
+
     let app_state = AppState {
         auth_service,
         mail_service,
         cloudinary_service,
         driver_service,
+        rating_service,
     };
 
     // Use the routes module

@@ -2,11 +2,14 @@ use chrono::NaiveDateTime;
 use diesel::deserialize::{self, FromSql, FromSqlRow};
 use diesel::expression::AsExpression;
 use diesel::pg::{Pg, PgValue};
+use diesel::prelude::*;
 use diesel::serialize::{self, IsNull, Output, ToSql};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use utoipa::ToSchema;
 use uuid::Uuid;
+
+use crate::schema::ratings;
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct User {
@@ -227,4 +230,30 @@ pub struct UpdateProfileRequest {
     pub nok_phone: Option<String>,
     pub dob: Option<chrono::NaiveDate>,
     pub avatar: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema, Queryable, Selectable)]
+#[diesel(table_name = ratings)]
+pub struct Rating {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub rater_id: Uuid,
+    pub rating: f64,
+    pub comment: Option<String>,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Debug, Insertable)]
+#[diesel(table_name = ratings)]
+pub struct NewRating {
+    pub user_id: Uuid,
+    pub rater_id: Uuid,
+    pub rating: f64,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct CreateRatingRequest {
+    pub rating: f64,
+    pub comment: Option<String>,
 }

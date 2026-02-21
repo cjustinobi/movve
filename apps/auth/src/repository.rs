@@ -1,6 +1,6 @@
 use crate::{
-    model::{User, UserRole},
-    schema::{email_verification_tokens, password_resets, refresh_tokens, users},
+    model::{NewRating, Rating, User, UserRole},
+    schema::{email_verification_tokens, password_resets, ratings, refresh_tokens, users},
 };
 use chrono::{Duration, NaiveDate, NaiveDateTime, Utc};
 use diesel::prelude::*;
@@ -739,5 +739,73 @@ impl PasswordResetRepository {
         .await??;
 
         Ok(())
+    }
+}
+
+#[derive(Clone)]
+pub struct RatingRepository {
+    pool: DbPool,
+}
+
+impl RatingRepository {
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn create_rating(&self, new_rating: NewRating) -> Result<Rating, DbError> {
+        let pool = self.pool.clone();
+
+        let rating = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+
+            let created: Rating = diesel::insert_into(ratings::table)
+                .values(&new_rating)
+                .returning(Rating::as_returning())
+                .get_result(&mut conn)?;
+
+            Ok::<Rating, DbError>(created)
+        })
+        .await??;
+
+        Ok(rating)
+    }
+
+    pub async fn get_user_ratings(&self, user_id_val: Uuid) -> Result<Vec<Rating>, DbError> {
+        let pool = self.pool.clone();
+
+        let ratings_list = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+
+            let list = ratings::table
+                .filter(ratings::user_id.eq(user_id_val))
+                .order(ratings::created_at.desc())
+                .select(Rating::as_select())
+                .load::<Rating>(&mut conn)?;
+
+            Ok::<Vec<Rating>, DbError>(list)
+        })
+        .await??;
+
+        Ok(ratings_list)
+    }
+
+    pub async fn get_user_average_rating(&self, user_id_val: Uuid) -> Result<Option<f64>, DbError> {
+        let pool = self.pool.clone();
+
+        let avg = tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()?;
+
+            use diesel::dsl::avg;
+
+            let average: Option<f64> = ratings::table
+                .filter(ratings::user_id.eq(user_id_val))
+                .select(avg(ratings::rating))
+                .first::<Option<f64>>(&mut conn)?;
+
+            Ok::<Option<f64>, DbError>(average)
+        })
+        .await??;
+
+        Ok(avg)
     }
 }

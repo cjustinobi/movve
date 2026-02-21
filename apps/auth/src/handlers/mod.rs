@@ -12,10 +12,10 @@ pub mod social;
 use crate::{
     AppState,
     model::{
-        AuthResponse, Claims, ForgotPasswordRequest, LoginRequest, LogoutRequest,
-        RefreshTokenRequest, RegisterRequest, RegisterResponse, ResendVerificationRequest,
-        ResetPasswordRequest, UpdatePasswordRequest, UpdateProfileRequest, User,
-        VerifyEmailRequest,
+        AuthResponse, Claims, CreateRatingRequest, ForgotPasswordRequest, LoginRequest,
+        LogoutRequest, Rating, RefreshTokenRequest, RegisterRequest, RegisterResponse,
+        ResendVerificationRequest, ResetPasswordRequest, UpdatePasswordRequest,
+        UpdateProfileRequest, User, VerifyEmailRequest,
     },
 };
 
@@ -518,4 +518,75 @@ async fn process_upload(state: AppState, mut multipart: Multipart) -> Result<Str
         }
     }
     Err(AppError::BadRequest("Missing file field".to_string()))
+}
+
+/// Creates a new rating for a user
+#[utoipa::path(
+    post,
+    path = "/api/auth/users/{id}/rate",
+    request_body = CreateRatingRequest,
+    responses(
+        (status = 200, description = "Rating created successfully", body = ApiResponse<Rating>),
+        (status = 400, description = "Invalid rating payload"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "User ID to rate"),
+    ),
+    tag = "Auth",
+    security(("bearerAuth" = []))
+)]
+pub async fn create_rating(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(target_user_id): axum::extract::Path<Uuid>,
+    Json(req): Json<CreateRatingRequest>,
+) -> Result<ApiResponse<Rating>, AppError> {
+    let rater_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| AppError::Unauthorized("Invalid rater ID".to_string()))?;
+
+    // Optionally: check if target_user_id exists
+    // let _ = state.auth_service.get_user_by_id(target_user_id).await?;
+
+    let rating = state
+        .rating_service
+        .create_rating(target_user_id, rater_id, req)
+        .await?;
+
+    Ok(ApiResponse::success_with_message(
+        "Rating submitted successfully",
+        rating,
+    ))
+}
+
+/// Gets a user's ratings and average
+#[utoipa::path(
+    get,
+    path = "/api/auth/users/{id}/ratings",
+    responses(
+        (status = 200, description = "User ratings retrieved successfully"),
+    ),
+    params(
+        ("id" = Uuid, Path, description = "User ID to get ratings for"),
+    ),
+    tag = "Auth"
+)]
+pub async fn get_user_ratings(
+    State(state): State<AppState>,
+    axum::extract::Path(target_user_id): axum::extract::Path<Uuid>,
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let ratings = state
+        .rating_service
+        .get_user_ratings(target_user_id)
+        .await?;
+    let average = state
+        .rating_service
+        .get_user_average_rating(target_user_id)
+        .await?;
+
+    Ok(ApiResponse::success(serde_json::json!({
+        "average_rating": average,
+        "total_ratings": ratings.len(),
+        "ratings": ratings
+    })))
 }

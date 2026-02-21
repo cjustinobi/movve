@@ -11,9 +11,10 @@ use uuid::Uuid;
 
 use crate::{
     model::{
-        AuthResponse, Claims, LoginRequest, RegisterRequest, UpdateProfileRequest, User, UserInfo,
+        AuthResponse, Claims, CreateRatingRequest, LoginRequest, NewRating, Rating,
+        RegisterRequest, UpdateProfileRequest, User, UserInfo,
     },
-    repository::{UserRepository, UserUpdate},
+    repository::{RatingRepository, UserRepository, UserUpdate},
 };
 
 pub struct AuthService {
@@ -608,5 +609,54 @@ impl AuthService {
         }
 
         Ok((email, first_name, last_name, avatar))
+    }
+}
+
+pub struct RatingService {
+    repo: RatingRepository,
+}
+
+impl RatingService {
+    pub fn new(repo: RatingRepository) -> Self {
+        Self { repo }
+    }
+
+    pub async fn create_rating(
+        &self,
+        user_id: Uuid,
+        rater_id: Uuid,
+        req: CreateRatingRequest,
+    ) -> Result<Rating, AppError> {
+        if req.rating < 1.0 || req.rating > 5.0 {
+            return Err(AppError::BadRequest(
+                "Rating must be between 1 and 5".to_string(),
+            ));
+        }
+
+        let new_rating = NewRating {
+            user_id,
+            rater_id,
+            rating: req.rating,
+            comment: req.comment,
+        };
+
+        self.repo
+            .create_rating(new_rating)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    pub async fn get_user_ratings(&self, user_id: Uuid) -> Result<Vec<Rating>, AppError> {
+        self.repo
+            .get_user_ratings(user_id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
+    pub async fn get_user_average_rating(&self, user_id: Uuid) -> Result<Option<f64>, AppError> {
+        self.repo
+            .get_user_average_rating(user_id)
+            .await
+            .map_err(|e| AppError::InternalError(e.to_string()))
     }
 }
