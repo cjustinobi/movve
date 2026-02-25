@@ -1,4 +1,3 @@
-use crate::model::VehicleType;
 use common::AppError;
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
@@ -165,13 +164,15 @@ impl DistanceService {
         &self,
         distance_meters: f64,
         duration_seconds: f64,
-        vehicle_type: &VehicleType,
+        base_fare: f64,
+        vehicle_type: &str,
     ) -> f64 {
-        let (base_fare, per_km_rate, per_minute_rate) = match vehicle_type {
-            VehicleType::Motorcycle => (30.0, 5.0, 1.0),
-            VehicleType::Sedan => (50.0, 10.0, 2.0),
-            VehicleType::Suv => (75.0, 15.0, 3.0),
-            VehicleType::Van => (100.0, 20.0, 5.0),
+        let (per_km_rate, per_minute_rate) = match vehicle_type.to_lowercase().as_str() {
+            "motorcycle" => (5.0, 1.0),
+            "sedan" => (10.0, 2.0),
+            "suv" => (15.0, 3.0),
+            "van" => (20.0, 5.0),
+            _ => (10.0, 2.0), // Default for unknown dynamic types
         };
 
         let distance_km = distance_meters / 1000.0;
@@ -233,7 +234,7 @@ mod tests {
         let distance = 5000.0; // 5km
         let duration = 600.0; // 10 minutes
 
-        let fare = service.calculate_fare(distance, duration, &VehicleType::Sedan);
+        let fare = service.calculate_fare(distance, duration, 50.0, "sedan");
 
         // Base (50) + distance (5 * 10 = 50) + time (10 * 2 = 20) = 120
         assert!((fare - 120.0).abs() < 1.0);

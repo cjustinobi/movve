@@ -55,8 +55,12 @@ impl DriverService {
         Ok(driver)
     }
 
-    pub fn list_drivers(&self, status: Option<DriverStatus>) -> Result<Vec<Driver>> {
-        self.repo.find_all(status).map_err(Into::into)
+    pub fn list_drivers(
+        &self,
+        status: Option<DriverStatus>,
+        search: Option<String>,
+    ) -> Result<Vec<Driver>> {
+        self.repo.find_all(status, search).map_err(Into::into)
     }
 
     pub fn get_driver_by_user_id(&self, user_id: Uuid) -> Result<Driver> {
@@ -160,12 +164,18 @@ impl DriverService {
             .map_err(|e| AppError::InternalError(e.to_string()))
     }
 
+    pub async fn get_vehicle_types(&self) -> Result<Vec<crate::model::VehicleTypeModel>, AppError> {
+        self.repo
+            .get_vehicle_types()
+            .map_err(|e| AppError::InternalError(e.to_string()))
+    }
+
     pub fn get_online_driver_locations(
         &self,
     ) -> Result<Vec<crate::model::DriverMapLocation>, AppError> {
         let drivers = self
             .repo
-            .find_all(Some(DriverStatus::Online))
+            .find_all(Some(DriverStatus::Online), None)
             .map_err(|e| AppError::InternalError(e.to_string()))?;
 
         use bigdecimal::ToPrimitive;

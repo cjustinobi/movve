@@ -88,7 +88,7 @@ impl NotificationService {
         Ok(response)
     }
 
-    pub fn broadcast_ride_status(&self, ride_id: Uuid, status: RideStatus, message: String) {
+    pub fn broadcast_ride_status(&self, ride_id: i64, status: RideStatus, message: String) {
         let msg = WsMessage::RideStatusUpdate(serde_json::json!({
             "ride_id": ride_id,
             "status": status,
@@ -104,7 +104,7 @@ impl NotificationService {
     pub async fn broadcast_ride_status_to_user(
         &self,
         user_id: Uuid,
-        ride_id: Uuid,
+        ride_id: i64,
         status: RideStatus,
         message: String,
     ) {
@@ -120,7 +120,7 @@ impl NotificationService {
     pub async fn get_messages(
         &self,
         context_type: String,
-        context_id: Uuid,
+        context_id: i64,
     ) -> Result<Vec<MessageResponse>, AppError> {
         let conversation = self
             .repository

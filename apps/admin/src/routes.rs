@@ -43,6 +43,15 @@ pub fn create_routes(state: AppState) -> Router {
             "/api/driver/admin/stats/drivers",
             get(handlers::get_driver_stats),
         )
+        // Fleet / Vehicle Types
+        .route(
+            "/api/admin/vehicle-types",
+            get(crate::fleet::get_vehicle_types),
+        )
+        .route(
+            "/api/admin/vehicle-types/{id}",
+            put(crate::fleet::update_vehicle_type),
+        )
         .route(
             "/openapi.json",
             get(|| async { axum::Json(docs::AdminApiDoc::openapi()) }),

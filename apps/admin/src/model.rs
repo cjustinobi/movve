@@ -26,20 +26,6 @@ pub enum DriverStatus {
 }
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
-#[ExistingTypePath = "crate::schema::sql_types::VehicleType"]
-#[serde(rename_all = "lowercase")]
-pub enum VehicleType {
-    #[db_rename = "sedan"]
-    Sedan,
-    #[db_rename = "suv"]
-    Suv,
-    #[db_rename = "van"]
-    Van,
-    #[db_rename = "motorcycle"]
-    Motorcycle,
-}
-
-#[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::VehicleColour"]
 #[serde(rename_all = "lowercase")]
 pub enum VehicleColour {
@@ -71,7 +57,7 @@ pub struct Driver {
     pub insurance_number: Option<String>,
     pub insurance_image: Option<String>,
     pub vehicle_image: String,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,
     pub vehicle_model: String,
@@ -196,7 +182,7 @@ pub struct DriverMapLocation {
     pub id: Uuid,
     pub latitude: f64,
     pub longitude: f64,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
     pub vehicle_colour: VehicleColour,
     pub heading: f64,
 }

@@ -92,10 +92,15 @@ pub async fn create_ride(
 )]
 pub async fn get_ride(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let response = state.rider_service.get_ride(id).await?;
     Ok(ApiResponse::success(response))
+}
+
+#[derive(serde::Deserialize, utoipa::IntoParams)]
+pub struct ListRidesQuery {
+    pub search: Option<String>,
 }
 
 /// Get Ride History
@@ -105,13 +110,22 @@ pub async fn get_ride(
     responses(
         (status = 200, description = "Ride history", body = ApiResponse<Vec<RideResponse>>),
     ),
+    params(
+        ListRidesQuery
+    ),
     tag = "Rider",
     security(("bearerAuth" = []))
 )]
 pub async fn get_rides(
     State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<ListRidesQuery>,
     Extension(claims): Extension<Claims>,
 ) -> Result<ApiResponse<Vec<RideResponse>>, AppError> {
+    if claims.role == "admin" {
+        let response = state.rider_service.get_all_rides(query.search).await?;
+        return Ok(ApiResponse::success(response));
+    }
+
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
 
@@ -157,7 +171,7 @@ pub async fn get_driver_rides(
 pub async fn cancel_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
     Json(req): Json<crate::model::CancelRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let user_id = Uuid::parse_str(&claims.sub)
@@ -176,7 +190,7 @@ pub async fn cancel_ride(
 pub async fn start_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let driver_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
@@ -188,7 +202,7 @@ pub async fn start_ride(
 pub async fn end_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let driver_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
@@ -217,7 +231,7 @@ pub async fn end_ride(
 pub async fn pay_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
     Json(req): Json<PayRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let user_id = Uuid::parse_str(&claims.sub)
@@ -247,7 +261,7 @@ pub async fn pay_ride(
 pub async fn rate_driver(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
     Json(req): Json<RateDriverRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
     let user_id = Uuid::parse_str(&claims.sub)
@@ -276,7 +290,7 @@ pub async fn rate_driver(
 pub async fn get_driver_location(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Result<ApiResponse<Location>, AppError> {
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid user ID".to_string()))?;
@@ -300,7 +314,7 @@ pub async fn get_driver_location(
 )]
 pub async fn get_ride_status(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     let ride = state.rider_service.get_ride(id).await?;
     Ok(ApiResponse::success(serde_json::json!({
@@ -311,7 +325,7 @@ pub async fn get_ride_status(
 pub async fn accept_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let driver_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
@@ -323,7 +337,7 @@ pub async fn accept_ride(
 pub async fn driver_cancel_ride(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
     Json(req): Json<crate::model::CancelRideRequest>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let driver_id = Uuid::parse_str(&claims.sub)
@@ -342,7 +356,7 @@ pub async fn driver_cancel_ride(
 pub async fn mark_ride_arrived(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<i64>,
 ) -> Result<ApiResponse<RideResponse>, AppError> {
     let driver_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::Unauthorized("Invalid driver ID".to_string()))?;
@@ -408,7 +422,7 @@ pub async fn send_message(
 )]
 pub async fn get_messages(
     State(state): State<AppState>,
-    Path((context_type, context_id)): Path<(String, Uuid)>,
+    Path((context_type, context_id)): Path<(String, i64)>,
 ) -> Result<ApiResponse<Vec<MessageResponse>>, AppError> {
     let response = state
         .notification_service

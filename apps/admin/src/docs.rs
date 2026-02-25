@@ -16,6 +16,8 @@ use common::{ApiResponse, EmptyData};
         handlers::get_user_details,
         handlers::get_online_driver_locations,
         handlers::get_driver_stats,
+        crate::fleet::get_vehicle_types,
+        crate::fleet::update_vehicle_type,
     ),
     components(
         schemas(
@@ -30,7 +32,9 @@ use common::{ApiResponse, EmptyData};
             model::DriverMapLocation,
             model::DriverStatsResponse,
             model::UserStatsResponse,
-            model::UpdateVerificationRequest
+            model::UpdateVerificationRequest,
+            crate::fleet::VehicleTypeModel,
+            crate::fleet::UpdateVehicleTypeRequest,
         )
     ),
     tags(

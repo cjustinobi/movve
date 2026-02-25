@@ -23,20 +23,6 @@ pub enum DriverStatus {
 }
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
-#[ExistingTypePath = "crate::schema::sql_types::VehicleType"]
-#[serde(rename_all = "lowercase")]
-pub enum VehicleType {
-    #[db_rename = "sedan"]
-    Sedan,
-    #[db_rename = "suv"]
-    Suv,
-    #[db_rename = "van"]
-    Van,
-    #[db_rename = "motorcycle"]
-    Motorcycle,
-}
-
-#[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[ExistingTypePath = "crate::schema::sql_types::VehicleColour"]
 #[serde(rename_all = "lowercase")]
 pub enum VehicleColour {
@@ -75,7 +61,7 @@ pub struct Driver {
     pub id: Uuid,
     pub user_id: Uuid,
     pub license_number: String,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,
     pub vehicle_model: String,
@@ -110,7 +96,7 @@ pub struct NewDriver {
     pub driver_license_image: String,
     pub vehicle_image: String,
     pub insurance_image: Option<String>,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: String,
     pub vehicle_model: String,
@@ -185,7 +171,7 @@ pub struct DriverMapLocation {
     pub id: Uuid,
     pub latitude: f64,
     pub longitude: f64,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
     pub vehicle_colour: VehicleColour,
     pub heading: f64,
 }
@@ -195,4 +181,17 @@ pub struct DriverStatsResponse {
     pub total_drivers: i64,
     pub active_drivers: i64,
     pub inactive_drivers: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, Identifiable, ToSchema)]
+#[diesel(table_name = crate::schema::vehicle_types)]
+pub struct VehicleTypeModel {
+    pub id: Uuid,
+    pub name: String,
+    pub display_name: String,
+    pub description: String,
+    pub base_price: f64,
+    pub is_active: bool,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }

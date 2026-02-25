@@ -6,6 +6,7 @@ use dotenvy::dotenv;
 use std::env;
 
 mod docs;
+mod fleet;
 mod handlers;
 mod model;
 mod routes;

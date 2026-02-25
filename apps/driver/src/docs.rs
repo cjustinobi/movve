@@ -25,7 +25,7 @@ use utoipa::OpenApi;
         crate::model::Driver,
         crate::model::NewDriver,
         crate::model::DriverStatus,
-        crate::model::VehicleType,
+
         crate::model::UpdateStatusRequest,
         crate::model::DriverLocation,
         crate::model::DriverMapLocation,

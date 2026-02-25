@@ -39,7 +39,7 @@ impl RiderRepository {
     }
 
     /// Get a single ride by ID
-    pub async fn get_ride(&self, ride_id: Uuid) -> Result<Option<Ride>, AppError> {
+    pub async fn get_ride(&self, ride_id: i64) -> Result<Option<Ride>, AppError> {
         let pool = self.pool.clone();
 
         tokio::task::spawn_blocking(move || {
@@ -53,6 +53,46 @@ impl RiderRepository {
                 .first(&mut conn)
                 .optional()
                 .map_err(|e| AppError::BadRequest(format!("Failed to fetch ride: {}", e)))?;
+
+            Ok(result)
+        })
+        .await
+        .map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
+
+    /// Get all rides with optional search filter
+    pub async fn get_all_rides(
+        &self,
+        search_filter: Option<String>,
+    ) -> Result<Vec<Ride>, AppError> {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool
+                .get()
+                .map_err(|e| AppError::InternalError(format!("Failed to get connection: {}", e)))?;
+
+            let mut query = rides::table.into_boxed();
+
+            if let Some(s) = search_filter {
+                let search_pattern = format!("%{}%", s);
+                // Search pickup or destination JSONB text
+                query = query.filter(
+                    diesel::dsl::sql::<diesel::sql_types::Bool>("")
+                        .bind::<diesel::sql_types::Text, _>(search_pattern.clone())
+                        .sql("rides.pickup::text ILIKE ")
+                        // This is a naive way to search JSON using ILIKE
+                        .or(diesel::dsl::sql::<diesel::sql_types::Bool>("")
+                            .bind::<diesel::sql_types::Text, _>(search_pattern)
+                            .sql("rides.destination::text ILIKE ")),
+                );
+            }
+
+            let result = query
+                .order(rides::created_at.desc())
+                .select(Ride::as_select())
+                .load(&mut conn)
+                .map_err(|e| AppError::BadRequest(format!("Failed to fetch rides: {}", e)))?;
 
             Ok(result)
         })
@@ -107,7 +147,7 @@ impl RiderRepository {
     /// Update ride status
     pub async fn update_ride_status(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         status_val: crate::model::RideStatus,
     ) -> Result<Ride, AppError> {
         let pool = self.pool.clone();
@@ -132,7 +172,7 @@ impl RiderRepository {
     }
 
     /// Update payment status (sets status to "paid")
-    pub async fn update_payment_status(&self, ride_id: Uuid) -> Result<Ride, AppError> {
+    pub async fn update_payment_status(&self, ride_id: i64) -> Result<Ride, AppError> {
         self.update_ride_status(ride_id, crate::model::RideStatus::Paid)
             .await
     }
@@ -140,7 +180,7 @@ impl RiderRepository {
     /// Cancel ride with reason
     pub async fn cancel_ride(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         reason_val: String,
         cancelled_by_val: String,
     ) -> Result<Ride, AppError> {
@@ -170,7 +210,7 @@ impl RiderRepository {
     /// Update ride rating (for future implementation)
     pub async fn update_ride_rating(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         rating_value: f64,
         comment: Option<String>,
     ) -> Result<(), AppError> {
@@ -190,7 +230,7 @@ impl RiderRepository {
     pub async fn get_or_create_conversation(
         &self,
         context_type_val: String,
-        context_id_val: Uuid,
+        context_id_val: i64,
     ) -> Result<Conversation, AppError> {
         let pool = self.pool.clone();
 

@@ -55,10 +55,25 @@ impl RiderService {
             )
             .await?;
 
+        // Fetch dynamic pricing
+        let vehicle_types_list =
+            self.driver_client.get_vehicle_types().await.map_err(|e| {
+                AppError::InternalError("Failed to fetch dynamic pricing".to_string())
+            })?;
+
+        let fetched_base_price = vehicle_types_list
+            .iter()
+            .find(|vt| vt.r#type.to_lowercase() == req.vehicle_type.to_lowercase())
+            .map(|vt| vt.base_price)
+            .unwrap_or(500.0); // Fallback
+
         // Calculate base fare
-        let base_fare = self
-            .distance_service
-            .calculate_fare(distance, duration, &req.vehicle_type);
+        let base_fare = self.distance_service.calculate_fare(
+            distance,
+            duration,
+            fetched_base_price,
+            &req.vehicle_type,
+        );
 
         // Get surge multiplier
         let surge_multiplier = self
@@ -82,20 +97,7 @@ impl RiderService {
 
         for driver in drivers {
             // Match vehicle type
-            let type_match = match (&driver.vehicle_type, &req.vehicle_type) {
-                (services::driver_client::VehicleType::Sedan, crate::model::VehicleType::Sedan) => {
-                    true
-                }
-                (services::driver_client::VehicleType::Suv, crate::model::VehicleType::Suv) => true,
-                (services::driver_client::VehicleType::Van, crate::model::VehicleType::Van) => true,
-                (
-                    services::driver_client::VehicleType::Motorcycle,
-                    crate::model::VehicleType::Motorcycle,
-                ) => true,
-                _ => false,
-            };
-
-            if !type_match {
+            if driver.vehicle_type.to_lowercase() != req.vehicle_type.to_lowercase() {
                 continue;
             }
 
@@ -143,28 +145,17 @@ impl RiderService {
 
             let eta = self.distance_service.calculate_eta(distance_from_pickup);
 
-            let (title, tagline, description) = match driver.vehicle_type {
-                services::driver_client::VehicleType::Sedan => (
-                    "Movve Go",
-                    "Comfortable & Reliable",
-                    "Affordable, everyday rides for up to 4 people",
-                ),
-                services::driver_client::VehicleType::Suv => (
-                    "Movve XL",
-                    "Spacious & Premium",
-                    "Spacious vehicles with more legroom or luggage space",
-                ),
-                services::driver_client::VehicleType::Van => (
-                    "Movve Van",
-                    "Extra Space for Everyone",
-                    "Large vehicles for groups of up to 6 people or extra luggage",
-                ),
-                services::driver_client::VehicleType::Motorcycle => (
-                    "Movve Moto",
-                    "Fast & Affordable",
-                    "Fast and nimble rides for solo travelers",
-                ),
-            };
+            let matched_vt = vehicle_types_list
+                .iter()
+                .find(|vt| vt.r#type.to_lowercase() == driver.vehicle_type.to_lowercase());
+
+            let title = matched_vt
+                .map(|v| v.name.clone())
+                .unwrap_or_else(|| driver.vehicle_type.clone());
+            let tagline = "Reliable Ride".to_string();
+            let description = matched_vt
+                .map(|v| v.description.clone())
+                .unwrap_or_else(|| "Standard customized ride".to_string());
 
             let (first_name, last_name, avatar) = if let Some(user) = user_info {
                 (user.first_name, user.last_name, user.avatar)
@@ -253,19 +244,7 @@ impl RiderService {
             ));
         }
 
-        // Verify vehicle type matches
-        let type_match = match (&driver.vehicle_type, &req.vehicle_type) {
-            (services::driver_client::VehicleType::Sedan, crate::model::VehicleType::Sedan) => true,
-            (services::driver_client::VehicleType::Suv, crate::model::VehicleType::Suv) => true,
-            (services::driver_client::VehicleType::Van, crate::model::VehicleType::Van) => true,
-            (
-                services::driver_client::VehicleType::Motorcycle,
-                crate::model::VehicleType::Motorcycle,
-            ) => true,
-            _ => false,
-        };
-
-        if !type_match {
+        if driver.vehicle_type.to_lowercase() != req.vehicle_type.to_lowercase() {
             return Err(AppError::BadRequest(format!(
                 "Driver vehicle type '{}' does not match requested type '{}'",
                 driver.vehicle_type, req.vehicle_type
@@ -304,7 +283,7 @@ impl RiderService {
         self.enrich_ride_response(created_ride).await
     }
 
-    pub async fn get_ride(&self, ride_id: Uuid) -> Result<RideResponse, AppError> {
+    pub async fn get_ride(&self, ride_id: i64) -> Result<RideResponse, AppError> {
         let ride = self
             .repository
             .get_ride(ride_id)
@@ -332,9 +311,23 @@ impl RiderService {
         Ok(responses)
     }
 
+    pub async fn get_all_rides(
+        &self,
+        search: Option<String>,
+    ) -> Result<Vec<RideResponse>, AppError> {
+        let rides = self.repository.get_all_rides(search).await?;
+        let mut responses = Vec::new();
+        for ride in rides {
+            if let Ok(enriched) = self.enrich_ride_response(ride).await {
+                responses.push(enriched);
+            }
+        }
+        Ok(responses)
+    }
+
     pub async fn cancel_ride(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         user_id: Uuid,
         reason: String,
         cancelled_by_role: &str,
@@ -448,7 +441,7 @@ impl RiderService {
     /// Driver accepts a ride request
     pub async fn accept_ride(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         driver_id: Uuid,
     ) -> Result<RideResponse, AppError> {
         let ride = self
@@ -487,7 +480,7 @@ impl RiderService {
     /// Driver cancels an accepted ride
     pub async fn driver_cancel_ride(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         driver_id: Uuid,
         reason: String,
     ) -> Result<RideResponse, AppError> {
@@ -497,7 +490,7 @@ impl RiderService {
     /// Start a ride
     pub async fn start_ride(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         driver_id: Uuid,
     ) -> Result<RideResponse, AppError> {
         let ride = self
@@ -527,7 +520,7 @@ impl RiderService {
     }
 
     /// End a ride
-    pub async fn end_ride(&self, ride_id: Uuid, driver_id: Uuid) -> Result<RideResponse, AppError> {
+    pub async fn end_ride(&self, ride_id: i64, driver_id: Uuid) -> Result<RideResponse, AppError> {
         let ride = self
             .repository
             .get_ride(ride_id)
@@ -557,7 +550,7 @@ impl RiderService {
     /// Driver marks arrival at pickup location
     pub async fn mark_ride_arrived(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         driver_id: Uuid,
     ) -> Result<(RideResponse, Uuid), AppError> {
         let ride = self
@@ -592,7 +585,7 @@ impl RiderService {
 
     pub async fn pay_ride(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         rider_id: Uuid,
         _req: PayRideRequest,
     ) -> Result<RideResponse, AppError> {
@@ -623,7 +616,7 @@ impl RiderService {
 
     pub async fn rate_driver(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         rider_id: Uuid,
         req: RateDriverRequest,
     ) -> Result<(), AppError> {
@@ -665,7 +658,7 @@ impl RiderService {
     /// Get current driver location for an active ride
     pub async fn get_driver_location(
         &self,
-        ride_id: Uuid,
+        ride_id: i64,
         rider_id: Uuid,
     ) -> Result<Location, AppError> {
         let ride = self

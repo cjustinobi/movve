@@ -4,7 +4,7 @@ use diesel::result::Error;
 use uuid::Uuid;
 
 use crate::database::DbPool;
-use crate::model::{Driver, DriverStatus, NewDriver, VehicleColour, VehicleType};
+use crate::model::{Driver, DriverStatus, NewDriver, VehicleColour, VehicleTypeModel};
 use crate::schema::drivers::dsl::*;
 
 #[derive(Insertable)]
@@ -16,7 +16,7 @@ pub struct NewDriverDb<'a> {
     pub driver_license_image: &'a str,
     pub vehicle_image: &'a str,
     pub insurance_image: Option<&'a str>,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: &'a str,
     pub vehicle_colour: VehicleColour,
     pub vehicle_plate: &'a str,
     pub vehicle_model: &'a str,
@@ -45,7 +45,7 @@ impl DriverRepository {
             driver_license_image: &new_driver.driver_license_image,
             vehicle_image: &new_driver.vehicle_image,
             insurance_image: new_driver.insurance_image.as_deref(),
-            vehicle_type: new_driver.vehicle_type,
+            vehicle_type: &new_driver.vehicle_type,
             vehicle_colour: new_driver.vehicle_colour,
             vehicle_plate: &new_driver.vehicle_plate,
             vehicle_model: &new_driver.vehicle_model,
@@ -60,12 +60,26 @@ impl DriverRepository {
             .get_result::<Driver>(&mut conn)
     }
 
-    pub fn find_all(&self, status_filter: Option<DriverStatus>) -> Result<Vec<Driver>, Error> {
+    pub fn find_all(
+        &self,
+        status_filter: Option<DriverStatus>,
+        search_filter: Option<String>,
+    ) -> Result<Vec<Driver>, Error> {
         let mut conn = self.pool.get().map_err(|_| Error::NotFound)?;
         let mut query = drivers.into_boxed();
 
         if let Some(s) = status_filter {
             query = query.filter(status.eq(s));
+        }
+
+        if let Some(s) = search_filter {
+            let search_pattern = format!("%{}%", s);
+            query = query.filter(
+                vehicle_plate
+                    .ilike(search_pattern.clone())
+                    .or(vehicle_model.ilike(search_pattern.clone()))
+                    .or(license_number.ilike(search_pattern)),
+            );
         }
 
         let result = query
@@ -136,5 +150,15 @@ impl DriverRepository {
             .execute(&mut conn)?;
 
         Ok(())
+    }
+
+    pub fn get_vehicle_types(&self) -> Result<Vec<VehicleTypeModel>, Error> {
+        use crate::schema::vehicle_types::dsl::*;
+        let mut conn = self.pool.get().expect("Failed to get DB connection");
+
+        vehicle_types
+            .filter(is_active.eq(true))
+            .select(VehicleTypeModel::as_select())
+            .load::<VehicleTypeModel>(&mut conn)
     }
 }

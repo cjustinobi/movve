@@ -7,6 +7,8 @@ use bigdecimal::ToPrimitive;
 use common::{ApiResponse, AppError, EmptyData};
 use diesel::prelude::*;
 use diesel::sql_types::Bool;
+use std::io::Write;
+use tracing::info;
 use uuid::Uuid;
 
 use crate::{
@@ -351,15 +353,21 @@ pub async fn update_driver_license_verification(
     Path(driver_id): Path<Uuid>,
     Json(req): Json<UpdateVerificationRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
+    info!(
+        "Updating driver license verification for driver {}",
+        driver_id
+    );
     let pool = state.driver_pool.clone();
     tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| AppError::InternalError(e.to_string()))?;
-        diesel::update(drivers::table.filter(drivers::id.eq(driver_id)))
-            .set(drivers::driver_license_verified.eq(req.verified))
-            .execute(&mut conn)
-            .map_err(|e| AppError::InternalError(e.to_string()))?;
+        diesel::update(
+            drivers::table.filter(drivers::id.eq(driver_id).or(drivers::user_id.eq(driver_id))),
+        )
+        .set(drivers::driver_license_verified.eq(req.verified))
+        .execute(&mut conn)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
         Ok::<(), AppError>(())
     })
     .await
@@ -394,15 +402,28 @@ pub async fn update_insurance_verification(
     Path(driver_id): Path<Uuid>,
     Json(req): Json<UpdateVerificationRequest>,
 ) -> Result<ApiResponse<EmptyData>, AppError> {
+    if let Ok(mut file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("admin.log")
+    {
+        let _ = writeln!(
+            file,
+            "Updating driver insurance verification for driver {}",
+            driver_id
+        );
+    }
     let pool = state.driver_pool.clone();
     tokio::task::spawn_blocking(move || {
         let mut conn = pool
             .get()
             .map_err(|e| AppError::InternalError(e.to_string()))?;
-        diesel::update(drivers::table.filter(drivers::id.eq(driver_id)))
-            .set(drivers::insurance_verified.eq(req.verified))
-            .execute(&mut conn)
-            .map_err(|e| AppError::InternalError(e.to_string()))?;
+        diesel::update(
+            drivers::table.filter(drivers::id.eq(driver_id).or(drivers::user_id.eq(driver_id))),
+        )
+        .set(drivers::insurance_verified.eq(req.verified))
+        .execute(&mut conn)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
         Ok::<(), AppError>(())
     })
     .await
@@ -442,10 +463,12 @@ pub async fn update_vehicle_verification(
         let mut conn = pool
             .get()
             .map_err(|e| AppError::InternalError(e.to_string()))?;
-        diesel::update(drivers::table.filter(drivers::id.eq(driver_id)))
-            .set(drivers::vehicle_image_verified.eq(req.verified))
-            .execute(&mut conn)
-            .map_err(|e| AppError::InternalError(e.to_string()))?;
+        diesel::update(
+            drivers::table.filter(drivers::id.eq(driver_id).or(drivers::user_id.eq(driver_id))),
+        )
+        .set(drivers::vehicle_image_verified.eq(req.verified))
+        .execute(&mut conn)
+        .map_err(|e| AppError::InternalError(e.to_string()))?;
         Ok::<(), AppError>(())
     })
     .await

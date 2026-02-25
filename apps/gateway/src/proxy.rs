@@ -22,6 +22,8 @@ pub async fn proxy_by_prefix(
     } else if path.starts_with("/api/rider/") {
         // Don't strip the prefix - send the full path
         (&state.config.services.rider_service_url, path)
+    } else if path.starts_with("/api/admin/") {
+        (&state.config.services.admin_service_url, path)
     } else {
         tracing::warn!("No matching service for path: {}", path);
         return Err(StatusCode::NOT_FOUND);

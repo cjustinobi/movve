@@ -74,26 +74,6 @@ where
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum VehicleType {
-    Sedan,
-    Suv,
-    Van,
-    Motorcycle,
-}
-
-impl std::fmt::Display for VehicleType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            VehicleType::Sedan => write!(f, "Sedan"),
-            VehicleType::Suv => write!(f, "SUV"),
-            VehicleType::Van => write!(f, "Van"),
-            VehicleType::Motorcycle => write!(f, "Motorcycle"),
-        }
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Driver {
     pub id: Uuid,
@@ -103,7 +83,7 @@ pub struct Driver {
     pub current_latitude: Option<f64>,
     #[serde(default, deserialize_with = "deserialize_opt_f64")]
     pub current_longitude: Option<f64>,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
     pub vehicle_make: Option<String>,
     pub vehicle_model: String,
     pub vehicle_year: i32,
@@ -114,6 +94,14 @@ pub struct Driver {
     pub rating: Option<f64>,
     #[serde(default, deserialize_with = "deserialize_total_rides")]
     pub total_rides: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VehicleTypeInfo {
+    pub r#type: String,
+    pub name: String,
+    pub description: String,
+    pub base_price: f64,
 }
 
 use common::response::ApiResponse;
@@ -184,5 +172,21 @@ impl DriverServiceClient {
 
         let api_response: ApiResponse<Driver> = response.json().await?;
         Ok(Some(api_response.data))
+    }
+
+    /// Get all vehicle types
+    pub async fn get_vehicle_types(&self) -> Result<Vec<VehicleTypeInfo>> {
+        let url = format!("{}/api/driver/vehicle-types", self.base_url);
+        let response = self.client.get(&url).send().await?;
+
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!(
+                "Failed to fetch vehicle types: {}",
+                response.status()
+            ));
+        }
+
+        let api_response: ApiResponse<Vec<VehicleTypeInfo>> = response.json().await?;
+        Ok(api_response.data)
     }
 }

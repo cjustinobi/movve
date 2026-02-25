@@ -1,7 +1,7 @@
 CREATE TYPE ride_status AS ENUM ('requested', 'accepted', 'arrived', 'in_progress', 'stopped', 'pit_stop', 'completed', 'paid', 'cancelled');
 
 CREATE TABLE rides (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id BIGSERIAL PRIMARY KEY,
     rider_id UUID NOT NULL,
     driver_id UUID,
     pickup JSONB NOT NULL,

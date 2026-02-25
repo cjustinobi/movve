@@ -1,8 +1,6 @@
 use crate::{
     AppState,
-    model::{
-        CancelRideRequest, Driver, DriverLocation, DriverStatus, NewDriver, UpdateStatusRequest,
-    },
+    model::{Driver, DriverLocation, DriverStatus, NewDriver, UpdateStatusRequest},
 };
 
 use axum::{
@@ -24,7 +22,7 @@ use uuid::Uuid;
 
 #[derive(Serialize, ToSchema)]
 pub struct VehicleTypeInfo {
-    pub r#type: crate::model::VehicleType,
+    pub r#type: String,
     pub name: String,
     pub description: String,
     pub base_price: f64,
@@ -33,6 +31,7 @@ pub struct VehicleTypeInfo {
 #[derive(Deserialize)]
 pub struct ListDriversQuery {
     pub status: Option<DriverStatus>,
+    pub search: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
@@ -69,8 +68,8 @@ pub async fn create_driver(
         ));
     }
 
-    match req.vehicle_type {
-        crate::model::VehicleType::Sedan => {
+    match req.vehicle_type.to_lowercase().as_str() {
+        "sedan" => {
             if req.vehicle_capacity > 5 {
                 return Err(AppError::BadRequest(
                     "Sedan capacity cannot exceed 5".to_string(),
@@ -105,7 +104,7 @@ pub async fn list_drivers(
 ) -> Result<ApiResponse<Vec<Driver>>, AppError> {
     let drivers = state
         .driver_service
-        .list_drivers(query.status)
+        .list_drivers(query.status, query.search.clone())
         .map_err(|e| AppError::InternalError(e.to_string()))?;
 
     Ok(ApiResponse::success(drivers))
@@ -514,34 +513,21 @@ pub async fn upload_vehicle_insurance(
     ),
     tag = "Driver"
 )]
-pub async fn get_vehicle_types() -> Json<ApiResponse<Vec<VehicleTypeInfo>>> {
-    let types = vec![
-        VehicleTypeInfo {
-            r#type: crate::model::VehicleType::Sedan,
-            name: "Sedan".to_string(),
-            description: "Comfortable car for up to 4 passengers".to_string(),
-            base_price: 500.0,
-        },
-        VehicleTypeInfo {
-            r#type: crate::model::VehicleType::Suv,
-            name: "SUV".to_string(),
-            description: "Spacious vehicle for larger groups or luggage".to_string(),
-            base_price: 800.0,
-        },
-        VehicleTypeInfo {
-            r#type: crate::model::VehicleType::Van,
-            name: "Van".to_string(),
-            description: "Big van for moving people or goods".to_string(),
-            base_price: 1200.0,
-        },
-        VehicleTypeInfo {
-            r#type: crate::model::VehicleType::Motorcycle,
-            name: "Motorcycle".to_string(),
-            description: "Fast and affordable ride for one passenger".to_string(),
-            base_price: 300.0,
-        },
-    ];
-    Json(ApiResponse::success(types))
+pub async fn get_vehicle_types(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<Vec<VehicleTypeInfo>>>, AppError> {
+    let types = state.driver_service.get_vehicle_types().await?;
+    let info = types
+        .into_iter()
+        .map(|t| VehicleTypeInfo {
+            r#type: t.name.clone(),
+            name: t.display_name,
+            description: t.description,
+            base_price: t.base_price,
+        })
+        .collect();
+
+    Ok(Json(ApiResponse::success(info)))
 }
 
 async fn process_upload(state: AppState, mut multipart: Multipart) -> Result<String, AppError> {

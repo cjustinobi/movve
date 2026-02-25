@@ -36,38 +36,17 @@ impl FromSql<Jsonb, Pg> for Location {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum VehicleType {
-    Sedan,
-    Suv,
-    Van,
-    Motorcycle,
-}
-
-impl std::fmt::Display for VehicleType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            VehicleType::Sedan => "sedan",
-            VehicleType::Suv => "suv",
-            VehicleType::Van => "van",
-            VehicleType::Motorcycle => "motorcycle",
-        };
-        write!(f, "{}", s)
-    }
-}
-
 /// Request to estimate ride cost
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RideEstimateRequest {
     pub pickup: Location,
     pub destination: Location,
     #[serde(default = "default_vehicle_type")]
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
 }
 
-fn default_vehicle_type() -> VehicleType {
-    VehicleType::Sedan
+fn default_vehicle_type() -> String {
+    "sedan".to_string()
 }
 
 /// Available driver option with real data
@@ -151,7 +130,7 @@ pub struct CreateRideRequest {
     pub pickup: Location,
     pub destination: Location,
     pub fare: f64,
-    pub vehicle_type: VehicleType,
+    pub vehicle_type: String,
 }
 
 /// Request to cancel a ride
@@ -183,7 +162,7 @@ pub struct RateDriverRequest {
 #[diesel(table_name = crate::schema::rides)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Ride {
-    pub id: Uuid,
+    pub id: i64,
     pub rider_id: Uuid,
     pub driver_id: Option<Uuid>,
     pub pickup: Location,
@@ -203,7 +182,6 @@ pub struct Ride {
 #[derive(Debug, Clone, Insertable)]
 #[diesel(table_name = crate::schema::rides)]
 pub struct NewRide {
-    pub id: Uuid,
     pub rider_id: Uuid,
     pub driver_id: Option<Uuid>,
     pub pickup: Location,
@@ -230,7 +208,6 @@ impl NewRide {
         otp: String,
     ) -> Self {
         Self {
-            id: Uuid::new_v4(),
             rider_id,
             driver_id: Some(driver_id),
             pickup,
@@ -256,7 +233,7 @@ impl NewRide {
 pub struct Conversation {
     pub id: Uuid,
     pub context_type: String,
-    pub context_id: Uuid,
+    pub context_id: i64,
     pub created_at: DateTime<Utc>,
 }
 
@@ -287,7 +264,7 @@ pub struct NewMessage {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct SendMessageRequest {
     pub context_type: String, // "ride"
-    pub context_id: Uuid,     // ride_id
+    pub context_id: i64,      // ride_id
     pub content: String,
 }
 
@@ -310,7 +287,7 @@ impl From<Message> for MessageResponse {
 /// Response for ride operations
 #[derive(Debug, Serialize, ToSchema)]
 pub struct RideResponse {
-    pub id: Uuid,
+    pub id: i64,
     pub user: String,
     pub driver: Option<RideDriver>,
     pub pickup: Location,

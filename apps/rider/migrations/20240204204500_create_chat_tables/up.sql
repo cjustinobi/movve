@@ -1,7 +1,7 @@
 CREATE TABLE conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     context_type VARCHAR(50) NOT NULL,
-    context_id UUID NOT NULL,
+    context_id BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
