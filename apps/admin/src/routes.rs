@@ -35,14 +35,12 @@ pub fn create_routes(state: AppState) -> Router {
             get(handlers::get_user_details),
         )
         // Driver Management
+        // Driver Management
         .route(
-            "/api/driver/admin/drivers/locations",
+            "/api/admin/drivers/locations",
             get(handlers::get_online_driver_locations),
         )
-        .route(
-            "/api/driver/admin/stats/drivers",
-            get(handlers::get_driver_stats),
-        )
+        .route("/api/admin/stats/drivers", get(handlers::get_driver_stats))
         // Fleet / Vehicle Types
         .route(
             "/api/admin/vehicle-types",

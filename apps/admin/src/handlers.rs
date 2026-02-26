@@ -487,7 +487,7 @@ pub async fn update_vehicle_verification(
 /// Retrieves online driver locations for map
 #[utoipa::path(
     get,
-    path = "/api/driver/admin/drivers/locations",
+    path = "/api/admin/drivers/locations",
     responses(
         (status = 200, description = "Online driver locations", body = ApiResponse<Vec<DriverMapLocation>>),
     ),
@@ -536,7 +536,7 @@ pub async fn get_online_driver_locations(
 /// Retrieves driver statistics
 #[utoipa::path(
     get,
-    path = "/api/driver/admin/stats/drivers",
+    path = "/api/admin/stats/drivers",
     responses(
         (status = 200, description = "Driver statistics", body = ApiResponse<DriverStatsResponse>),
     ),
