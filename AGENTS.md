@@ -1,4 +1,4 @@
-This is a ride hailing app. I want you to act as a senior software engineer and help me build this app. 
+This is a ride hailing app. I want you to act as a senior software engineer and help me build this app, production ready not a toy project. 
 
 It is a monorepo with the following structure:
 - apps/
@@ -52,67 +52,6 @@ The driver flow (real life)
     Data Transmission: Use WebSockets or MQTT for low-latency, real-time, bidirectional communication between the driver’s app and the server. This is superior to traditional HTTP polling, which is too slow for real-time tracking.
  
 
- Read [](file:///Users/justin/Projects/movve_monorepo/apps/driver/src/routes.rs#40-40), lines 40 to 50
-
-Read [](file:///Users/justin/Projects/movve_monorepo/apps/driver/src/routes.rs#50-50), lines 50 to 78
-
-Using "Replace String in File"
-
-
-```
-
-```
-
-
-Read [](file:///Users/justin/Projects/movve_monorepo/apps/driver/src/handlers.rs#1-1), lines 1 to 50
-
-Using "Replace String in File"
-
-
-```
-
-```
-
-
-Using "Replace String in File"
-
-
-```
-
-```
-
-
-Using "Replace String in File"
-
-
-```
-
-```
-
-
-Read [](file:///Users/justin/Projects/movve_monorepo/apps/driver/src/service.rs)
-
-Using "Replace String in File"
-
-
-```
-
-```
-
-
-Read [](file:///Users/justin/Projects/movve_monorepo/apps/driver/src/repository.rs#1-1), lines 1 to 50
-
-Read [](file:///Users/justin/Projects/movve_monorepo/apps/driver/src/repository.rs#50-50), lines 50 to 73
-
-Using "Replace String in File"
-
-
-```
-
-```
-
-
-Ran terminal command:  cargo check -p driver
 
 The ideal mechanism for real-time driver location updates involves:
 

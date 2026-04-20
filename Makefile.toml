@@ -372,12 +372,24 @@ if ! command -v tmux >/dev/null 2>&1; then
   echo "⚠️  tmux not found. Installing..."
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    if command -v brew >/dev/null 2>&1; then
-      brew install tmux
-    else
-      echo "❌ Homebrew not found. Please install tmux manually: https://brew.sh"
-      exit 1
-    fi
+    echo "🍎 Detected macOS. Downloading precompiled static binary for tmux..."
+    ARCH=$(uname -m)
+    VERSION="3.6a"
+    URL="https://github.com/tmux/tmux-builds/releases/download/v${VERSION}/tmux-${VERSION}-macos-${ARCH}.tar.gz"
+
+    echo "📥 Downloading tmux v${VERSION} (${ARCH})..."
+    curl -L "$URL" -o tmux.tar.gz
+
+    echo "📦 Extracting..."
+    tar -xzf tmux.tar.gz
+
+    echo "🚀 Installing to /usr/local/bin..."
+    sudo mkdir -p /usr/local/bin
+    sudo mv tmux /usr/local/bin/tmux
+    sudo chmod +x /usr/local/bin/tmux
+
+    rm -f tmux.tar.gz
+    echo "✅ tmux installed successfully."
   elif command -v apt-get >/dev/null 2>&1; then
     sudo apt-get update && sudo apt-get install -y tmux
   elif command -v yum >/dev/null 2>&1; then
